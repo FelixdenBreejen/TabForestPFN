@@ -138,3 +138,8 @@ model_keyword_dic[config_regression["model_name"]["value"]] = SAINT
 model_keyword_dic[config_classif["model_name"]["value"]] = SAINT
 
 
+
+
+if __name__ == "__main__":
+    print(total_config)
+    print(model_keyword_dic)
