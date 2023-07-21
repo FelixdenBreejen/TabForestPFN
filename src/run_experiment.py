@@ -283,4 +283,34 @@ if __name__ == """__main__""":
     #           #"max_test_samples": None,
     #           }
 
-    train_model_on_config()
+
+    config = {
+        "data__categorical": True,
+        "data__keyword": 361282,
+        "data__method_name": "openml_no_transform",
+        "data__regression": False,
+        "log_training": True,
+        "max_train_samples": 10000,
+        "model__batch_size": 512,
+        "model__device": "cuda",
+        "model__lr": 0.001,
+        "model__lr_scheduler": True,
+        "model__max_epochs": 300,
+        "model__module__d_embedding": 128,
+        "model__module__d_layers": 256,
+        "model__module__dropout": 0,
+        "model__module__n_layers": 4,
+        "model__optimizer": "adamw",
+        "model__use_checkpoints": True,
+        "model_name": "rtdl_mlp",
+        "model_type": 'skorch',
+        "n_iter": "auto",
+        "regression": False,
+        "transform__0__apply_on": "numerical",
+        "transform__0__method_name": "gaussienize",
+        "transform__0__type": "quantile",
+        "transformed_target": True,
+        "use_gpu": True
+    }
+
+    train_model_on_config(config)
