@@ -31,6 +31,7 @@ class MLP_PWL(nn.Module):
         self.regression = regression
         self.categorical_indicator = categorical_indicator #Added
 
+        d_in = 0
 
         if categories is not None:
             d_in += len(categories) * d_embedding
@@ -42,8 +43,8 @@ class MLP_PWL(nn.Module):
 
         if feature_representation_list is not None:
             feature_representation_list_numeric = [f for i, f in enumerate(feature_representation_list) if not categorical_indicator[i]]
-            self.piecewiselinear = PieceWiseLinear(d_embedding, feature_representation_list_numeric, use_extra_layer=False)
-            d_in += sum([len(f)-2 for f in feature_representation_list_numeric])
+            self.piecewiselinear = PieceWiseLinear(d_embedding, feature_representation_list_numeric, use_extra_layer=True)
+            d_in += self.piecewiselinear.get_dim()
 
         d_layers = [d_layers for _ in range(n_layers)] #CHANGED
 
@@ -67,7 +68,13 @@ class MLP_PWL(nn.Module):
             x_cat = None
         x = []
         if x_num is not None:
-            x.append(self.piecewiselinear(x_num))
+            x.append(
+                torch.cat([
+                    self.piecewiselinear(x_num),
+                    # self.onehot(x_num),
+                    # self.piecewiselinear_revered(x_num)
+                ], dim=1)
+                )
         if x_cat is not None:
             x.append(
                 self.category_embeddings(x_cat + self.category_offsets[None]).view(
@@ -93,9 +100,73 @@ class PieceWiseLinear(torch.nn.Module):
         super().__init__()
 
         self.extra_layers = torch.nn.ModuleList()
+        self.use_extra_layer = use_extra_layer
+        self.embedding_size = embedding_size
+        self.feature_representation_list = feature_representation_list
 
         for i, feature_representation in enumerate(feature_representation_list):
             feature_representation_torch = torch.from_numpy(feature_representation.get_values()).float()
+            self.register_buffer('feature_representation_'+str(i), feature_representation_torch)
+
+            dim_in = len(feature_representation_torch) - 1
+            extra_layer = ExtraLayer(use_extra_layer, dim_in, embedding_size)
+            self.extra_layers.append(extra_layer)
+
+
+    def forward(self, X_numerical):
+
+        num_features = X_numerical.shape[1]
+
+        newX_list = []
+
+        for i in range(num_features):
+
+            bounds = getattr(self, 'feature_representation_'+str(i))
+
+            lower_bounds = bounds[:-1]
+            upper_bounds = bounds[1:]
+
+            # The following code is trying to make the following function:
+            #              -----------
+            #             /
+            #            /
+            # -----------
+            # This is a piecewise linear function, where the linearly increasing part
+            # is between the lower and upper bounds.
+            # We can create this function with two relus.
+            scaling_factor = upper_bounds - lower_bounds
+            lower_part =  F.relu( X_numerical[:, None, i] - lower_bounds[None, :]) 
+            upper_part =  F.relu( X_numerical[:, None, i] - upper_bounds[None, :]) 
+
+            newX_item = (lower_part - upper_part) / scaling_factor
+            newX_item = self.extra_layers[i](newX_item)
+
+            newX_list.append(newX_item)
+
+        newX = torch.cat(newX_list, dim=1)
+
+        return newX
+    
+
+    def get_dim(self) -> int:
+
+        if self.use_extra_layer:
+            return len(self.feature_representation_list) * self.embedding_size
+        else:
+            return sum([len(f)-1 for f in self.feature_representation_list])
+
+
+    
+
+class OneHot(torch.nn.Module):
+
+    def __init__(self, embedding_size: int, feature_representation_list: 'FeatureRepresentationList', use_extra_layer: bool):
+        super().__init__()
+
+        self.extra_layers = torch.nn.ModuleList()
+
+        for i, feature_representation in enumerate(feature_representation_list):
+            feature_representation_torch = torch.from_numpy(feature_representation.get_bounds()).float()
             self.register_buffer('feature_representation_'+str(i), feature_representation_torch)
 
             dim_in = len(feature_representation_torch) - 1
