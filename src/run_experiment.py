@@ -302,7 +302,7 @@ if __name__ == """__main__""":
         "model__module__n_layers": 4,
         "model__optimizer": "adamw",
         "model__use_checkpoints": True,
-        "model_name": "rtdl_mlp",
+        "model_name": "rtdl_mlp_pwl",
         "model_type": 'skorch',
         "n_iter": "auto",
         "regression": False,

@@ -4,8 +4,9 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, \
     GradientBoostingClassifier, GradientBoostingRegressor, \
     HistGradientBoostingRegressor, HistGradientBoostingClassifier
 from xgboost import XGBClassifier, XGBRegressor
-from models.skorch_models import create_resnet_skorch, create_ft_transformer_skorch, create_rtdl_mlp_skorch
-from models.skorch_models_regression import create_resnet_regressor_skorch, create_ft_transformer_regressor_skorch, create_rtdl_mlp_regressor_skorch
+from models.skorch_models import create_resnet_skorch, create_ft_transformer_skorch, create_rtdl_mlp_skorch, create_rtdl_mlp_pwl_skorch
+from models.skorch_models_regression import create_resnet_regressor_skorch, create_ft_transformer_regressor_skorch, create_rtdl_mlp_regressor_skorch, \
+                                            create_rtdl_mlp_pwl_regressor_skorch
 from models.TabSurvey.models.saint import SAINT
 
 
@@ -100,6 +101,18 @@ total_config[keyword] = {
 
 model_keyword_dic[config_regression["model_name"]["value"]] = create_rtdl_mlp_regressor_skorch
 model_keyword_dic[config_classif["model_name"]["value"]] = create_rtdl_mlp_skorch
+
+from configs.model_configs.mlp_pwl_config import config_classif, config_regression, config_classif_default, config_regression_default
+keyword = "mlp_pwl"
+total_config[keyword] = {
+        "classif": {"random": config_classif,
+                    "default": config_classif_default},
+        "regression": {"random": config_regression,
+                            "default": config_regression_default},
+}
+
+model_keyword_dic[config_regression["model_name"]["value"]] = create_rtdl_mlp_pwl_regressor_skorch
+model_keyword_dic[config_classif["model_name"]["value"]] = create_rtdl_mlp_pwl_skorch
 
 from configs.model_configs.resnet_config import config_classif, config_regression, config_classif_default, config_regression_default
 keyword = "resnet"
