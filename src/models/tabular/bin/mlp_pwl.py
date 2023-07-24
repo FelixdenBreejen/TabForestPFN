@@ -1,7 +1,9 @@
 # %%
 import math
+import scipy
 import typing as ty
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -20,6 +22,7 @@ class MLP_PWL(nn.Module):
         d_out: int,
         categories: ty.Optional[ty.List[int]],
         d_embedding: int,
+        feature_representation_list: ty.List['FeatureRepresentation'],
         regression: bool,
         categorical_indicator
     ) -> None:
@@ -36,6 +39,11 @@ class MLP_PWL(nn.Module):
             self.category_embeddings = nn.Embedding(sum(categories), d_embedding)
             nn.init.kaiming_uniform_(self.category_embeddings.weight, a=math.sqrt(5))
             print(f'{self.category_embeddings.weight.shape=}')
+
+        if feature_representation_list is not None:
+            feature_representation_list_numeric = [f for i, f in enumerate(feature_representation_list) if not categorical_indicator[i]]
+            self.piecewiselinear = PieceWiseLinear(d_embedding, feature_representation_list_numeric, use_extra_layer=False)
+            d_in += sum([len(f)-2 for f in feature_representation_list_numeric])
 
         d_layers = [d_layers for _ in range(n_layers)] #CHANGED
 
@@ -59,7 +67,7 @@ class MLP_PWL(nn.Module):
             x_cat = None
         x = []
         if x_num is not None:
-            x.append(x_num)
+            x.append(self.piecewiselinear(x_num))
         if x_cat is not None:
             x.append(
                 self.category_embeddings(x_cat + self.category_offsets[None]).view(
@@ -79,6 +87,87 @@ class MLP_PWL(nn.Module):
         return x
 
 
+class PieceWiseLinear(torch.nn.Module):
+
+    def __init__(self, embedding_size: int, feature_representation_list: 'FeatureRepresentationList', use_extra_layer: bool):
+        super().__init__()
+
+        self.extra_layers = torch.nn.ModuleList()
+
+        for i, feature_representation in enumerate(feature_representation_list):
+            feature_representation_torch = torch.from_numpy(feature_representation.get_values()).float()
+            self.register_buffer('feature_representation_'+str(i), feature_representation_torch)
+
+            dim_in = len(feature_representation_torch) - 1
+            extra_layer = ExtraLayer(use_extra_layer, dim_in, embedding_size)
+            self.extra_layers.append(extra_layer)
+
+
+    def forward(self, X_numerical):
+
+        num_features = X_numerical.shape[1]
+
+        newX_list = []
+
+        for i in range(num_features):
+
+            bounds = getattr(self, 'feature_representation_'+str(i))
+
+            lower_bounds = bounds[:-1]
+            upper_bounds = bounds[1:]
+
+            # The following code is trying to make the following function:
+            #              -----------
+            #             /
+            #            /
+            # -----------
+            # This is a piecewise linear function, where the linearly increasing part
+            # is between the lower and upper bounds.
+            # We can create this function with two relus.
+            scaling_factor = upper_bounds - lower_bounds
+            lower_part =  F.relu( X_numerical[:, None, i] - lower_bounds[None, :]) 
+            upper_part =  F.relu( X_numerical[:, None, i] - upper_bounds[None, :]) 
+
+            newX_item = (lower_part - upper_part) / scaling_factor
+            newX_item = self.extra_layers[i](newX_item)
+
+            newX_list.append(newX_item)
+
+        newX = torch.cat(newX_list, dim=1)
+
+        return newX
+    
+
+class ExtraLayer(torch.nn.Module):
+    """
+    Extra Feature-wise Layer
+    """
+
+    def __init__(self, use: bool, dim_in: int, dim_out: int):
+        super().__init__()
+
+        if use:
+            self.extra_layer: torch.nn.Module = DoExtraLayer(dim_in, dim_out)
+        else:
+            self.extra_layer = torch.nn.Identity()
+
+    def forward(self, X):
+        return self.extra_layer(X)
+
+
+class DoExtraLayer(torch.nn.Module):
+
+    def __init__(self, dim_in: int, dim_out: int):
+        super().__init__()
+
+        self.linear = torch.nn.Linear(dim_in, dim_out)
+        self.activation = torch.nn.ReLU()
+
+    def forward(self, X):
+        return self.activation(self.linear(X))
+
+
+
 class InputShapeSetterMLP_PWL(skorch.callbacks.Callback):
     def __init__(self, regression=False, batch_size=None,
                  categorical_indicator=None, categories=None):
@@ -90,6 +179,7 @@ class InputShapeSetterMLP_PWL(skorch.callbacks.Callback):
 
     def on_train_begin(self, net, X, y):
         print("categorical_indicator", self.categorical_indicator)
+
         if self.categorical_indicator is None:
             d_in = X.shape[1]
             categories = None
@@ -99,11 +189,204 @@ class InputShapeSetterMLP_PWL(skorch.callbacks.Callback):
                 categories = list((X[:, self.categorical_indicator].max(0) + 1).astype(int))
             else:
                 categories = self.categories
+
+        max_size = net.module__d_embedding
+        feature_representation_list = FeatureRepresentationList.create_representations('quantile', max_size, X)
+        
         net.set_params(module__d_in=d_in,
                        module__categories=categories,  # FIXME #lib.get_categories(X_cat),
+                       module__feature_representation_list=feature_representation_list,
                        module__d_out=2 if self.regression == False else 1)  # FIXME#D.info['n_classes'] if D.is_multiclass else 1,
         print("Numerical features: {}".format(d_in))
         print("Categories {}".format(categories))
+
+
+
+
+class FeatureRepresentation(np.ndarray):
+    """
+    A feature representation is a summary of a feature in a dataset.
+    It is a 1D numpy array of shape (n), where n is the size of the feature representation.
+    The feature representation should have a significant smaller size than the original feature.
+    Also, all values in the feature representation should be unique.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    
+    def get_values(self) -> np.ndarray:
+        """
+        Return the values of the feature representation.
+        """
+        return self
+
+
+    def get_bounds(self, add_inf: bool = False) -> np.ndarray:
+        """
+        In case we have the array [1, 2, 3], we want to have the following intervals:
+        (-inf, 1.5), [1.5, 2.5), [2.5, inf).
+        This function returns creates the bounds without the infs: [1.5, 2.5].
+        If add_inf is True, then it returns [-inf, 1.5, 2.5, inf].
+        """
+
+        right_midpoints = self[1:]
+        left_midpoints = self[:-1]
+        bound = (right_midpoints + left_midpoints) / 2
+
+        if add_inf:
+            bound = np.concatenate([[-np.inf], self, [np.inf]])
+
+        return bound.view(np.ndarray)
+
+    
+    @classmethod
+    def create_feature_representation_from_column(cls, repr_type: str, max_size: int, X: np.ndarray) -> 'FeatureRepresentation':
+        
+        if repr_type == 'quantile':
+            return cls.create_quantile_representation(max_size, X)
+        elif repr_type == 'unique':
+            return cls.create_unique_rounded_representation(max_size, X)
+        elif repr_type == 'uniform':
+            return cls.create_uniform_representation(max_size, X)
+        else:
+            raise ValueError('Feature Representation type not supported')
+
+
+    @classmethod
+    def create_quantile_representation(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+        
+        """
+        For a given dataset, gather the quantile information for each feature.
+        We have n_buckets+1 values because we include the minimum and
+        maximum values of each feature. For example, if n_buckets=4, then we
+        have 5 values: [min, q1, q2, q3, max].
+        In case of duplicate values, we remove them.
+        """
+        
+        n_buckets = max_size
+        quantiles = [i/n_buckets for i in range(n_buckets+1)]
+
+        values = np.quantile(x, q=quantiles, interpolation='midpoint')
+        values_unique = np.unique(values)
+
+        return values_unique.view(cls)
+
+    
+    @classmethod
+    def create_unique_rounded_representation(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+
+        """
+        Here we create the representation for the unique values.
+        The feature representation is a 1D numpy array of shape (n), where n is the number of unique values.
+        In case there are too many unique values, we round the values to a certain number of digits.
+        """
+
+        unique_values = unique_values_through_rounding(max_size, x)
+        return unique_values.view(cls)
+    
+
+    @classmethod
+    def create_unique_values(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+
+        """
+        Here we create the representation for the unique values.
+        The feature representation is a 1D numpy array of shape (n), where n is the number of unique values.
+        """
+
+        unique_values = np.unique(x)
+        return unique_values.view(cls)
+    
+    @classmethod
+    def create_uniform_representation(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+
+        """
+        Here we create the representation for the uniform values.
+        The feature representation is a 1D numpy array of shape (n), where n is the specified size.
+        """
+
+        max_element = np.max(x)
+        min_element = np.min(x)
+        size = max_size
+        uniform_values = np.linspace(min_element, max_element, size)
+
+        return uniform_values.view(cls)
+
+
+
+def unique_values_through_rounding(max_size: int, features: np.ndarray) -> np.ndarray:
+    """
+    We want to find the number of unique values in a feature.
+    In case there are too many unique values, we round the values to a certain number of digits.
+    We try to pick a number of digits that results in the highest number of unique values 
+    that is less than a certain threshold.
+    'digits' is the number of digits we round to, but it is not necessarily an integer.
+    """
+
+    unique_values = np.unique(features)
+    max_dim = max_size
+
+    if len(unique_values) <= max_dim:
+        return unique_values
+       
+    func = min_dist_max_dim(features, max_dim)
+    digits = scipy.optimize.minimize(func, 3, method='Nelder-Mead')['x'][0]
+    unique_values = get_unique_values(features, digits)
+
+    return unique_values
+
+
+def get_unique_values(features, digits):
+    rounded = (features // 10**(-digits)) * 10**(-digits)
+    unique_values = np.unique(rounded)
+    return unique_values
+
+
+def min_dist_max_dim(features, max_dim):
+
+    def f(digits):
+        unique_values = get_unique_values(features, digits)
+        return (math.log(len(unique_values)) - math.log(max_dim)) ** 2
+
+    return f
+
+
+
+
+class FeatureRepresentationList(ty.List[FeatureRepresentation]):
+    """
+    This is a list of feature representations
+    """
+
+    def __init__(self):
+        super().__init__()
+
+
+    @classmethod
+    def create_representations(cls, repr_type: str, max_size: int, X: np.ndarray):
+
+        num_features = X.shape[1]
+        bounds = cls()
+
+        for i_feature in range(num_features):
+            bound = FeatureRepresentation.create_feature_representation_from_column(repr_type, max_size, X[:, i_feature])
+            bounds.append(bound)
+
+        return bounds
+    
+
+    @classmethod
+    def create_unique_values(cls, max_size: int, X: np.ndarray):
+
+        num_features = X.shape[1]
+        bounds = cls()
+
+        for i_feature in range(num_features):
+            bound = FeatureRepresentation.create_unique_values(max_size, X[:, i_feature])
+            bounds.append(bound)
+
+        return bounds
+
 
 #
 # # %%
