@@ -185,7 +185,7 @@ def create_rtdl_mlp_pwl_skorch(id, wandb_run=None, use_checkpoints=True,
         categories = None
     else:
         categories = kwargs.pop('categories')
-    callbacks = [InputShapeSetterMLP(categorical_indicator=categorical_indicator, categories=categories),
+    callbacks = [InputShapeSetterMLP_PWL(categorical_indicator=categorical_indicator, categories=categories),
                  EarlyStopping(monitor="valid_loss",
                                patience=es_patience)]  # TODO try with train_loss, and in this case use checkpoint
     callbacks.append(EpochScoring(scoring='accuracy', name='train_accuracy', on_train=True))
