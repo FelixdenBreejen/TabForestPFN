@@ -172,7 +172,7 @@ if __name__ == "__main__":
 
     df = pd.DataFrame({"sweep_id": sweep_ids, "name": names, "project":projects, "use_gpu": use_gpu_list,
                        "n_datasets": n_datasets_list})
-    df.to_csv(f"launch_benchmarks/sweeps/{output_filename}.csv", index=False)
+    df.to_csv(f"launch_benchmarks/sweeps/{output_filename}", index=False)
     print("Check the sweeps id saved at launch_benchmarks/sweeps/{}.csv".format(output_filename))
     print("You can now run each sweep with wandb agent <USERNAME/PROJECTNAME/SWEEPID>, or use launch_on_cluster.py "
           "after making a few changes")
