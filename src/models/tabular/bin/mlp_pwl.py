@@ -43,7 +43,7 @@ class MLP_PWL(nn.Module):
 
         if feature_representation_list is not None:
             feature_representation_list_numeric = [f for i, f in enumerate(feature_representation_list) if not categorical_indicator[i]]
-            self.piecewiselinear = PieceWiseLinear(d_embedding, feature_representation_list_numeric, use_extra_layer=True)
+            self.piecewiselinear = PieceWiseLinear(d_embedding, feature_representation_list_numeric, use_extra_layer=False)
             d_in += self.piecewiselinear.get_dim()
 
         d_layers = [d_layers for _ in range(n_layers)] #CHANGED
