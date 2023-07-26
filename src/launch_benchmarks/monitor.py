@@ -6,6 +6,7 @@ import wandb
 import argparse
 import time
 import sys
+from tqdm import tqdm
 
 sys.path.append(".")
 from configs.wandb_config import wandb_id
@@ -88,14 +89,6 @@ parser.add_argument('--oar_queue', type=str, default="default")
 # Parse the arguments
 args = parser.parse_args()
 
-if args.oar:
-    print("Using OAR")
-    if args.oar_queue == "default":
-        args.oar_queue = "production"
-    print(f"Using queue {args.oar_queue}")
-else:
-    print("Using SLURM")
-
 df = pd.read_csv(args.filename)
 
 saved_sweeps = []
@@ -146,7 +139,7 @@ while len(saved_sweeps) < len(df):
                 # Check that all runs are finished
                 all_finished = True
                 try:
-                    for run in runs:
+                    for run in tqdm(runs):
                         if run.state == "running":
                             print(f"Run {run.name} is still running")
                             all_finished = False
