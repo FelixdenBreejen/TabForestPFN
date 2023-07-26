@@ -1,6 +1,6 @@
 source("analyses/plot_utils.R")
 
-benchmark <- read_csv("analyses/results/benchmark_total.csv")
+benchmark <- read_csv("analyses/results/df_merged.csv")
 
 ###################################
 # Benchmark classif categorical medium
