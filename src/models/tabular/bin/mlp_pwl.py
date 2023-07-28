@@ -33,18 +33,22 @@ class MLP_PWL(nn.Module):
 
         d_in = 0
 
-        if categories is not None:
-            d_in += len(categories) * d_embedding
-            category_offsets = torch.tensor([0] + categories[:-1]).cumsum(0)
-            self.register_buffer('category_offsets', category_offsets)
-            self.category_embeddings = nn.Embedding(sum(categories), d_embedding)
-            nn.init.kaiming_uniform_(self.category_embeddings.weight, a=math.sqrt(5))
-            print(f'{self.category_embeddings.weight.shape=}')
+        # if categories is not None:
+        #     d_in += len(categories) * d_embedding
+        #     category_offsets = torch.tensor([0] + categories[:-1]).cumsum(0)
+        #     self.register_buffer('category_offsets', category_offsets)
+        #     self.category_embeddings = nn.Embedding(sum(categories), d_embedding)
+        #     nn.init.kaiming_uniform_(self.category_embeddings.weight, a=math.sqrt(5))
+        #     print(f'{self.category_embeddings.weight.shape=}')
+
+        # if feature_representation_list is not None:
+        #     feature_representation_list_numeric = [f for i, f in enumerate(feature_representation_list) if not categorical_indicator[i]]
+        #     self.piecewiselinear = PieceWiseLinear(d_embedding, feature_representation_list_numeric, use_extra_layer=True)
+        #     d_in += self.piecewiselinear.get_dim()
 
         if feature_representation_list is not None:
-            feature_representation_list_numeric = [f for i, f in enumerate(feature_representation_list) if not categorical_indicator[i]]
-            self.piecewiselinear = PieceWiseLinear(d_embedding, feature_representation_list_numeric, use_extra_layer=False)
-            d_in += self.piecewiselinear.get_dim()
+            self.quantization_embedding = QuantizationEmbedding(d_embedding, feature_representation_list, use_onehot=True, use_ordinal=True, use_extra_layer=True)
+            d_in += self.quantization_embedding.get_dim()
 
         d_layers = [d_layers for _ in range(n_layers)] #CHANGED
 
@@ -66,22 +70,23 @@ class MLP_PWL(nn.Module):
         else:
             x_num = x
             x_cat = None
-        x = []
-        if x_num is not None:
-            x.append(
-                torch.cat([
-                    self.piecewiselinear(x_num),
-                    # self.onehot(x_num),
-                    # self.piecewiselinear_revered(x_num)
-                ], dim=1)
-                )
-        if x_cat is not None:
-            x.append(
-                self.category_embeddings(x_cat + self.category_offsets[None]).view(
-                    x_cat.size(0), -1
-                )
-            )
-        x = torch.cat(x, dim=-1)
+        x_list = []
+        # if x_num is not None:
+        #     x_list.append(
+        #         torch.cat([
+        #             self.piecewiselinear(x_num),
+        #             # self.onehot(x_num),
+        #             # self.piecewiselinear_revered(x_num)
+        #         ], dim=1)
+        #         )
+        # if x_cat is not None:
+        #     x_list.append(
+        #         self.category_embeddings(x_cat + self.category_offsets[None]).view(
+        #             x_cat.size(0), -1
+        #         )
+        #     )
+        x_list.append(self.quantization_embedding(x))
+        x = torch.cat(x_list, dim=-1)
 
         for layer in self.layers:
             x = layer(x)
@@ -92,6 +97,133 @@ class MLP_PWL(nn.Module):
         if not self.regression:
             x = x.squeeze(-1)
         return x
+
+
+class QuantizationEmbedding(torch.nn.Module):
+
+    def __init__(
+        self, 
+        embedding_size: int, 
+        feature_representation_list: 'FeatureRepresentationList',
+        use_onehot: bool,
+        use_ordinal: bool,
+        use_extra_layer: bool
+    ):
+        
+        super().__init__()
+
+        self.use_onehot = use_onehot
+        self.use_ordinal = use_ordinal
+        self.use_extra_layer = use_extra_layer
+        self.embedding_size = embedding_size
+        self.feature_representation_list = feature_representation_list
+
+        self.compose = ComposeEmbedding(use_onehot, use_ordinal)
+
+        self.extra_layers = torch.nn.ModuleList()
+
+        for i, feature_representation in enumerate(feature_representation_list):
+            unique_values = torch.from_numpy(feature_representation.get_bounds()).float()
+            self.register_buffer(f'unique_{i}', unique_values)
+
+            dim_in = len(unique_values) * (use_onehot + use_ordinal) + use_onehot
+            extra_layer = ExtraLayer(use_extra_layer, dim_in, embedding_size)
+            self.extra_layers.append(extra_layer)
+            
+
+    def forward(self, X):
+
+        batch_size = X.shape[0]
+        num_features = X.shape[1]
+        x_embs = []
+
+        for i in range(num_features):
+
+            bounds = getattr(self, f"unique_{i}")
+
+            lowerbound = X[:, i, None] > bounds[None, :]
+    
+            zeropad = torch.zeros((batch_size, 1), device=X.device).bool()
+            onespad = torch.ones((batch_size, 1), device=X.device).bool()
+            padded = torch.cat((onespad, lowerbound, zeropad), dim=1)
+
+            onehot = padded[:, 1:] ^ padded[:, :-1]
+
+            embedding = self.compose(lowerbound, onehot).float()
+            embedding = self.extra_layers[i](embedding)
+            
+            x_embs.append(embedding)
+
+        x = torch.cat(x_embs, dim=1)
+        return x
+    
+
+    def get_dim(self):
+
+        if self.use_extra_layer:
+
+            return self.embedding_size * len(self.feature_representation_list)
+        
+        else:
+            feature_representation_count = sum([len(f) for f in self.feature_representation_list])
+
+            n_ordinal_bins = (feature_representation_count-1) * self.use_ordinal
+            n_onehot_bins = feature_representation_count * self.use_onehot
+            n_quantization_bins = n_ordinal_bins + n_onehot_bins
+
+            return n_quantization_bins
+
+
+
+class ComposeEmbedding(torch.nn.Module):
+    """
+    This embedding selects which of the the onehot and ordinal embeddings
+    should be on based on the configuration.
+    """
+
+    def __init__(self, use_onehot: bool, use_ordinal: bool):
+        super().__init__()
+
+        if use_onehot and use_ordinal:
+            self.compose = CombineEmbedding()
+        elif use_onehot and not use_ordinal:
+            self.compose = OnehotOnly()
+        elif not use_onehot and use_ordinal:
+            self.compose = OrdinalOnly()
+        else:
+            raise ValueError("For the unique values embedding, at least onehot or ordinal needs to be on")
+
+    def forward(self, lowerbound, onehot):
+        return self.compose(lowerbound, onehot)
+
+
+
+class CombineEmbedding(torch.nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, lowerbound, onehot):
+        return torch.cat((lowerbound, onehot), dim=1)
+
+
+class OrdinalOnly(torch.nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, lowerbound, onehot):
+        return lowerbound
+
+
+class OnehotOnly(torch.nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, lowerbound, onehot):
+        return onehot
+
 
 
 class PieceWiseLinear(torch.nn.Module):
