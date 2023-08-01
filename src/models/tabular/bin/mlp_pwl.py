@@ -33,22 +33,27 @@ class MLP_PWL(nn.Module):
 
         d_in = 0
 
-        # if categories is not None:
-        #     d_in += len(categories) * d_embedding
-        #     category_offsets = torch.tensor([0] + categories[:-1]).cumsum(0)
-        #     self.register_buffer('category_offsets', category_offsets)
-        #     self.category_embeddings = nn.Embedding(sum(categories), d_embedding)
-        #     nn.init.kaiming_uniform_(self.category_embeddings.weight, a=math.sqrt(5))
-        #     print(f'{self.category_embeddings.weight.shape=}')
+        if categories is not None:
+            d_in += len(categories) * d_embedding
+            category_offsets = torch.tensor([0] + categories[:-1]).cumsum(0)
+            self.register_buffer('category_offsets', category_offsets)
+            self.category_embeddings = nn.Embedding(sum(categories), d_embedding)
+            nn.init.kaiming_uniform_(self.category_embeddings.weight, a=math.sqrt(5))
+            print(f'{self.category_embeddings.weight.shape=}')
 
         # if feature_representation_list is not None:
         #     feature_representation_list_numeric = [f for i, f in enumerate(feature_representation_list) if not categorical_indicator[i]]
         #     self.piecewiselinear = PieceWiseLinear(d_embedding, feature_representation_list_numeric, use_extra_layer=True)
         #     d_in += self.piecewiselinear.get_dim()
 
+        # if feature_representation_list is not None:
+        #     self.quantization_embedding = QuantizationEmbedding(d_embedding, feature_representation_list, use_onehot=True, use_ordinal=True, use_extra_layer=True)
+        #     d_in += self.quantization_embedding.get_dim()
+        
         if feature_representation_list is not None:
-            self.quantization_embedding = QuantizationEmbedding(d_embedding, feature_representation_list, use_onehot=True, use_ordinal=True, use_extra_layer=True)
-            d_in += self.quantization_embedding.get_dim()
+            feature_representation_list_numeric = [f for i, f in enumerate(feature_representation_list) if not categorical_indicator[i]]
+            self.no_embedding = NoEmbedding(d_embedding, feature_representation_list_numeric)
+            d_in += self.no_embedding.get_dim()
 
         d_layers = [d_layers for _ in range(n_layers)] #CHANGED
 
@@ -71,21 +76,21 @@ class MLP_PWL(nn.Module):
             x_num = x
             x_cat = None
         x_list = []
-        # if x_num is not None:
-        #     x_list.append(
-        #         torch.cat([
-        #             self.piecewiselinear(x_num),
-        #             # self.onehot(x_num),
-        #             # self.piecewiselinear_revered(x_num)
-        #         ], dim=1)
-        #         )
-        # if x_cat is not None:
-        #     x_list.append(
-        #         self.category_embeddings(x_cat + self.category_offsets[None]).view(
-        #             x_cat.size(0), -1
-        #         )
-        #     )
-        x_list.append(self.quantization_embedding(x))
+        if x_num is not None:
+            x_list.append(
+                torch.cat([
+                    self.no_embedding(x_num),
+                    # self.onehot(x_num),
+                    # self.piecewiselinear_revered(x_num)
+                ], dim=1)
+                )
+        if x_cat is not None:
+            x_list.append(
+                self.category_embeddings(x_cat + self.category_offsets[None]).view(
+                    x_cat.size(0), -1
+                )
+            )
+        # x_list.append(self.no_embedding(x))
         x = torch.cat(x_list, dim=-1)
 
         for layer in self.layers:
@@ -172,7 +177,47 @@ class QuantizationEmbedding(torch.nn.Module):
             n_quantization_bins = n_ordinal_bins + n_onehot_bins
 
             return n_quantization_bins
+        
 
+class NoEmbedding(torch.nn.Module):
+
+    def __init__(
+        self, 
+        embedding_size: int, 
+        feature_representation_list: 'FeatureRepresentationList',
+    ):
+        
+        super().__init__()
+
+        self.embedding_size = embedding_size
+        self.feature_representation_list = feature_representation_list
+
+        self.extra_layers = torch.nn.ModuleList()
+
+        for i, feature_representation in enumerate(feature_representation_list):
+            dim_in = 1
+            extra_layer = ExtraLayer(True, dim_in, embedding_size)
+            self.extra_layers.append(extra_layer)
+            
+
+    def forward(self, X):
+
+        num_features = X.shape[1]
+        x_embs = []
+
+        for i in range(num_features):
+            
+            embedding = self.extra_layers[i](X[:, i:i+1])
+            
+            x_embs.append(embedding)
+
+        x = torch.cat(x_embs, dim=1)
+        return x
+    
+
+    def get_dim(self):
+
+        return self.embedding_size * len(self.feature_representation_list)
 
 
 class ComposeEmbedding(torch.nn.Module):
