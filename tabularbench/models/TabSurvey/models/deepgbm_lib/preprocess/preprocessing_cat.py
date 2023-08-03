@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-import models.deepgbm_lib.config as config
+import tabularbench.models.deepgbm_lib.config as config
 
 '''
 

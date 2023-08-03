@@ -9,7 +9,7 @@ sys.path.append(".")
 print(sys.path)
 import torch
 import pandas as pd
-from train import *
+from tabularbench.train import *
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.preprocessing import StandardScaler, MaxAbsScaler
 # import train test split

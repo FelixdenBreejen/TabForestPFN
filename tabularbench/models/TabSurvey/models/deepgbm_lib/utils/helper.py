@@ -5,7 +5,7 @@ import torch.optim as optim
 
 from sklearn.metrics import log_loss, roc_auc_score, mean_squared_error
 
-import models.deepgbm_lib.config as config
+import tabularbench.models.deepgbm_lib.config as config
 
 
 def eval_metrics(task, true, pred):

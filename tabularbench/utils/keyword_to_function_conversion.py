@@ -1,6 +1,6 @@
-from target_function_classif import *
-from generate_data import *
-from data_transforms import *
+from tabularbench.target_function_classif import *
+from tabularbench.generate_data import *
+from tabularbench.data_transforms import *
 
 
 convert_keyword_to_function = {

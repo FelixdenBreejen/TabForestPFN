@@ -1,5 +1,5 @@
 import numpy as np
-from create_models import create_model
+from tabularbench.create_models import create_model
 import os
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.preprocessing import QuantileTransformer, OneHotEncoder

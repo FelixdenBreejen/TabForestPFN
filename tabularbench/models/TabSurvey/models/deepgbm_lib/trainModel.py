@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from torch.utils.data import TensorDataset
 
-import models.deepgbm_lib.config as config
+import tabularbench.models.deepgbm_lib.config as config
 
 from tabularbench.models.deepgbm_lib.utils.helper import eval_metrics, printMetric
 
@@ -53,7 +53,7 @@ def trainModel(model, train_x, train_y, tree_outputs, test_x, test_y, optimizer,
 
         for i, data in enumerate(trainloader, 0):
 
-            # Get data and target from trainloader
+            # Get data and target from tabularbench.trainloader
 
             if train_x_cat is not None:
                 inputs, target, tree_targets, inputs_cat = data

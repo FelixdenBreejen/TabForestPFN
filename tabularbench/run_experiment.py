@@ -1,10 +1,6 @@
-import os
-os.environ["PROJECT_DIR"] = "test"
-import sys
-sys.path.append("src")
-from generate_dataset_pipeline import generate_dataset
+from tabularbench.generate_dataset_pipeline import generate_dataset
 import traceback  # Needed for pulling out your full stackframe info
-from train import *
+from tabularbench.train import *
 import wandb
 import platform
 import time
@@ -197,7 +193,7 @@ def train_model_on_config(config=None):
                        "n_features": x_train.shape[1],
                        "data_generation_time": data_generation_time})
 
-        except:
+        except Exception as e:
             # Print to the console
             print("ERROR")
             # To get the traceback information
@@ -217,6 +213,10 @@ def train_model_on_config(config=None):
                 os.remove(r"output/saint/{}/tmp/m_{}_best.pt".format(config["data__keyword"], model_id))
                 #except:
                 #print("could not remove params file")
+            
+            if not config.sweep:
+                raise e
+            
             return -1
     return 0
 

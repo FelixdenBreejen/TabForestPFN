@@ -1,6 +1,6 @@
-# from data_transforms import tree_quantile_transformer
-# from generate_data import generate_gaussian_data
-# from target_function_classif import periodic_triangle
+# from tabularbench.data_transforms import tree_quantile_transformer
+# from tabularbench.generate_data import generate_gaussian_data
+# from tabularbench.target_function_classif import periodic_triangle
 # import matplotlib.pyplot as plt
 # import numpy as np
 #

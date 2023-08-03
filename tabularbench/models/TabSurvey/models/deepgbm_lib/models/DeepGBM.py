@@ -4,7 +4,7 @@ import torch.nn as nn
 from tabularbench.models.deepgbm_lib.models.CatNN import CatNN
 from tabularbench.models.deepgbm_lib.models.GBDT2NN import GBDT2NN
 
-import models.deepgbm_lib.config as config
+import tabularbench.models.deepgbm_lib.config as config
 
 '''
 

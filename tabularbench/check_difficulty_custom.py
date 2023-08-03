@@ -1,5 +1,5 @@
 import sklearn.datasets
-from check_difficulty import check_difficulty
+from tabularbench.check_difficulty import check_difficulty
 from tabularbench.preprocessing.preprocessing import preprocessing
 import traceback
 import pandas as pd

@@ -6,7 +6,7 @@ from torch.autograd import Variable
 
 from tabularbench.models.deepgbm_lib.models.EmbeddingModel import BatchDense
 
-import models.deepgbm_lib.config as config
+import tabularbench.models.deepgbm_lib.config as config
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

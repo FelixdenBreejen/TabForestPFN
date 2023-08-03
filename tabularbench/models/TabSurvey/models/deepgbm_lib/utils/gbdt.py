@@ -10,7 +10,7 @@ import lightgbm as lgb
 
 from tabularbench.models.deepgbm_lib.utils.tree_model_interpreter import ModelInterpreter
 
-import models.deepgbm_lib.config as config
+import tabularbench.models.deepgbm_lib.config as config
 
 
 

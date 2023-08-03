@@ -3,7 +3,7 @@ from tabularbench.models.basemodel_torch import BaseModelTorch
 from tabularbench.models.deepgbm_lib.main import train, predict
 from tabularbench.models.deepgbm_lib.preprocess.preprocessing_cat import CatEncoder
 from tabularbench.models.deepgbm_lib.preprocess.preprocessing_num import NumEncoder
-import models.deepgbm_lib.config as deepgbm_config
+import tabularbench.models.deepgbm_lib.config as deepgbm_config
 
 '''
     DeepGBM: A Deep Learning Framework Distilled by GBDT for Online Prediction Tasks

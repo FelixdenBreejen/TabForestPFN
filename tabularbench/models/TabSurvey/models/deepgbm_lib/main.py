@@ -10,7 +10,7 @@ from tabularbench.models.deepgbm_lib.utils.helper import outputFromEmbeddingMode
 
 from tabularbench.models.deepgbm_lib.trainModel import trainModel, evaluateModel, makePredictions
 
-import models.deepgbm_lib.config as config
+import tabularbench.models.deepgbm_lib.config as config
 
 '''
     Preprocess the data

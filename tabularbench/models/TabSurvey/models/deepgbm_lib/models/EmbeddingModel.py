@@ -4,7 +4,7 @@ from torch.nn.parameter import Parameter
 
 import math
 
-import models.deepgbm_lib.config as config
+import tabularbench.models.deepgbm_lib.config as config
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

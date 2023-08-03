@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn as nn
 
-import models.deepgbm_lib.config as config
+import tabularbench.models.deepgbm_lib.config as config
 
 '''
     CatNN:

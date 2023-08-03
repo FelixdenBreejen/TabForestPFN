@@ -10,7 +10,7 @@ import sys
 sys.path.append("")
 import os
 os.environ["PROJECT_DIR"] = "test"
-import models.tabular.lib as lib
+import tabularbench.models.tabular.lib as lib
 import skorch
 
 

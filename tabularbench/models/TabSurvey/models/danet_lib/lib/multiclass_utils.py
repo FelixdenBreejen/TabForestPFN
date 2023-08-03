@@ -348,7 +348,7 @@ def check_output_dim(labels, y):
         if not set(valid_labels).issubset(set(labels)):
             raise ValueError(
                 f"""Valid set -- {set(valid_labels)} --
-                             contains unkown targets from training --
+                             contains unkown targets from tabularbench.training --
                              {set(labels)}"""
             )
     return

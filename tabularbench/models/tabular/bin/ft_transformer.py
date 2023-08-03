@@ -13,7 +13,7 @@ from torch import Tensor
 
 import sys
 sys.path.append("")
-import models.tabular.lib as lib
+import tabularbench.models.tabular.lib as lib
 
 
 # %%
