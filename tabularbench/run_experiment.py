@@ -6,8 +6,6 @@ import platform
 import time
 import torch
 
-#os.environ["WANDB_MODE"] = "offline"
-
 def modify_config(config):
     if config["model_name"] == "ft_transformer" or config["model_name"] == "ft_transformer_regressor":
         config["model__module__d_token"] = (config["d_token"] // config["model__module__n_heads"]) * config["model__module__n_heads"]
