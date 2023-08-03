@@ -1,111 +1,87 @@
 import wandb
 
-from tabularbench.utils import create_sweep
 import pandas as pd
-import sys
-sys.path.append(".")
-from tabularbench.configs.wandb_config import wandb_id
-from tabularbench.configs.all_model_configs import total_config
 import argparse
 import openml
 import numpy as np
 
+from tabularbench.launch_benchmarks.utils import create_sweep
+from tabularbench.configs.wandb_config import wandb_id
+from tabularbench.configs.all_model_configs import total_config
 
 
-data_transform_config = {
-    "data__method_name": {
-        "value": "openml_no_transform"
-    },
-    "n_iter": {
-        "value": "auto",
-    },
-}
+def main(args):
 
-benchmarks = [{"task": "regression",
-                   "dataset_size": "medium",
-                   "categorical": False,
-                    "name": "numerical_regression",
-                   "suite_id": 336,
-                   "exclude": []},
+    data_transform_config = {
+        "data__method_name": {
+            "value": "openml_no_transform"
+        },
+        "n_iter": {
+            "value": "auto",
+        },
+    }
 
-                {"task": "regression",
-                    "dataset_size": "large",
+    benchmarks = [{"task": "regression",
+                    "dataset_size": "medium",
                     "categorical": False,
-                    "name": "numerical_regression_large",
+                        "name": "numerical_regression",
                     "suite_id": 336,
                     "exclude": []},
 
-                {"task": "classif",
-                    "dataset_size": "medium",
-                    "categorical": False,
-                    "name": "numerical_classification",
-                    "suite_id": 337,
-                    "exlude": []
-                 },
+                    {"task": "regression",
+                        "dataset_size": "large",
+                        "categorical": False,
+                        "name": "numerical_regression_large",
+                        "suite_id": 336,
+                        "exclude": []},
 
-                {"task": "classif",
-                    "dataset_size": "large",
-                    "categorical": False,
-                    "name": "numerical_classification_large",
-                    "suite_id": 337,
-                    "exclude": []
-                 },
+                    {"task": "classif",
+                        "dataset_size": "medium",
+                        "categorical": False,
+                        "name": "numerical_classification",
+                        "suite_id": 337,
+                        "exlude": []
+                    },
 
-                {"task": "regression",
-                    "dataset_size": "medium",
-                    "categorical": True,
-                    "name": "categorical_regression",
-                    "suite_id": 335,
-                    "exclude": [],
-                },
+                    {"task": "classif",
+                        "dataset_size": "large",
+                        "categorical": False,
+                        "name": "numerical_classification_large",
+                        "suite_id": 337,
+                        "exclude": []
+                    },
 
-                {"task": "regression",
-                 "dataset_size": "large",
-                 "categorical": True,
-                    "name": "categorical_regression_large",
-                    "suite_id": 335,
-                    "exclude": [],},
+                    {"task": "regression",
+                        "dataset_size": "medium",
+                        "categorical": True,
+                        "name": "categorical_regression",
+                        "suite_id": 335,
+                        "exclude": [],
+                    },
 
-                {"task": "classif",
-                    "dataset_size": "medium",
-                    "categorical": True,
-                    "name": "categorical_classification",
-                    "suite_id": 334,
-                    "exclude": [],
-                 },
-
-                {"task": "classif",
+                    {"task": "regression",
                     "dataset_size": "large",
                     "categorical": True,
-                    "name": "categorical_classification_large",
-                    "suite_id": 334,
-                    "exclude": [],
-                 }
-]
+                        "name": "categorical_regression_large",
+                        "suite_id": 335,
+                        "exclude": [],},
 
-if __name__ == "__main__":
-    # Create a csv file with all the WandB sweeps
-    #Make an argparse
-    parser = argparse.ArgumentParser()
-    # List of benchmarks as argument
-    parser.add_argument("--benchmarks", nargs="+", type=str, default=["numerical_classification", "numerical_regression", "categorical_classification", "categorical_regression"])
-    # List of models as argument
-    parser.add_argument("--models", nargs="+", type=str, default=[])
-    # output file name
-    parser.add_argument("--output_file", type=str, default="all_benchmark_medium.csv")
-    # Datasets
-    parser.add_argument("--datasets", nargs="+", type=str, default=[])
-    # Exclude datasets
-    parser.add_argument("--exclude", nargs="+", type=str, default=[])
-    # Suffix for project name
-    parser.add_argument("--suffix", type=str, default="")
-    # Only default
-    parser.add_argument("--default", action="store_true")
+                    {"task": "classif",
+                        "dataset_size": "medium",
+                        "categorical": True,
+                        "name": "categorical_classification",
+                        "suite_id": 334,
+                        "exclude": [],
+                    },
 
-
-    args = parser.parse_args()
-
-    
+                    {"task": "classif",
+                        "dataset_size": "large",
+                        "categorical": True,
+                        "name": "categorical_classification_large",
+                        "suite_id": 334,
+                        "exclude": [],
+                    }
+    ]
 
     if len(args.models) == 0:
         models = list(total_config.keys())
@@ -122,7 +98,7 @@ if __name__ == "__main__":
     n_datasets_list = []
     benchmarks = [benchmark for benchmark in benchmarks if benchmark["name"] in benchmark_names]
     print(benchmarks)
-    default_list = [False, True] if not args.default else [True]
+    default_list = args.default
 
     for n in range(1):
         for model_name in models:
@@ -174,9 +150,37 @@ if __name__ == "__main__":
 
     df = pd.DataFrame({"sweep_id": sweep_ids, "name": names, "project":projects, "use_gpu": use_gpu_list,
                        "n_datasets": n_datasets_list})
-    df.to_csv(f"launch_benchmarks/sweeps/{output_filename}", index=False)
-    print("Check the sweeps id saved at launch_benchmarks/sweeps/{}.csv".format(output_filename))
+    
+    df.to_csv(output_filename, index=False)
+    print("Check the sweeps id saved at {}".format(output_filename))
     print("You can now run each sweep with wandb agent <USERNAME/PROJECTNAME/SWEEPID>, or use launch_on_cluster.py "
           "after making a few changes")
+    
+    return df
+
+
+if __name__ == "__main__":
+    # Create a csv file with all the WandB sweeps
+    #Make an argparse
+    parser = argparse.ArgumentParser()
+    # List of benchmarks as argument
+    parser.add_argument("--benchmarks", nargs="+", type=str, default=["numerical_classification", "numerical_regression", "categorical_classification", "categorical_regression"])
+    # List of models as argument
+    parser.add_argument("--models", nargs="+", type=str, default=[])
+    # output file name
+    parser.add_argument("--output_file", type=str, default="all_benchmark_medium.csv")
+    # Datasets
+    parser.add_argument("--datasets", nargs="+", type=str, default=[])
+    # Exclude datasets
+    parser.add_argument("--exclude", nargs="+", type=str, default=[])
+    # Suffix for project name
+    parser.add_argument("--suffix", type=str, default="")
+    # Only default
+    parser.add_argument("--default", action="store_true")
+
+
+    args = parser.parse_args()
+
+    main(args)
 
 

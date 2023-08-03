@@ -214,7 +214,7 @@ def train_model_on_config(config=None):
                 #except:
                 #print("could not remove params file")
             
-            if config.debug:
+            if 'debug' in config and config.debug:
                 raise e
             
             return -1

@@ -47,7 +47,7 @@ def create_sweep(data_transform_config, model_name, regression, default, project
     data_transform_config["data__keyword"] = {"values": datasets}
 
     sweep_config = {
-        "program": "run_experiment.py",
+        "program": "tabularbench/run_experiment.py",
         "name": name,
         "project": project,
         "method": "grid" if default else "random",
