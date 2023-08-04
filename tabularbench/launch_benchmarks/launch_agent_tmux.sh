@@ -6,4 +6,4 @@ do
         s) sweep=${OPTARG};;
     esac
 done
-tmux new-session -d "conda activate tabularbench; export WANDB_MODE="offline"; export CUDA_VISIBLE_DEVICES=$gpu; wandb agent $project/$sweep; tmux kill-session"
+tmux new-session -d "conda activate tabularbench; export WANDB_BASE_URL = "http://localhost:8080"; export CUDA_VISIBLE_DEVICES=$gpu; wandb agent $project/$sweep; tmux kill-session"

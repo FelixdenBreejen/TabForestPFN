@@ -215,7 +215,10 @@ def train_model_on_config(config=None):
             if 'debug' in config and config.debug:
                 raise e
             
+            wandb.finish()
             return -1
+        
+    wandb.finish()
     return 0
 
 

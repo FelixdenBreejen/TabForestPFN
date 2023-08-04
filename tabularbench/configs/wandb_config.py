@@ -1,1 +1,1 @@
-wandb_id = "felixatkaist" # Enter your ID
+wandb_id = "felixlocal" # Enter your ID

@@ -11,7 +11,7 @@ from tabularbench.run_experiment import train_model_on_config
 from tabularbench.launch_benchmarks.launch_benchmarks import main as make_wandb_sweeps
 from tabularbench.launch_benchmarks.monitor import main as monitor_sweeps
 
-os.environ["WANDB_MODE"] = "offline"
+# os.environ["WANDB_MODE"] = "offline"
 
 @hydra.main(version_base=None, config_path="config", config_name="sweep")
 def main(cfg: DictConfig):
