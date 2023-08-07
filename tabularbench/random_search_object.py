@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 
 class RandomSearchObject:
@@ -30,14 +31,14 @@ class RandomSearchObject:
         probabilities = self.cfg['probabilities']
         values = self.cfg['values']
 
-        return np.random.choice(values, p=probabilities)
+        return random.choices(values, weights=probabilities, k=1)[0]
     
 
     def draw_values(self):
 
         values = self.cfg['values']
 
-        return np.random.choice(values)
+        return random.choice(values)
     
 
     def draw_distribution(self):
@@ -78,7 +79,7 @@ class RandomSearchObject:
     def draw_int_uniform(self):
         assert 'min' in self.cfg and 'max' in self.cfg
 
-        return int(np.random.randint(self.cfg['min'], self.cfg['max'] + 1))
+        return np.random.randint(self.cfg['min'], self.cfg['max'] + 1)
     
 
     def draw_float_uniform(self):
@@ -143,5 +144,5 @@ class RandomSearchObject:
         else:
             q = 1
 
-        return int(round(x / q) * q)
+        return round(x / q) * q
         

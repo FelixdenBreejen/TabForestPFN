@@ -170,7 +170,7 @@ def create_rtdl_mlp_pwl_regressor_skorch(id, wandb_run=None, use_checkpoints=Tru
         categories = None
     else:
         categories = kwargs.pop('categories')
-    callbacks = [InputShapeSetterMLP(regression=True,
+    callbacks = [InputShapeSetterMLP_PWL(regression=True,
                                         categorical_indicator=categorical_indicator,
                                         categories=categories),
                        EarlyStopping(monitor="valid_loss", patience=es_patience)] #TODO try with train_loss, and in this case use checkpoint
