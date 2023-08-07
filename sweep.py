@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import time
 import hydra
@@ -8,70 +10,59 @@ import subprocess
 from pathlib import Path
 
 from tabularbench.run_experiment import train_model_on_config
+from tabularbench.launch_benchmarks.launch_benchmarks import benchmarks
 from tabularbench.launch_benchmarks.launch_benchmarks import main as make_wandb_sweeps
 from tabularbench.launch_benchmarks.monitor import main as monitor_sweeps
+from tabularbench.run_sweeps import run_sweeps, SWEEP_FILE_NAME
 
-# os.environ["WANDB_MODE"] = "offline"
 
 @hydra.main(version_base=None, config_path="config", config_name="sweep")
 def main(cfg: DictConfig):
 
-    sweep_df_path = os.path.join(cfg.output_dir, 'wandb_sweep.csv') 
-
-    launch_benchmarks_args = argparse.Namespace(**{
-        'benchmarks': [cfg.benchmark],
-        'models': [cfg.model],
-        'output_file': sweep_df_path,
-        'datasets': [],
-        'exclude': [],
-        'suffix': '',
-        'default': [not cfg.random_search]
-    })
-
-    sweep_df = make_wandb_sweeps(launch_benchmarks_args)
-
-    launch_sweeps(cfg, sweep_df)
-
-    results_path = os.path.join(cfg.output_dir, 'results.csv')
-
-    monitor_sweeps_args = argparse.Namespace(**{
-        'filename': sweep_df_path,
-        'max_runs': 2,                                         # Max runs per dataset
-        'output_filename': results_path,
-        'default': not cfg.random_search,
-        'max_run_per_sweep': 20000,
-        'time': 10
-    })
-
-    monitor_sweeps(monitor_sweeps_args)
-
-    pass
+    create_sweep_csv(cfg)
+    launch_sweeps(cfg)
 
 
-def launch_sweeps(cfg, sweep_df: pd.DataFrame) -> None:
+def create_sweep_csv(cfg: dict) -> None:
 
-    sweep_id = sweep_df.iloc[0]['sweep_id']
-    project = sweep_df.iloc[0]['project']
+    sweep_dicts = []
+
+    for model in cfg.models:
+        for task in cfg.random_search:
+            for benchmark in benchmarks:
+
+                if benchmark['name'] not in cfg.benchmarks:
+                    continue
+                
+                sweep_dict = {
+                    'model': model,
+                    'benchmark': benchmark['name'],
+                    'random_search': task,
+                    'task': benchmark['task'],
+                    'dataset_size': benchmark['dataset_size'],
+                    'categorical': benchmark['categorical'],
+                    'suite_id': benchmark['suite_id'],
+                }
+
+                sweep_dicts.append(sweep_dict)
+
+    sweep_csv_path = os.path.join(cfg.output_dir, SWEEP_FILE_NAME)
+    pd.DataFrame(sweep_dicts).to_csv(sweep_csv_path, index=False)
+
+
+def launch_sweeps(cfg) -> None:
 
     gpus = list(cfg.devices) * cfg.runs_per_device
+    path = cfg.output_dir
 
-    for gpu in gpus:
-        subprocess.run(['bash', 'tabularbench/launch_benchmarks/launch_agent_tmux.sh', '-g', str(gpu), '-p', project, '-s', sweep_id])
-
+    if len(gpus) > 1:
+        for i, gpu in enumerate(gpus[1:]):
+            subprocess.run(['bash', 'tabularbench/launch_benchmarks/launch_agent_tmux.sh', '-g', str(gpu), '-p', path, '-s', i])
+    
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(gpus[0])
     print(f"Launched {len(gpus)} agents on {len(set(gpus))} devices")
 
-    
-
-
-
-def run_agents(gpu:int, sweep_df: pd.DataFrame):
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
-
-    for i, row in sweep_df.iterrows():
-        os.system(f'wandb agent {row["project"]}/{row["sweep_id"]}')
-
-
+    run_sweeps(path, main_process=True)
 
 if __name__ == "__main__":
     main()

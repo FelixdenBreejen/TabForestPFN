@@ -10,78 +10,81 @@ from tabularbench.configs.wandb_config import wandb_id
 from tabularbench.configs.all_model_configs import total_config
 
 
-def main(args):
+data_transform_config = {
+    "data__method_name": {
+        "value": "openml_no_transform"
+    },
+    "n_iter": {
+        "value": "auto",
+    },
+}
 
-    data_transform_config = {
-        "data__method_name": {
-            "value": "openml_no_transform"
-        },
-        "n_iter": {
-            "value": "auto",
-        },
-    }
+benchmarks = [{"task": "regression",
+                "dataset_size": "medium",
+                "categorical": False,
+                    "name": "numerical_regression",
+                "suite_id": 336,
+                "exclude": []},
 
-    benchmarks = [{"task": "regression",
-                    "dataset_size": "medium",
+                {"task": "regression",
+                    "dataset_size": "large",
                     "categorical": False,
-                        "name": "numerical_regression",
+                    "name": "numerical_regression_large",
                     "suite_id": 336,
                     "exclude": []},
 
-                    {"task": "regression",
-                        "dataset_size": "large",
-                        "categorical": False,
-                        "name": "numerical_regression_large",
-                        "suite_id": 336,
-                        "exclude": []},
+                {"task": "classif",
+                    "dataset_size": "medium",
+                    "categorical": False,
+                    "name": "numerical_classification",
+                    "suite_id": 337,
+                    "exlude": []
+                },
 
-                    {"task": "classif",
-                        "dataset_size": "medium",
-                        "categorical": False,
-                        "name": "numerical_classification",
-                        "suite_id": 337,
-                        "exlude": []
-                    },
+                {"task": "classif",
+                    "dataset_size": "large",
+                    "categorical": False,
+                    "name": "numerical_classification_large",
+                    "suite_id": 337,
+                    "exclude": []
+                },
 
-                    {"task": "classif",
-                        "dataset_size": "large",
-                        "categorical": False,
-                        "name": "numerical_classification_large",
-                        "suite_id": 337,
-                        "exclude": []
-                    },
+                {"task": "regression",
+                    "dataset_size": "medium",
+                    "categorical": True,
+                    "name": "categorical_regression",
+                    "suite_id": 335,
+                    "exclude": [],
+                },
 
-                    {"task": "regression",
-                        "dataset_size": "medium",
-                        "categorical": True,
-                        "name": "categorical_regression",
-                        "suite_id": 335,
-                        "exclude": [],
-                    },
+                {"task": "regression",
+                "dataset_size": "large",
+                "categorical": True,
+                    "name": "categorical_regression_large",
+                    "suite_id": 335,
+                    "exclude": [],},
 
-                    {"task": "regression",
+                {"task": "classif",
+                    "dataset_size": "medium",
+                    "categorical": True,
+                    "name": "categorical_classification",
+                    "suite_id": 334,
+                    "exclude": [],
+                },
+
+                {"task": "classif",
                     "dataset_size": "large",
                     "categorical": True,
-                        "name": "categorical_regression_large",
-                        "suite_id": 335,
-                        "exclude": [],},
+                    "name": "categorical_classification_large",
+                    "suite_id": 334,
+                    "exclude": [],
+                }
+]
 
-                    {"task": "classif",
-                        "dataset_size": "medium",
-                        "categorical": True,
-                        "name": "categorical_classification",
-                        "suite_id": 334,
-                        "exclude": [],
-                    },
 
-                    {"task": "classif",
-                        "dataset_size": "large",
-                        "categorical": True,
-                        "name": "categorical_classification_large",
-                        "suite_id": 334,
-                        "exclude": [],
-                    }
-    ]
+def main(args):
+
+    
 
     if len(args.models) == 0:
         models = list(total_config.keys())
