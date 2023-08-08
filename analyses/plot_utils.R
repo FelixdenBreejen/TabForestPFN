@@ -24,7 +24,7 @@ plot_results_per_dataset <- function(df, score="accuracy", truncate_scores=F, no
   
   
   #normalize_no_variable(normalization_type = "quantile", quantile = 0.1) %>% 
-  res_datasets <- res_datasets %>% random_search_no_variable(n_shuffles=15, default_first = T, equalize_n_iteration = equalize_n_iteration)
+  res_datasets <- res_datasets %>% random_search_no_variable(n_shuffles=15, default_first = F, equalize_n_iteration = equalize_n_iteration)
   
   if (equalize_n_iteration)
     res_datasets <- res_datasets %>% 
@@ -85,7 +85,7 @@ plot_aggregated_results <- function(df, score="accuracy", quantile=0.1, truncate
   
   
   res_datasets <- res_datasets %>% 
-    random_search_no_variable(n_shuffles=15, default_first = T, equalize_n_iteration=equalize_n_iteration) 
+    random_search_no_variable(n_shuffles=15, default_first = F, equalize_n_iteration=equalize_n_iteration) 
   
   
   res_datasets_ <- res_datasets %>% 

@@ -210,8 +210,6 @@ def train_model_on_config(config=None) -> dict:
             #except:
             #print("could not remove params file")
         
-        raise e
-        
         return -1
     
     

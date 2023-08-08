@@ -1,6 +1,7 @@
 from __future__ import annotations
 import argparse
 from pathlib import Path
+import subprocess
 
 import pandas as pd
 import openml
@@ -13,7 +14,7 @@ from tabularbench.random_search_object import RandomSearchObject
 
 SWEEP_FILE_NAME = 'sweep.csv'
 RESULTS_FILE_NAME = 'results.csv'
-RESULTS_MODIFIED_FILE_NAME = 'results_modified.csv'
+RESULTS_MODIFIED_FILE_NAME = 'results_modified_for_plotting.csv'
 
 
 def run_sweeps(output_dir: str, seed: int = 0, main_process: bool = True):
@@ -101,13 +102,12 @@ def random_search_sweep(benchmark: dict[str, str], benchmark_dir: Path, main_pro
 
         df['model_name'] = benchmark['plot_name']
 
-        if benchmark['runs_per_dataset'] == 1:
-        
-            df = df.append([df] * 999, ignore_index=True)
-            
-
         df.to_csv(benchmark_dir / RESULTS_MODIFIED_FILE_NAME, mode='w', index=False, header=True)
 
+        script_name = f"bench_script_{benchmark['benchmark']}"
+        script_path = 'analyses/' + script_name + '.R'
+        results_csv_path = str(benchmark_dir)
+        subprocess.run(['Rscript', script_path, f"-'{results_csv_path}'"])
 
 
 
