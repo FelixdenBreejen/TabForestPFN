@@ -1,0 +1,24 @@
+hydra:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+
+output_dir: ${hydra:run.dir}
+seed: 0
+devices: [0]
+runs_per_device: 1
+runs_per_dataset: 1
+
+
+models:
+  - mlp_pwl
+  - ft_transformer
+model_plot_names:
+  - piecewise_linear
+  - ft_transformer_2
+benchmarks:
+  - numerical_classification
+  - categorical_classification
+random_search:
+  - True
+  - False

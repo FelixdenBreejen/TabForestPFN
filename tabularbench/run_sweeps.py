@@ -56,7 +56,7 @@ def random_search_sweep(benchmark: dict[str, str], output_dir: Path, results_fil
     
     while True:
 
-        datasets_unfinished = get_unfinished_datasets(datasets_all_ids, results_path)
+        datasets_unfinished = get_unfinished_datasets(datasets_all_ids, results_path, benchmark['runs_per_dataset'])
 
         if len(datasets_unfinished) == 0:
             break
@@ -72,8 +72,7 @@ def random_search_sweep(benchmark: dict[str, str], output_dir: Path, results_fil
         if results == -1:
             continue
 
-        results.to_csv(results_path, mode='a', index=False, header=not results_path.exists())
-
+        pd.Series(results).to_frame().T.to_csv(results_path, mode='a', index=False, header=not results_path.exists())
 
     
     if main_process:
@@ -82,13 +81,22 @@ def random_search_sweep(benchmark: dict[str, str], output_dir: Path, results_fil
     
 
 
-def get_unfinished_datasets(datasets_all_ids: list[int], results_path: Path) -> list[int]:
+def get_unfinished_datasets(datasets_all_ids: list[int], results_path: Path, runs_per_dataset: int) -> list[int]:
 
     if not results_path.exists():
         return datasets_all_ids
     
     results_df = pd.read_csv(results_path)
-    pass
+    datasets_run_count = results_df.groupby('data__keyword').count()['data__categorical'].to_dict()
+
+    datasets_unfinished = []
+    for dataset_id in datasets_all_ids:
+        if dataset_id not in datasets_run_count:
+            datasets_unfinished.append(dataset_id)
+        elif datasets_run_count[dataset_id] < runs_per_dataset:
+            datasets_unfinished.append(dataset_id)
+
+    return datasets_unfinished
 
 
 def make_base_config(benchmark: dict) -> dict:

@@ -27,7 +27,7 @@ def create_sweep_csv(cfg: dict) -> None:
 
     sweep_dicts = []
 
-    for model in cfg.models:
+    for i_model, model in enumerate(cfg.models):
         for task in cfg.random_search:
             for benchmark in benchmarks:
 
@@ -36,12 +36,14 @@ def create_sweep_csv(cfg: dict) -> None:
                 
                 sweep_dict = {
                     'model': model,
+                    'plot_name': cfg.model_plot_names[i_model], 
                     'benchmark': benchmark['name'],
                     'random_search': task,
                     'task': benchmark['task'],
                     'dataset_size': benchmark['dataset_size'],
                     'categorical': benchmark['categorical'],
                     'suite_id': benchmark['suite_id'],
+                    'runs_per_dataset': cfg.runs_per_dataset,
                 }
 
                 sweep_dicts.append(sweep_dict)
