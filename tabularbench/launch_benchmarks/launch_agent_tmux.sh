@@ -6,4 +6,4 @@ do
         s) seed=${OPTARG};;
     esac
 done
-tmux new-session -d "conda activate tabularbench; export CUDA_VISIBLE_DEVICES=$gpu; python tabularbench/run_sweeps.py --sweep_csv_path=$path --seed=$seed; tmux kill-session"
+tmux new-session -d "conda activate tabularbench; export CUDA_VISIBLE_DEVICES=$gpu; python tabularbench/run_sweeps.py --output_dir=$path --seed=$seed; tmux kill-session"

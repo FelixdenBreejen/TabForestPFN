@@ -59,7 +59,7 @@ def launch_sweeps(cfg) -> None:
 
     if len(gpus) > 1:
         for i, gpu in enumerate(gpus[1:]):
-            subprocess.run(['bash', 'tabularbench/launch_benchmarks/launch_agent_tmux.sh', '-g', str(gpu), '-p', path, '-s', i])
+            subprocess.run(['bash', 'tabularbench/launch_benchmarks/launch_agent_tmux.sh', '-g', str(gpu), '-p', path, '-s', str(i+1)])
     
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpus[0])
     print(f"Launched {len(gpus)} agents on {len(set(gpus))} devices")

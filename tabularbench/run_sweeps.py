@@ -34,7 +34,7 @@ def run_sweeps(output_dir: str, seed: int = 0, main_process: bool = True):
         else:
             random_search_str = 'default'
 
-        results_file_name = f"results_{row['model']}_{row['benchmark']}_{random_search_str}.csv"
+        results_file_name = f"results_{row['benchmark']}_{random_search_str}_{row['model']}.csv"
         
         if row['random_search']:
             random_search_sweep(row.to_dict(), output_dir, results_file_name, main_process)
@@ -72,11 +72,20 @@ def random_search_sweep(benchmark: dict[str, str], output_dir: Path, results_fil
         if results == -1:
             continue
 
-        pd.Series(results).to_frame().T.to_csv(results_path, mode='a', index=False, header=not results_path.exists())
+        df_new = pd.Series(results).to_frame().T
+
+        if not results_path.exists():
+            df_new.to_csv(results_path, mode='w', index=False, header=True)
+        else:
+            df = pd.read_csv(results_path)
+            df = df.append(df_new, ignore_index=True)
+            df.to_csv(results_path, mode='w', index=False, header=True)
+        
 
     
     if main_process:
-        make_graphs(output_dir)
+        pass
+        # make_graphs(output_dir)
 
     
 
@@ -153,5 +162,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    run_sweeps(args.sweep_csv_path, seed=args.seed, main_process=args.main_process)
+    run_sweeps(args.output_dir, seed=args.seed, main_process=args.main_process)
 
