@@ -12,6 +12,8 @@ from tabularbench.run_experiment import train_model_on_config
 from tabularbench.random_search_object import RandomSearchObject
 
 SWEEP_FILE_NAME = 'sweep.csv'
+RESULTS_FILE_NAME = 'results.csv'
+RESULTS_MODIFIED_FILE_NAME = 'results_modified.csv'
 
 
 def run_sweeps(output_dir: str, seed: int = 0, main_process: bool = True):
@@ -24,8 +26,7 @@ def run_sweeps(output_dir: str, seed: int = 0, main_process: bool = True):
     random.seed(seed)
     np.random.seed(seed)
 
-    sweep_csv_path = Path(output_dir) / SWEEP_FILE_NAME
-    sweep_csv = pd.read_csv(sweep_csv_path)
+    sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
 
     for i, row in sweep_csv.iterrows():
         
@@ -34,24 +35,24 @@ def run_sweeps(output_dir: str, seed: int = 0, main_process: bool = True):
         else:
             random_search_str = 'default'
 
-        results_file_name = f"results_{row['benchmark']}_{random_search_str}_{row['model']}.csv"
+        benchmark_path = Path(output_dir) / f"{row['benchmark']}_{random_search_str}_{row['model']}"
         
         if row['random_search']:
-            random_search_sweep(row.to_dict(), output_dir, results_file_name, main_process)
+            random_search_sweep(row.to_dict(), benchmark_path, main_process)
         else:
-            grid_default_sweep(row.to_dict(), output_dir, results_file_name, main_process)
+            grid_default_sweep(row.to_dict(), benchmark_path, main_process)
     
 
 
 
 
-def random_search_sweep(benchmark: dict[str, str], output_dir: Path, results_file_name: str, main_process: bool):
+def random_search_sweep(benchmark: dict[str, str], benchmark_dir: Path, main_process: bool):
     
     model = benchmark['model']
     task = benchmark['task']
     config = total_config[model][task]['random']
     random_search_objects = [RandomSearchObject(name, cfg) for name, cfg in config.items()]
-    results_path = Path(output_dir) / results_file_name
+    results_path = benchmark_dir / RESULTS_FILE_NAME
     datasets_all_ids = openml.study.get_suite(benchmark['suite_id']).tasks
     
     while True:
@@ -75,6 +76,7 @@ def random_search_sweep(benchmark: dict[str, str], output_dir: Path, results_fil
         df_new = pd.Series(results).to_frame().T
 
         if not results_path.exists():
+            results_path.parent.mkdir(parents=True, exist_ok=True)
             df_new.to_csv(results_path, mode='w', index=False, header=True)
         else:
             df = pd.read_csv(results_path)
@@ -84,8 +86,31 @@ def random_search_sweep(benchmark: dict[str, str], output_dir: Path, results_fil
 
     
     if main_process:
-        pass
-        # make_graphs(output_dir)
+
+        df = pd.read_csv(results_path)
+
+        df['benchmark'] = benchmark['benchmark'] + '_' + benchmark['dataset_size']
+
+        df['data__openmlid'] = df['data__keyword']
+
+        for id in datasets_all_ids:
+            dataset_id_real = openml.tasks.get_task(id).dataset_id
+            dataset_name = openml.datasets.get_dataset(dataset_id_real, download_data=False).name
+
+            df.loc[df['data__openmlid'] == id, 'data__keyword'] = dataset_name
+
+        df['model_name'] = benchmark['plot_name']
+
+        if benchmark['runs_per_dataset'] == 1:
+        
+            df = df.append([df] * 999, ignore_index=True)
+            
+
+        df.to_csv(benchmark_dir / RESULTS_MODIFIED_FILE_NAME, mode='w', index=False, header=True)
+
+
+
+
 
     
 
