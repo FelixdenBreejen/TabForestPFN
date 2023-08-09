@@ -193,16 +193,6 @@ def draw_dataset_config(datasets_unfinished: list[int]) -> dict:
     return {
         "data__keyword": dataset_id
     }
-
-
-def draw_random_config(random_search_objects: list[RandomSearchObject]) -> dict:
-
-    random_config = {}
-
-    for random_search_object in random_search_objects:
-        random_config[random_search_object.name] = random_search_object.draw()
-
-    return random_config
     
 
 

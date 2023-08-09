@@ -21,8 +21,8 @@ config_random  = {
     },
     "model__module__d_embedding": {
         "distribution": "q_uniform",
-        "min": 64,
-        "max": 512
+        "min": 16,
+        "max": 128
     },
     "model__lr_scheduler": {
         "values": [True, False]
@@ -49,7 +49,7 @@ config_default = {
         "value": 1e-3,
     },
     "model__module__d_embedding": {
-        "value": 128
+        "value": 64
     },
     "use_gpu": {
         "value": True
