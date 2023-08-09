@@ -49,7 +49,7 @@ config_default = {
         "value": 1e-3,
     },
     "model__module__d_embedding": {
-        "value": 64
+        "value": 32
     },
     "use_gpu": {
         "value": True
