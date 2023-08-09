@@ -43,7 +43,7 @@ def create_sweep_csv(cfg: dict) -> None:
                     'dataset_size': benchmark['dataset_size'],
                     'categorical': benchmark['categorical'],
                     'suite_id': benchmark['suite_id'],
-                    'runs_per_dataset': cfg.runs_per_dataset,
+                    'runs_per_dataset': 1 if task == 'default' else cfg.runs_per_dataset
                 }
 
                 sweep_dicts.append(sweep_dict)

@@ -10,7 +10,7 @@ import numpy as np
 
 from tabularbench.configs.all_model_configs import total_config
 from tabularbench.run_experiment import train_model_on_config
-from tabularbench.random_search_object import RandomSearchObject
+from tabularbench.random_search_object import WandbSearchObject
 
 SWEEP_FILE_NAME = 'sweep.csv'
 RESULTS_FILE_NAME = 'results.csv'
@@ -51,8 +51,8 @@ def random_search_sweep(benchmark: dict[str, str], benchmark_dir: Path, main_pro
     
     model = benchmark['model']
     task = benchmark['task']
-    config = total_config[model][task]['random']
-    random_search_objects = [RandomSearchObject(name, cfg) for name, cfg in config.items()]
+    config = total_config[model][task]
+    search_object = WandbSearchObject(config)
     results_path = benchmark_dir / RESULTS_FILE_NAME
     datasets_all_ids = openml.study.get_suite(benchmark['suite_id']).tasks
     
@@ -66,7 +66,7 @@ def random_search_sweep(benchmark: dict[str, str], benchmark_dir: Path, main_pro
         
         config_base = make_base_config(benchmark)
         config_dataset = draw_dataset_config(datasets_unfinished)
-        config_hyperparams = draw_random_config(random_search_objects)
+        config_hyperparams = search_object.draw_random_config()
         config_run = {**config_base, **config_dataset, **config_hyperparams}
 
         results = train_model_on_config(config_run)
@@ -110,7 +110,67 @@ def random_search_sweep(benchmark: dict[str, str], benchmark_dir: Path, main_pro
         subprocess.run(['Rscript', script_path, results_csv_path])
 
 
+def grid_default_sweep(benchmark: dict[str, str], benchmark_dir: Path, main_process: bool):
 
+    model = benchmark['model']
+    task = benchmark['task']
+    config = total_config[model][task]
+    search_object = WandbSearchObject(config)
+    results_path = benchmark_dir / RESULTS_FILE_NAME
+    datasets_all_ids = openml.study.get_suite(benchmark['suite_id']).tasks
+    
+    while True:
+
+        datasets_unfinished = get_unfinished_datasets(datasets_all_ids, results_path, benchmark['runs_per_dataset'])
+
+        if len(datasets_unfinished) == 0:
+            break
+
+        
+        config_base = make_base_config(benchmark)
+        config_dataset = draw_dataset_config(datasets_unfinished)
+        config_hyperparams = search_object.draw_default_config()
+        config_run = {**config_base, **config_dataset, **config_hyperparams}
+
+        results = train_model_on_config(config_run)
+
+        if results == -1:
+            continue
+
+        df_new = pd.Series(results).to_frame().T
+
+        if not results_path.exists():
+            results_path.parent.mkdir(parents=True, exist_ok=True)
+            df_new.to_csv(results_path, mode='w', index=False, header=True)
+        else:
+            df = pd.read_csv(results_path)
+            df = df.append(df_new, ignore_index=True)
+            df.to_csv(results_path, mode='w', index=False, header=True)
+        
+    if main_process:
+
+        pass
+
+        # df = pd.read_csv(results_path)
+
+        # df['benchmark'] = benchmark['benchmark'] + '_' + benchmark['dataset_size']
+
+        # df['data__openmlid'] = df['data__keyword']
+
+        # for id in datasets_all_ids:
+        #     dataset_id_real = openml.tasks.get_task(id).dataset_id
+        #     dataset_name = openml.datasets.get_dataset(dataset_id_real, download_data=False).name
+
+        #     df.loc[df['data__openmlid'] == id, 'data__keyword'] = dataset_name
+
+        # df['model_name'] = benchmark['plot_name']
+
+        # df.to_csv(benchmark_dir / RESULTS_MODIFIED_FILE_NAME, mode='w', index=False, header=True)
+
+        # script_name = f"bench_script_{benchmark['benchmark']}"
+        # script_path = 'analyses/' + script_name + '.R'
+        # results_csv_path = str(benchmark_dir)
+        # subprocess.run(['Rscript', script_path, results_csv_path])
 
     
 
@@ -156,6 +216,7 @@ def make_base_config(benchmark: dict) -> dict:
         "max_train_samples": max_train_samples
     }
 
+
 def draw_dataset_config(datasets_unfinished: list[int]) -> dict:
 
     dataset_id = random.choice(datasets_unfinished)
@@ -174,8 +235,6 @@ def draw_random_config(random_search_objects: list[RandomSearchObject]) -> dict:
     return random_config
     
 
-def grid_default_sweep(model: str, benchmark: str):
-    pass
 
 
 if __name__ == '__main__':

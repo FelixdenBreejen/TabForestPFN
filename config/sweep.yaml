@@ -6,7 +6,7 @@ hydra:
 output_dir: ${hydra:run.dir}
 seed: 0
 devices: [0]
-runs_per_device: 2
+runs_per_device: 1
 runs_per_dataset: 1      # minimum 100 required to show up in the plots
 
 models:
@@ -17,9 +17,9 @@ model_plot_names:
   - ft_transformer_2
 benchmarks:
   - categorical_classification
-  - numerical_classification
-  - categorical_regression
-  - numerical_regression
+  # - numerical_classification
+  # - categorical_regression
+  # - numerical_regression
 random_search:
-  - True
-  # - False
+  # - True
+  - False

@@ -2,6 +2,42 @@ import numpy as np
 import random
 
 
+class WandbSearchObject:
+    """Random or default search in WandB sweep config format"""
+
+    def __init__(self, cfg: dict):
+        
+        self.random_search_objects = [RandomSearchObject(name, cfg) for name, cfg in cfg['random'].items()]
+        self.default_search_objects = [RandomSearchObject(name, cfg) for name, cfg in cfg['default'].items()]
+
+    
+    def draw_random_config(self):
+        return self.draw_config('random')
+    
+
+    def draw_default_config(self):
+        return self.draw_config('default')
+    
+    
+    def draw_config(self, type: str):
+
+        if type == 'random':
+            objects = self.random_search_objects
+        elif type == 'default':
+            objects = self.default_search_objects
+        else:
+            raise ValueError(f'Invalid type: {type}')
+        
+        config = {}
+
+        for search_object in objects:
+            config[search_object.name] = search_object.draw()
+
+        return config
+
+
+
+
 class RandomSearchObject:
 
     def __init__(self, name: str, cfg: dict):
