@@ -51,7 +51,10 @@ class MLP_PWL(nn.Module):
         #     d_in += self.quantization_embedding.get_dim()
         
         if feature_representation_list is not None:
-            feature_representation_list_numeric = [f for i, f in enumerate(feature_representation_list) if not categorical_indicator[i]]
+            if categorical_indicator is None:
+                feature_representation_list_numeric = feature_representation_list
+            else:
+                feature_representation_list_numeric = [f for i, f in enumerate(feature_representation_list) if not categorical_indicator[i]]
             self.no_embedding = NoEmbedding(d_embedding, feature_representation_list_numeric)
             d_in += self.no_embedding.get_dim()
 
