@@ -15,6 +15,7 @@ from tabularbench.random_search_object import WandbSearchObject
 SWEEP_FILE_NAME = 'sweep.csv'
 RESULTS_FILE_NAME = 'results.csv'
 RESULTS_MODIFIED_FILE_NAME = 'results_modified_for_plotting.csv'
+PATH_TO_ALL_BENCH_CSV = 'analyses/results/benchmark_total.csv'
 
 
 def run_sweeps(output_dir: str, seed: int = 0, main_process: bool = True):
@@ -38,10 +39,9 @@ def run_sweeps(output_dir: str, seed: int = 0, main_process: bool = True):
 
         benchmark_path = Path(output_dir) / f"{row['benchmark']}_{random_search_str}_{row['model']}"
         
+        grid_default_sweep(row.to_dict(), benchmark_path, main_process)
         if row['random_search']:
             random_search_sweep(row.to_dict(), benchmark_path, main_process)
-        else:
-            grid_default_sweep(row.to_dict(), benchmark_path, main_process)
     
 
 
@@ -62,16 +62,20 @@ def random_search_sweep(benchmark: dict[str, str], benchmark_dir: Path, main_pro
 
         if len(datasets_unfinished) == 0:
             break
-
         
         config_base = make_base_config(benchmark)
         config_dataset = draw_dataset_config(datasets_unfinished)
         config_hyperparams = search_object.draw_random_config()
-        config_run = {**config_base, **config_dataset, **config_hyperparams}
+        config_run = {**config_base, **config_dataset, **config_hyperparams, 'hp': 'random'}
 
         results = train_model_on_config(config_run)
 
         if results == -1:
+            continue
+        
+        # someone was here first
+        datasets_unfinished = get_unfinished_datasets(datasets_all_ids, results_path, benchmark['runs_per_dataset'])
+        if config_dataset['data__keyword'] not in datasets_unfinished:
             continue
 
         df_new = pd.Series(results).to_frame().T
@@ -130,13 +134,18 @@ def grid_default_sweep(benchmark: dict[str, str], benchmark_dir: Path, main_proc
         config_base = make_base_config(benchmark)
         config_dataset = draw_dataset_config(datasets_unfinished)
         config_hyperparams = search_object.draw_default_config()
-        config_run = {**config_base, **config_dataset, **config_hyperparams}
+        config_run = {**config_base, **config_dataset, **config_hyperparams, 'hp': 'default'}
 
         results = train_model_on_config(config_run)
 
         if results == -1:
             continue
 
+        # someone was here first
+        datasets_unfinished = get_unfinished_datasets(datasets_all_ids, results_path, benchmark['runs_per_dataset'])
+        if config_dataset['data__keyword'] not in datasets_unfinished:
+            continue
+        
         df_new = pd.Series(results).to_frame().T
 
         if not results_path.exists():
@@ -149,9 +158,33 @@ def grid_default_sweep(benchmark: dict[str, str], benchmark_dir: Path, main_proc
         
     if main_process:
 
-        pass
+        df = pd.read_csv(results_path)
 
-        # df = pd.read_csv(results_path)
+        df_all = pd.read_csv(PATH_TO_ALL_BENCH_CSV)
+
+        index = df_all['model_name'].unique().tolist() + [benchmark['plot_name']]
+        df_new = pd.DataFrame(columns=datasets_all_ids, index=index)
+
+        df_new.loc[benchmark['plot_name']] = df['mean_test_score'].to_list()
+
+        for model_name in df_all['model_name'].unique():
+
+            correct_model = df_all['model_name'] == model_name
+            correct_task = df_all['hp'] == 'default'
+            correct_benchmark = df_all['benchmark'] == benchmark['benchmark'] + '_' + benchmark['dataset_size']
+            df_new.loc[model_name] = df_all.loc[correct_model & correct_task & correct_benchmark, 'mean_test_score'].tolist()
+
+        id_to_name = {}
+        for id in datasets_all_ids:
+            dataset_id_real = openml.tasks.get_task(id).dataset_id
+            dataset_name = openml.datasets.get_dataset(dataset_id_real, download_data=False).name
+            id_to_name[id] = dataset_name
+        
+        df_new.rename(columns=id_to_name, inplace=True)
+        df_new.to_csv(benchmark_dir / 'grid_results.csv', mode='w', index=True, header=True)
+            
+
+        pass
 
         # df['benchmark'] = benchmark['benchmark'] + '_' + benchmark['dataset_size']
 
