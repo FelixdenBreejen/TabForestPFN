@@ -10,16 +10,16 @@ runs_per_device: 1
 runs_per_dataset: 1      # minimum 100 required to show up in the plots
 
 models:
-  - mlp_pwl
+  - mlp
   - ft_transformer
 model_plot_names:
   - piecewise_linear
   - ft_transformer_2
 benchmarks:
   - categorical_classification
-  # - numerical_classification
-  # - categorical_regression
-  # - numerical_regression
+  - numerical_classification
+  - categorical_regression
+  - numerical_regression
 random_search:
-  # - True
-  - False
+  - True
+  # - False
