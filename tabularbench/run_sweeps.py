@@ -107,7 +107,7 @@ def random_search_sweep(benchmark: dict[str, str], benchmark_dir: Path, main_pro
         script_name = f"bench_script_{benchmark['benchmark']}"
         script_path = 'analyses/' + script_name + '.R'
         results_csv_path = str(benchmark_dir)
-        subprocess.run(['Rscript', script_path, f"-'{results_csv_path}'"])
+        subprocess.run(['Rscript', script_path, results_csv_path])
 
 
 
