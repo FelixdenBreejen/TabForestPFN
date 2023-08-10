@@ -4,9 +4,9 @@ from pathlib import Path
 import os
 
 import pandas as pd
-import openml
 import random
 import numpy as np
+import torch
 
 from tabularbench.configs.all_model_configs import total_config
 from tabularbench.run_experiment import train_model_on_config
@@ -23,9 +23,12 @@ def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
     If main_process is False, then this process will only run the sweeps.
     """
 
+    print("seed: ", seed)
+
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu)
     random.seed(seed)
     np.random.seed(seed)
+    torch.manual_seed(seed)
 
     sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
     sweep_configs = sweep_config_maker(sweep_csv, output_dir)

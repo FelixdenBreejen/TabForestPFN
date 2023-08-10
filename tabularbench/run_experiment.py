@@ -63,7 +63,7 @@ def train_model_on_config(config=None) -> dict:
         for i in range(n_iter):
             if config["model_type"] == "skorch" or config["model_type"] == "tab_survey":
                 model_id = hash(
-                    ".".join(list(config.keys())) + "." + str(iter))  # uniquely identify the run (useful for checkpointing)
+                    ".".join(list(str(a) for a in config.values())) + "." + str(iter))  # uniquely identify the run (useful for checkpointing)
             elif config["model_type"] == "sklearn":
                 model_id = 0 # not used
             # if config["log_training"]: #FIXME
@@ -91,6 +91,7 @@ def train_model_on_config(config=None) -> dict:
             start_time = time.time()
             print(y_train.shape)
             model = train_model(i, x_train, y_train, categorical_indicator, config, model_id)
+
             if config["regression"]:
                 try:
                     r2_train, r2_val, r2_test = evaluate_model(model, x_train, y_train, x_val, y_val, x_test,
@@ -114,14 +115,6 @@ def train_model_on_config(config=None) -> dict:
             print("Train score:", train_score)
             print("Val score:", val_score)
             print("Test score:", test_score)
-            if config["model_type"] == "skorch":
-                if config["regression"]:
-                    if config["transformed_target"]:
-                        history = model.regressor_.history
-                    else:
-                        history = model.history
-                else:
-                    history = model.history
 
             times.append(end_time - start_time)
             train_scores.append(train_score)
@@ -197,6 +190,8 @@ def train_model_on_config(config=None) -> dict:
             #except:
             #print("could not remove params file")
         
+        raise e
+
         return -1
     
     
@@ -267,33 +262,35 @@ if __name__ == """__main__""":
     #           }
 
 
-    config = {
-        "data__categorical": True,
-        "data__keyword": 361282,
-        "data__method_name": "openml_no_transform",
-        "data__regression": False,
-        "log_training": True,
-        "max_train_samples": 10000,
-        "model__batch_size": 512,
-        "model__device": "cuda",
-        "model__lr": 0.001,
-        "model__lr_scheduler": True,
-        "model__max_epochs": 300,
-        "model__module__d_embedding": 128,
-        "model__module__d_layers": 256,
-        "model__module__dropout": 0,
-        "model__module__n_layers": 4,
-        "model__optimizer": "adamw",
-        "model__use_checkpoints": True,
-        "model_name": "rtdl_mlp_pwl",
-        "model_type": 'skorch',
-        "n_iter": "auto",
-        "regression": False,
-        "transform__0__apply_on": "numerical",
-        "transform__0__method_name": "gaussienize",
-        "transform__0__type": "quantile",
-        "transformed_target": True,
-        "use_gpu": True
-    }
+    # config = {
+    #     "data__categorical": True,
+    #     "data__keyword": 361282,
+    #     "data__method_name": "openml_no_transform",
+    #     "data__regression": False,
+    #     "log_training": True,
+    #     "max_train_samples": 10000,
+    #     "model__batch_size": 512,
+    #     "model__device": "cuda",
+    #     "model__lr": 0.001,
+    #     "model__lr_scheduler": True,
+    #     "model__max_epochs": 300,
+    #     "model__module__d_embedding": 128,
+    #     "model__module__d_layers": 256,
+    #     "model__module__dropout": 0,
+    #     "model__module__n_layers": 4,
+    #     "model__optimizer": "adamw",
+    #     "model__use_checkpoints": True,
+    #     "model_name": "rtdl_mlp_pwl",
+    #     "model_type": 'skorch',
+    #     "n_iter": "auto",
+    #     "regression": False,
+    #     "transform__0__apply_on": "numerical",
+    #     "transform__0__method_name": "gaussienize",
+    #     "transform__0__type": "quantile",
+    #     "transformed_target": True,
+    #     "use_gpu": True
+    # }
+
+    config = {'data__categorical': True, 'data__method_name': 'openml_no_transform', 'data__regression': False, 'regression': False, 'n_iter': 'auto', 'max_train_samples': 10000, 'data__keyword': 361111, 'model__lr_scheduler': True, 'model__module__n_layers': 4, 'model__module__d_layers': 256, 'model__module__dropout': 0.0, 'model__lr': 0.001, 'model__module__d_embedding': 128, 'use_gpu': True, 'log_training': True, 'model__device': 'cuda', 'model_type': 'skorch', 'model__use_checkpoints': True, 'model__optimizer': 'adamw', 'model__batch_size': 512, 'model__max_epochs': 300, 'transform__0__method_name': 'gaussienize', 'transform__0__type': 'quantile', 'transform__0__apply_on': 'numerical', 'transformed_target': True, 'model_name': 'rtdl_mlp', 'hp': 'default'}
 
     train_model_on_config(config)
