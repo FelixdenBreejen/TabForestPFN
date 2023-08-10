@@ -4,7 +4,6 @@ from skorch import NeuralNetClassifier
 from skorch.callbacks import EpochScoring
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.optim import AdamW, Adam, SGD
-from skorch.callbacks import WandbLogger
 import sys
 sys.path.append("")
 from tabularbench.models.tabular.bin.resnet import ResNet, InputShapeSetterResnet
@@ -12,7 +11,6 @@ from tabularbench.models.tabular.bin.mlp import MLP, InputShapeSetterMLP
 from tabularbench.models.tabular.bin.mlp_pwl import MLP_PWL, InputShapeSetterMLP_PWL
 from tabularbench.models.tabular.bin.ft_transformer import Transformer
 
-from skorch.callbacks import WandbLogger
 from skorch.callbacks import Callback
 import numpy as np
 
@@ -21,9 +19,6 @@ class LearningRateLogger(Callback):
     def on_epoch_begin(self, net,
                        dataset_train=None, dataset_valid=None, **kwargs):
         callbacks = net.callbacks
-        for callback in callbacks:
-            if isinstance(callback, WandbLogger):
-                callback.wandb_run.log({'log_lr': np.log10(net.optimizer_.param_groups[0]['lr'])})
 
 
 
@@ -70,7 +65,6 @@ def create_resnet_skorch(id, wandb_run=None, use_checkpoints=True,
         callbacks.append(Checkpoint(dirname="skorch_cp", f_params=r"params_{}.pt".format(id), f_optimizer=None,
                                     f_criterion=None))
     if not wandb_run is None:
-        callbacks.append(WandbLogger(wandb_run, save_model=False))
         callbacks.append(LearningRateLogger())
 
     if not categorical_indicator is None:
@@ -133,7 +127,6 @@ def create_rtdl_mlp_skorch(id, wandb_run=None, use_checkpoints=True,
         callbacks.append(Checkpoint(dirname="skorch_cp", f_params=r"params_{}.pt".format(id), f_optimizer=None,
                                     f_criterion=None))
     if not wandb_run is None:
-        callbacks.append(WandbLogger(wandb_run, save_model=False))
         callbacks.append(LearningRateLogger())
 
     if not categorical_indicator is None:
@@ -196,7 +189,6 @@ def create_rtdl_mlp_pwl_skorch(id, wandb_run=None, use_checkpoints=True,
         callbacks.append(Checkpoint(dirname="skorch_cp", f_params=r"params_{}.pt".format(id), f_optimizer=None,
                                     f_criterion=None))
     if not wandb_run is None:
-        callbacks.append(WandbLogger(wandb_run, save_model=False))
         callbacks.append(LearningRateLogger())
 
     if not categorical_indicator is None:
@@ -260,7 +252,6 @@ def create_ft_transformer_skorch(id, wandb_run=None, use_checkpoints=True,
         callbacks.append(Checkpoint(dirname="skorch_cp", f_params=r"params_{}.pt".format(id), f_optimizer=None,
                                     f_criterion=None))
     if not wandb_run is None:
-        callbacks.append(WandbLogger(wandb_run, save_model=False))
         callbacks.append(LearningRateLogger())
 
     if not categorical_indicator is None:

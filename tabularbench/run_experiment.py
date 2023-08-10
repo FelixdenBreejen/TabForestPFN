@@ -1,7 +1,6 @@
 from tabularbench.generate_dataset_pipeline import generate_dataset
 import traceback  # Needed for pulling out your full stackframe info
 from tabularbench.train import *
-import wandb
 import platform
 import time
 import torch
@@ -121,20 +120,8 @@ def train_model_on_config(config=None) -> dict:
                         history = model.regressor_.history
                     else:
                         history = model.history
-                    # wandb.log({"num_epochs": len(history),
-                    #             "train_accuracy_vector": [history[i * 10]["train_accuracy"] for i in
-                    #                                         range(len(history) // 10)],
-                    #             "valid_loss_vector": [history[i * 10]["valid_loss"] for i in
-                    #                                     range(len(history) // 10)]},
-                    #             commit=False)
                 else:
                     history = model.history
-                    # wandb.log({"num_epochs": len(history),
-                    #             "train_accuracy_vector": [history[i * 10]["train_accuracy"] for i in
-                    #                                         range(len(history) // 10)],
-                    #             "valid_accuracy_vector": [history[i * 10]["valid_acc"] for i in
-                    #                                         range(len(history) // 10)]},
-                    #             commit=False)
 
             times.append(end_time - start_time)
             train_scores.append(train_score)

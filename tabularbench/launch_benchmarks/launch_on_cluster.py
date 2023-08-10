@@ -2,13 +2,11 @@ import os
 
 import numpy as np
 import pandas as pd
-import wandb
 import argparse
 import time
 import sys
 
 sys.path.append(".")
-from tabularbench.configs.wandb_config import wandb_id
 import time
 
 

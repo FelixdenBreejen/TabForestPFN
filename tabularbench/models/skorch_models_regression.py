@@ -4,7 +4,6 @@ from skorch import NeuralNetRegressor
 from skorch.callbacks import EpochScoring
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.optim import AdamW, Adam, SGD
-from skorch.callbacks import WandbLogger
 import sys
 sys.path.append("")
 from tabularbench.models.tabular.bin.resnet import ResNet, InputShapeSetterResnet
@@ -58,7 +57,6 @@ def create_resnet_regressor_skorch(id, wandb_run=None, use_checkpoints=True,
         callbacks.append(Checkpoint(dirname="skorch_cp", f_params=r"params_{}.pt".format(id), f_optimizer=None,
                                   f_criterion=None))
     if not wandb_run is None:
-        callbacks.append(WandbLogger(wandb_run, save_model=False))
         callbacks.append(LearningRateLogger())
     if not categorical_indicator is None:
         categorical_indicator = torch.BoolTensor(categorical_indicator)
@@ -118,7 +116,6 @@ def create_rtdl_mlp_regressor_skorch(id, wandb_run=None, use_checkpoints=True,
         callbacks.append(Checkpoint(dirname="skorch_cp", f_params=r"params_{}.pt".format(id), f_optimizer=None,
                                   f_criterion=None))
     if not wandb_run is None:
-        callbacks.append(WandbLogger(wandb_run, save_model=False))
         callbacks.append(LearningRateLogger())
 
     if not categorical_indicator is None:
@@ -181,7 +178,6 @@ def create_rtdl_mlp_pwl_regressor_skorch(id, wandb_run=None, use_checkpoints=Tru
         callbacks.append(Checkpoint(dirname="skorch_cp", f_params=r"params_{}.pt".format(id), f_optimizer=None,
                                   f_criterion=None))
     if not wandb_run is None:
-        callbacks.append(WandbLogger(wandb_run, save_model=False))
         callbacks.append(LearningRateLogger())
 
     if not categorical_indicator is None:
@@ -245,7 +241,6 @@ def create_ft_transformer_regressor_skorch(id, wandb_run=None, use_checkpoints=T
         callbacks.append(Checkpoint(dirname="skorch_cp", f_params=r"params_{}.pt".format(id), f_optimizer=None,
                                   f_criterion=None))
     if not wandb_run is None:
-        callbacks.append(WandbLogger(wandb_run, save_model=False))
         callbacks.append(LearningRateLogger())
 
     if not categorical_indicator is None:

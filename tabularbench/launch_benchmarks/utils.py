@@ -1,4 +1,3 @@
-import wandb
 import sys
 sys.path.append(".")
 from tabularbench.configs.all_model_configs import total_config

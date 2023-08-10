@@ -19,6 +19,7 @@ from tabularbench.run_sweeps import run_sweeps, SWEEP_FILE_NAME
 @hydra.main(version_base=None, config_path="config", config_name="sweep")
 def main(cfg: DictConfig):
 
+    check_for_benchmark_results_csv()
     create_sweep_csv(cfg)
     launch_sweeps(cfg)
 
@@ -65,6 +66,13 @@ def launch_sweeps(cfg) -> None:
     print(f"Launched {len(gpus)} agents on {len(set(gpus))} devices")
 
     run_sweeps(path, main_process=True)
+
+
+def check_for_benchmark_results_csv() -> None:
+
+    results_csv = Path('analyses/results/benchmark_total.csv')
+    if not results_csv.exists():
+        raise FileNotFoundError(f"Could not find {results_csv}. Please download it from the link in the README.")
 
 if __name__ == "__main__":
     main()

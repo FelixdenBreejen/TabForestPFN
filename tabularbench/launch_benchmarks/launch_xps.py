@@ -2,8 +2,6 @@ from tabularbench.utils import create_sweep
 import pandas as pd
 import sys
 sys.path.append(".")
-from tabularbench.configs.wandb_config import wandb_id
-import wandb
 import openml
 import numpy as np
 
