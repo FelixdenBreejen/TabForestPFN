@@ -3,11 +3,12 @@ hydra:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
 
+continue_last_output: True
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [0]
-runs_per_device: 1
-runs_per_dataset: 3      # minimum 100 required to show up in the plots
+devices: [6, 7]
+runs_per_device: 4
+runs_per_dataset: 3              # suggested: 500
 
 models:
   - mlp_pwl

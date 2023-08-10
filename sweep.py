@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import time
 import hydra
+from datetime import datetime
 from omegaconf import DictConfig, OmegaConf
 import argparse
 import pandas as pd
@@ -20,9 +21,37 @@ from tabularbench.sweeps.run_sweeps import run_sweeps, SWEEP_FILE_NAME
 @hydra.main(version_base=None, config_path="config", config_name="sweep")
 def main(cfg: DictConfig):
 
+    if cfg.continue_last_output:
+        delete_current_output_dir(cfg)
+        set_config_dir_to_last_output(cfg)
+
     check_for_benchmark_results_csv()
     create_sweep_csv(cfg)
     launch_sweeps(cfg)
+
+
+def set_config_dir_to_last_output(cfg: DictConfig) -> None:
+
+    all_output_dirs = list(Path('outputs').glob('*/*'))
+    newest_output_dir = max(all_output_dirs, key=output_dir_to_date)
+    cfg.output_dir = newest_output_dir
+
+
+def output_dir_to_date(output_dir: Path) -> datetime:
+    
+    parts = output_dir.parts
+    time_str = "-".join(parts[1:])
+    date = datetime.strptime(time_str, "%Y-%m-%d-%H-%M-%S")
+
+    return date
+
+
+
+def delete_current_output_dir(cfg: DictConfig) -> None:
+
+    output_dir = Path(cfg.output_dir)
+    if output_dir.exists():
+        subprocess.run(['rm', '-rf', output_dir])
 
 
 def create_sweep_csv(cfg: dict) -> None:
