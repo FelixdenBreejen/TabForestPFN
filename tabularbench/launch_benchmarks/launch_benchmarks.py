@@ -1,12 +1,9 @@
-import wandb
-
 import pandas as pd
 import argparse
 import openml
 import numpy as np
 
 from tabularbench.launch_benchmarks.utils import create_sweep
-from tabularbench.configs.wandb_config import wandb_id
 from tabularbench.configs.all_model_configs import total_config
 
 
