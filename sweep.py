@@ -8,12 +8,13 @@ import argparse
 import pandas as pd
 import subprocess
 from pathlib import Path
+import multiprocessing as mp
 
 from tabularbench.run_experiment import train_model_on_config
 from tabularbench.launch_benchmarks.launch_benchmarks import benchmarks
 from tabularbench.launch_benchmarks.launch_benchmarks import main as make_wandb_sweeps
 from tabularbench.launch_benchmarks.monitor import main as monitor_sweeps
-from tabularbench.run_sweeps import run_sweeps, SWEEP_FILE_NAME
+from tabularbench.sweeps.run_sweeps import run_sweeps, SWEEP_FILE_NAME
 
 
 @hydra.main(version_base=None, config_path="config", config_name="sweep")
@@ -57,14 +58,17 @@ def launch_sweeps(cfg) -> None:
     gpus = list(cfg.devices) * cfg.runs_per_device
     path = cfg.output_dir
 
-    if len(gpus) > 1:
-        for i, gpu in enumerate(gpus[1:]):
-            subprocess.run(['bash', 'tabularbench/launch_benchmarks/launch_agent_tmux.sh', '-g', str(gpu), '-p', path, '-s', str(i+1)])
-    
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(gpus[0])
+    processes = []
+    for seed, gpu in enumerate(gpus):
+        process = mp.Process(target=run_sweeps, args=(path, gpu, seed))
+        process.start()
+        processes.append(process)
+
     print(f"Launched {len(gpus)} agents on {len(set(gpus))} devices")
 
-    run_sweeps(path, main_process=True)
+    for process in processes:
+        process.join()
+
 
 if __name__ == "__main__":
     main()
