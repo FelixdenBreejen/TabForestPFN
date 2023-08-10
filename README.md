@@ -83,5 +83,9 @@ We recommend using [Skorch](https://skorch.readthedocs.io/en/stable/net.html) us
 - to add your model hyperparameters search space to the template config `src/configs/model_configs/template.py`.
 - to run the benchmarks as explained in **Replicating the paper's results**.
 
+## Install R:
 
+```
+conda install -c r r-essentials
+```
 

@@ -1,9 +1,7 @@
 from __future__ import annotations
 import argparse
 from pathlib import Path
-import subprocess
 import os
-import time
 
 import pandas as pd
 import openml
@@ -14,11 +12,8 @@ from tabularbench.configs.all_model_configs import total_config
 from tabularbench.run_experiment import train_model_on_config
 from tabularbench.sweeps.random_search_object import WandbSearchObject
 from tabularbench.sweeps.sweep_config import SweepConfig, sweep_config_maker
-
-SWEEP_FILE_NAME = 'sweep.csv'
-RESULTS_FILE_NAME = 'results.csv'
-RESULTS_MODIFIED_FILE_NAME = 'results_modified_for_plotting.csv'
-PATH_TO_ALL_BENCH_CSV = 'analyses/results/benchmark_total.csv'
+from tabularbench.sweeps.datasets import get_unfinished_task_ids
+from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, RESULTS_FILE_NAME
 
 
 def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
@@ -48,12 +43,11 @@ def search_sweep(sweep: SweepConfig, is_random: bool):
     config = total_config[sweep.model][sweep.task]
     search_object = WandbSearchObject(config)
     results_path = sweep.path / RESULTS_FILE_NAME
-    datasets_all_ids = openml.study.get_suite(sweep.suite_id).tasks
     runs_per_dataset = sweep.runs_per_dataset if is_random else 1
     
     while True:
 
-        datasets_unfinished = get_unfinished_datasets(datasets_all_ids, results_path, runs_per_dataset)
+        datasets_unfinished = get_unfinished_task_ids(sweep.task_ids, results_path, runs_per_dataset)
 
         if len(datasets_unfinished) == 0:
             break
@@ -65,25 +59,13 @@ def search_sweep(sweep: SweepConfig, is_random: bool):
             # This is the error code in case the run crashes
             continue
 
+        if config_run['data__keyword'] not in get_unfinished_task_ids(sweep.task_ids, results_path, runs_per_dataset):
+            # This is the case where another process finished the dataset while this process was running
+            # It is important to check this because otherwise the results default runs will be saved multiple times,
+            # which is problematic for computing random search statistics.
+            continue
+
         save_results(results, results_path)
-
-
-def get_unfinished_datasets(datasets_all_ids: list[int], results_path: Path, runs_per_dataset: int) -> list[int]:
-
-    if not results_path.exists():
-        return datasets_all_ids
-    
-    results_df = pd.read_csv(results_path)
-    datasets_run_count = results_df.groupby('data__keyword').count()['data__categorical'].to_dict()
-
-    datasets_unfinished = []
-    for dataset_id in datasets_all_ids:
-        if dataset_id not in datasets_run_count:
-            datasets_unfinished.append(dataset_id)
-        elif datasets_run_count[dataset_id] < runs_per_dataset:
-            datasets_unfinished.append(dataset_id)
-
-    return datasets_unfinished
 
 
 def create_run_config(

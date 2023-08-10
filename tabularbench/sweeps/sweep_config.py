@@ -1,5 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
+import openml
 
 import pandas as pd
 
@@ -11,12 +12,16 @@ class SweepConfig():
         self.model = sweep_config['model']
         self.plot_name = sweep_config['plot_name']
         self.task = sweep_config['task']
-        self.suite_id = sweep_config['suite_id']
         self.benchmark = sweep_config['benchmark']
         self.random_search = sweep_config['random_search']
         self.runs_per_dataset = sweep_config['runs_per_dataset']
         self.dataset_size = sweep_config['dataset_size']
         self.path: Path = sweep_config['path']
+        
+        self.suite_id = sweep_config['suite_id']
+        self.task_ids = openml.study.get_suite(self.suite_id).tasks
+        self.dataset_ids = [openml.tasks.get_task(id).dataset_id for id in self.task_ids]
+        self.dataset_names = [openml.datasets.get_dataset(id, download_data=False).name for id in self.dataset_ids]
 
         assert self.task in ['regression', 'classif']
 

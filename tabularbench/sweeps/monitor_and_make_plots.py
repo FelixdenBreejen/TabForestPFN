@@ -11,103 +11,96 @@ import random
 import numpy as np
 
 from tabularbench.configs.all_model_configs import total_config
-from tabularbench.run_experiment import train_model_on_config
 from tabularbench.sweeps.random_search_object import WandbSearchObject
-from tabularbench.sweeps.run_sweeps import (
-    sweep_generator, get_unfinished_datasets, SWEEP_FILE_NAME, RESULTS_FILE_NAME, RESULTS_MODIFIED_FILE_NAME, PATH_TO_ALL_BENCH_CSV
+from tabularbench.sweeps.sweep_config import SweepConfig, sweep_config_maker
+from tabularbench.sweeps.datasets import get_unfinished_task_ids
+from tabularbench.sweeps.paths_and_filenames import (
+    SWEEP_FILE_NAME, RESULTS_FILE_NAME, RESULTS_MODIFIED_FILE_NAME, 
+    PATH_TO_ALL_BENCH_CSV, DEFAULT_RESULTS_FILE_NAME
 )
 
 
 def monitor_and_make_plots(output_dir: str, delay_in_seconds: int = 10):
 
     sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
-    sweeps = sweep_generator(sweep_csv, output_dir)
+    sweeps = sweep_config_maker(sweep_csv, output_dir)
 
-    while True:
-        time.sleep(delay_in_seconds)
-        for sweep in sweeps:
-            if sweep_grid_finished(sweep):
-                make_grid_results(sweep)
+    for sweep in sweeps:
 
+        while True:
+            if sweep_default_finished(sweep):
+                make_default_results(sweep)
+                break
             
-            make_sweep_plots(sweep, output_dir)
+            time.sleep(delay_in_seconds)
+
+        while True:
+            make_random_sweep_plots(sweep)
+
+            if sweep_random_finished(sweep) or not sweep.random_search:
+                break
+
+            time.sleep(delay_in_seconds)
 
 
-def sweep_grid_finished(sweep: dict[str, str]) -> bool:
+def sweep_default_finished(sweep: SweepConfig) -> bool:
     
     # default sweep always finishes before random sweep starts, so we just check if every dataset has one run
-    unfinished_datasets = get_unfinished_datasets(sweep, sweep['path'] / RESULTS_FILE_NAME, runs_per_dataset=1)
+    unfinished_tasks = get_unfinished_task_ids(sweep.task_ids, sweep.path / RESULTS_FILE_NAME, runs_per_dataset=1)
 
-    return len(unfinished_datasets) == 0
+    return len(unfinished_tasks) == 0
 
 
-def make_grid_results(sweep: dict[str, str]):
+def sweep_random_finished(sweep: SweepConfig) -> bool:
 
-    df = pd.read_csv(sweep['path'] / RESULTS_FILE_NAME)
+    if not sweep.random_search:
+        return True
+    
+    # default sweep always finishes before random sweep starts, so we just check if every dataset has one run
+    unfinished_tasks = get_unfinished_task_ids(sweep.task_ids, sweep.path / RESULTS_FILE_NAME, runs_per_dataset=sweep.runs_per_dataset)
+
+    return len(unfinished_tasks) == 0
+
+
+def make_default_results(sweep: SweepConfig):
+
+    df = pd.read_csv(sweep.path / RESULTS_FILE_NAME)
     df_all = pd.read_csv(PATH_TO_ALL_BENCH_CSV)
-    datasets_all_ids = openml.study.get_suite(sweep['suite_id']).tasks
 
-    index = df_all['model_name'].unique().tolist() + [sweep['plot_name']]
-    df_new = pd.DataFrame(columns=datasets_all_ids, index=index)
+    index = df_all['model_name'].unique().tolist() + [sweep.plot_name]
+    df_new = pd.DataFrame(columns=sweep.task_ids, index=index)
 
-    df_new.loc[sweep['plot_name']] = df[df['hp'] == 'default']['mean_test_score'].to_list()
+    df_new.loc[sweep.plot_name] = df[df['hp'] == 'default']['mean_test_score'].to_list()
 
     for model_name in df_all['model_name'].unique():
 
         correct_model = df_all['model_name'] == model_name
         correct_task = df_all['hp'] == 'default'
-        correct_benchmark = df_all['benchmark'] == sweep['benchmark'] + '_' + sweep['dataset_size']
+        correct_benchmark = df_all['benchmark'] == sweep.benchmark + '_' + sweep.dataset_size
         df_new.loc[model_name] = df_all.loc[correct_model & correct_task & correct_benchmark, 'mean_test_score'].tolist()
-
-    id_to_name = {}
-    for id in datasets_all_ids:
-        dataset_id_real = openml.tasks.get_task(id).dataset_id
-        dataset_name = openml.datasets.get_dataset(dataset_id_real, download_data=False).name
-        id_to_name[id] = dataset_name
     
-    df_new.rename(columns=id_to_name, inplace=True)
-    df_new.to_csv(sweep['path'] / 'grid_results.csv', mode='w', index=True, header=True)
+    df_new.rename(columns=dict(zip(sweep.task_ids, sweep.dataset_names)), inplace=True)
+    df_new.to_csv(sweep.path / DEFAULT_RESULTS_FILE_NAME, mode='w', index=True, header=True)
 
 
-def make_sweep_plots(sweep: dict[str, str], output_dir: str):
+def make_random_sweep_plots(sweep: SweepConfig):
 
-    model = sweep['model']
-    task = sweep['task']
-    config = total_config[model][task]
-    search_object = WandbSearchObject(config)
-    results_path = sweep['path'] / RESULTS_FILE_NAME
-    datasets_all_ids = openml.study.get_suite(sweep['suite_id']).tasks
+    results_path = sweep.path / RESULTS_FILE_NAME
     
-
     df = pd.read_csv(results_path)
     
-    
-    if sweep['random_search']:
+    df['benchmark'] = sweep.benchmark + '_' + sweep.dataset_size
 
-        df['benchmark'] = benchmark['benchmark'] + '_' + benchmark['dataset_size']
+    df['data__openmlid'] = df['data__keyword']
+    df['data__keyword'] = df['data__openmlid'].map(dict(zip(sweep.task_ids, sweep.dataset_names)))
+    df['model_name'] = sweep.plot_name
 
-        df['data__openmlid'] = df['data__keyword']
+    df.to_csv(sweep.path / RESULTS_MODIFIED_FILE_NAME, mode='w', index=False, header=True)
 
-        for id in datasets_all_ids:
-            dataset_id_real = openml.tasks.get_task(id).dataset_id
-            dataset_name = openml.datasets.get_dataset(dataset_id_real, download_data=False).name
-
-            df.loc[df['data__openmlid'] == id, 'data__keyword'] = dataset_name
-
-        df['model_name'] = benchmark['plot_name']
-
-        df.to_csv(benchmark_dir / RESULTS_MODIFIED_FILE_NAME, mode='w', index=False, header=True)
-
-        script_name = f"bench_script_{benchmark['benchmark']}"
-        script_path = 'analyses/' + script_name + '.R'
-        results_csv_path = str(benchmark_dir)
-        subprocess.run(['Rscript', script_path, results_csv_path])
-
-    
-
-    
-
-
+    script_name = f"bench_script_{sweep.benchmark}"
+    script_path = 'analyses/' + script_name + '.R'
+    results_csv_path = str(sweep.path)
+    subprocess.run(['Rscript', script_path, results_csv_path])
 
 
 if __name__ == '__main__':
