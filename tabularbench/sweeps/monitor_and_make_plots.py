@@ -2,16 +2,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import subprocess
-import os
 import time
 
 import pandas as pd
-import openml
-import random
-import numpy as np
 
-from tabularbench.configs.all_model_configs import total_config
-from tabularbench.sweeps.random_search_object import WandbSearchObject
 from tabularbench.sweeps.sweep_config import SweepConfig, sweep_config_maker
 from tabularbench.sweeps.datasets import get_unfinished_task_ids
 from tabularbench.sweeps.paths_and_filenames import (
@@ -71,7 +65,7 @@ def make_default_results(sweep: SweepConfig):
     df_all = pd.read_csv(PATH_TO_ALL_BENCH_CSV)
 
     index = df_all['model_name'].unique().tolist() + [sweep.plot_name]
-    df_new = pd.DataFrame(columns=df['data__keyword'], index=index)
+    df_new = pd.DataFrame(columns=df['data__keyword'].unique().tolist(), index=index)
 
     df_new.loc[sweep.plot_name] = df[df['hp'] == 'default']['mean_test_score'].to_list()
 

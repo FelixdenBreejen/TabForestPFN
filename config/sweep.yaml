@@ -8,7 +8,7 @@ output_dir: ${hydra:run.dir}
 seed: 0
 devices: [6, 7]
 runs_per_device: 4
-runs_per_dataset: 1                    # suggested: 500
+runs_per_dataset: 10                    # suggested: 500
 monitor_interval_in_seconds: 100       # plot the results every x seconds
 
 models:
@@ -23,5 +23,5 @@ benchmarks:
   # - categorical_regression
   # - numerical_regression
 random_search:
-  # - True
-  - False
+  - True
+  # - False
