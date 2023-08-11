@@ -35,12 +35,12 @@ def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
 
     for sweep_config in sweep_configs:
         
-        search_sweep(sweep_config, is_random=False)
+        search_sweep(sweep_config, seed=seed, is_random=False)
         if sweep_config.random_search:
-            search_sweep(sweep_config, is_random=True)
+            search_sweep(sweep_config, seed=seed, is_random=True)
 
 
-def search_sweep(sweep: SweepConfig, is_random: bool):
+def search_sweep(sweep: SweepConfig, seed: int, is_random: bool):
     """Perform one sweep: one row of the sweep.csv file."""
     
     config = total_config[sweep.model][sweep.task]
@@ -55,7 +55,7 @@ def search_sweep(sweep: SweepConfig, is_random: bool):
         if len(datasets_unfinished) == 0:
             break
         
-        config_run = create_run_config(sweep, datasets_unfinished, search_object, is_random)
+        config_run = create_run_config(sweep, datasets_unfinished, search_object, seed, is_random)
         results = train_model_on_config(config_run)
 
         if results == -1:
@@ -75,13 +75,14 @@ def create_run_config(
     sweep: SweepConfig, 
     datasets_unfinished: list[int], 
     search_object: WandbSearchObject,  
+    seed: int,
     is_random: bool
 ) -> dict:
 
     config_base = make_base_config(sweep)
     config_dataset = draw_dataset_config(datasets_unfinished)
     config_hyperparams = search_object.draw_config(type='random' if is_random else 'default')
-    config_hp = {'hp': 'random' if is_random else 'default'}
+    config_hp = {'hp': 'random' if is_random else 'default', 'seed': seed}
     config_run = {**config_base, **config_dataset, **config_hyperparams, **config_hp}
 
     return config_run

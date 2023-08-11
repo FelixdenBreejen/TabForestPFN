@@ -62,8 +62,8 @@ def train_model_on_config(config=None) -> dict:
             
         for i in range(n_iter):
             if config["model_type"] == "skorch" or config["model_type"] == "tab_survey":
-                model_id = hash(
-                    ".".join(list(str(a) for a in config.values())) + "." + str(iter))  # uniquely identify the run (useful for checkpointing)
+                config_str = ".".join(list(str(a) for a in config.values()))  + "." + str(iter)
+                model_id = hash(config_str)  # uniquely identify the run (useful for checkpointing)
             elif config["model_type"] == "sklearn":
                 model_id = 0 # not used
             # if config["log_training"]: #FIXME
