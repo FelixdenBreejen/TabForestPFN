@@ -65,10 +65,13 @@ def sweep_random_finished(sweep: SweepConfig) -> bool:
 def make_default_results(sweep: SweepConfig):
 
     df = pd.read_csv(sweep.path / RESULTS_FILE_NAME)
+    df['data__keyword'] = df['data__keyword'].map(dict(zip(sweep.task_ids, sweep.dataset_names)))
+    df.sort_values(by='data__keyword', inplace=True, ascending=True)
+
     df_all = pd.read_csv(PATH_TO_ALL_BENCH_CSV)
 
     index = df_all['model_name'].unique().tolist() + [sweep.plot_name]
-    df_new = pd.DataFrame(columns=sweep.task_ids, index=index)
+    df_new = pd.DataFrame(columns=df['data__keyword'], index=index)
 
     df_new.loc[sweep.plot_name] = df[df['hp'] == 'default']['mean_test_score'].to_list()
 
@@ -77,7 +80,11 @@ def make_default_results(sweep: SweepConfig):
         correct_model = df_all['model_name'] == model_name
         correct_task = df_all['hp'] == 'default'
         correct_benchmark = df_all['benchmark'] == sweep.benchmark + '_' + sweep.dataset_size
-        df_new.loc[model_name] = df_all.loc[correct_model & correct_task & correct_benchmark, 'mean_test_score'].tolist()
+
+        default_runs = df_all.loc[correct_model & correct_task & correct_benchmark]
+        default_runs.sort_values(by='data__keyword', inplace=True, ascending=True)
+
+        df_new.loc[model_name] = default_runs['mean_test_score'].tolist()
     
     df_new.rename(columns=dict(zip(sweep.task_ids, sweep.dataset_names)), inplace=True)
     df_new.to_csv(sweep.path / DEFAULT_RESULTS_FILE_NAME, mode='w', index=True, header=True)
