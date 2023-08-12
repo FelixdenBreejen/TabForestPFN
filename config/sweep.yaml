@@ -3,19 +3,17 @@ hydra:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
 
-continue_last_output: True
+continue_last_output: False
 output_dir: ${hydra:run.dir}
 seed: 0
 devices: [6, 7]
-runs_per_device: 4
-runs_per_dataset: 10                    # suggested: 500
+runs_per_device: 1
+runs_per_dataset: 10                   # suggested: 500, only for random search
 monitor_interval_in_seconds: 100       # plot the results every x seconds
 
 models:
-  - mlp
   - ft_transformer
 model_plot_names:
-  - mlp_check
   - ft_transformer_check
 benchmarks:
   - categorical_classification
