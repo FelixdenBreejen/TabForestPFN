@@ -189,8 +189,6 @@ def train_model_on_config(config=None) -> dict:
             os.remove(r"output/saint/{}/tmp/m_{}_best.pt".format(config["data__keyword"], model_id))
             #except:
             #print("could not remove params file")
-        
-        raise e
 
         return -1
     

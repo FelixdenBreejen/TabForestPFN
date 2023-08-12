@@ -2,6 +2,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import os
+import sys
 
 import pandas as pd
 import random
@@ -25,6 +26,7 @@ def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
 
     print("seed: ", seed)
 
+    log_to_file(output_dir)
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu)
     random.seed(seed)
     np.random.seed(seed)
@@ -38,6 +40,17 @@ def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
         search_sweep(sweep_config, seed=seed, is_random=False)
         if sweep_config.random_search:
             search_sweep(sweep_config, seed=seed, is_random=True)
+
+
+def log_to_file(output_dir: str):
+
+    log_dir = Path(output_dir) / 'logs'
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file_name_stdout = str(os.getpid()) + ".out"
+    log_file_name_stderr = str(os.getpid()) + "_error.out"
+
+    sys.stdout = open(log_dir / log_file_name_stdout, "a")
+    sys.stderr = open(log_dir / log_file_name_stderr, "a")
 
 
 def search_sweep(sweep: SweepConfig, seed: int, is_random: bool):

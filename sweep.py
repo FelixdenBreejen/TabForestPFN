@@ -88,7 +88,7 @@ def launch_sweeps(cfg) -> None:
 
     processes = []
     for seed, gpu in enumerate(gpus):
-        process = mp.Process(target=run_sweeps, args=(path, gpu, seed))
+        process = mp.Process(target=run_sweeps, args=(path, gpu, seed), )
         process.start()
         processes.append(process)
 

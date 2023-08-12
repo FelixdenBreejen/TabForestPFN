@@ -6,6 +6,7 @@ from sklearn.datasets import make_spd_matrix, make_sparse_spd_matrix
 from sklearn.preprocessing import LabelEncoder
 import openml
 import pickle
+import warnings
 
 def balance_data(x, y):
     rng = np.random.RandomState(0)
@@ -30,12 +31,16 @@ def balance_data(x, y):
 
 def import_openml_data_no_transform(keyword, regression=False, categorical=False, rng=None):
     # keyword should be the openml task id
-    task = openml.tasks.get_task(keyword)
-    dataset = task.get_dataset()
+    task = openml.tasks.get_task(keyword, download_data=True, download_splits=True, download_qualities=False, download_features_meta_data=False)
+    with warnings.catch_warnings():
+        warnings.simplefilter("once")
+        dataset = task.get_dataset()
     X, y, categorical_indicator, attribute_names = dataset.get_data(
-        dataset_format='array',
+        dataset_format='dataframe',
         target=dataset.default_target_attribute
     )
+    X = X.to_numpy()
+    y = y.to_numpy()
     if not categorical:
         assert categorical_indicator is None or not np.array(categorical_indicator).astype(bool).any(), "There are categorical features in the dataset"
         categorical_indicator = None #easier to deal with

@@ -20,8 +20,8 @@ class SweepConfig():
         
         self.suite_id = sweep_config['suite_id']
         self.task_ids = openml.study.get_suite(self.suite_id).tasks
-        self.dataset_ids = [openml.tasks.get_task(id).dataset_id for id in self.task_ids]
-        self.dataset_names = [openml.datasets.get_dataset(id, download_data=False).name for id in self.dataset_ids]
+        self.dataset_ids = [openml.tasks.get_task(id, download_data=False, download_splits=False, download_qualities=False, download_features_meta_data=False).dataset_id for id in self.task_ids]
+        self.dataset_names = [openml.datasets.get_dataset(id, download_data=False, download_qualities=False, download_features_meta_data=False).name for id in self.dataset_ids]
 
         assert self.task in ['regression', 'classif']
 
