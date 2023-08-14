@@ -6,7 +6,7 @@ hydra:
 continue_last_output: False
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [6, 7]
+devices: [0]
 runs_per_device: 1
 runs_per_dataset: 1000                   # suggested: 500, only for random search
 monitor_interval_in_seconds: 100       # plot the results every x seconds
@@ -14,12 +14,12 @@ monitor_interval_in_seconds: 100       # plot the results every x seconds
 models:
   - ft_transformer
 model_plot_names:
-  - ft_transformer_big
+  - ft_transformer_squid
 benchmarks:
   - categorical_classification
   # - numerical_classification
   # - categorical_regression
   # - numerical_regression
 random_search:
-  - True
-  # - False
+  # - True
+  - False
