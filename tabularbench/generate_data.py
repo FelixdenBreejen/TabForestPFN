@@ -41,6 +41,9 @@ def import_openml_data_no_transform(keyword, regression=False, categorical=False
     )
     X = X.to_numpy()
     y = y.to_numpy()
+    if y.dtype == np.dtype('O'):
+        y = LabelEncoder().fit_transform(y)
+
     if not categorical:
         assert categorical_indicator is None or not np.array(categorical_indicator).astype(bool).any(), "There are categorical features in the dataset"
         categorical_indicator = None #easier to deal with
