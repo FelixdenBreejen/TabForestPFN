@@ -107,7 +107,7 @@ config_default = {
         "value": 12      # original 3
     },
     "model__module__n_heads": {
-        "value": 12,
+        "value": 12,     # original 8
     },
     "model__module__d_ffn_factor": {
         "value": 1       # original   4. / 3
@@ -128,7 +128,7 @@ config_default = {
         "value": 1e-2,      # original 1e-5
     },
     "d_token": {
-        "value": 768
+        "value": 768        # original 192
     },
     "use_gpu": {
         "value": True
