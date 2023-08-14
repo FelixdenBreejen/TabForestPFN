@@ -12,14 +12,14 @@ runs_per_dataset: 1000                   # suggested: 500, only for random searc
 monitor_interval_in_seconds: 100       # plot the results every x seconds
 
 models:
-  - ft_transformer
+  - mlp_pwl
 model_plot_names:
-  - ft_transformer_squid
+  - mlp_tokenizer
 benchmarks:
   - categorical_classification
   # - numerical_classification
   # - categorical_regression
   # - numerical_regression
 random_search:
-  # - True
-  - False
+  - True
+  # - False
