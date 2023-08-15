@@ -1,6 +1,7 @@
 # %%
 import math
 import typing as ty
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -260,24 +261,31 @@ class InputShapeSetterMLP_PWL(skorch.callbacks.Callback):
                 categories = self.categories
 
 
-        xgb = XGBClassifier(
-            n_estimators=4168,
-            eta=0.018,
-            subsample=0.839,
-            booster='gbtree',
-            max_depth=13,
-            min_child_weight=2.06,
-            colsample_bytree=0.752,
-            colsample_bylevel=0.585,
-            reg_lambda=0.982,
-            reg_alpha=1.113
-        )
-        xgb.fit(X, y)
+        path = Path(f'cache/feature_importance_{d_in}_{len(self.categorical_indicator)}.npy')
+        if path.exists():
+            feature_importance = np.load(path)
+        
+        else:
+            xgb = XGBClassifier(
+                n_estimators=4168,
+                eta=0.018,
+                subsample=0.839,
+                booster='gbtree',
+                max_depth=13,
+                min_child_weight=2.06,
+                colsample_bytree=0.752,
+                colsample_bylevel=0.585,
+                reg_lambda=0.982,
+                reg_alpha=1.113
+            )
+            xgb.fit(X, y)
+            feature_importance = xgb.feature_importances_
             
         net.set_params(module__d_in=d_in,
-                       module__feature_importance=xgb.feature_importances_,
+                       module__feature_importance=feature_importance,
                        module__categories=categories,  # FIXME #lib.get_categories(X_cat),
                        module__d_out=2 if self.regression == False else 1)  # FIXME#D.info['n_classes'] if D.is_multiclass else 1,
         print("Numerical features: {}".format(d_in))
         print("Categories {}".format(categories))
+        print("Feature importance: {}".format(feature_importance))
 
