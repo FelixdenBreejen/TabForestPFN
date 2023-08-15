@@ -261,9 +261,9 @@ class InputShapeSetterMLP_PWL(skorch.callbacks.Callback):
                 categories = self.categories
 
 
-        path = Path(f'cache/feature_importance_{d_in}_{len(self.categorical_indicator)}.npy')
+        path = Path(f'cache/feature_importance_{d_in}_{len(self.categorical_indicator)}.txt')
         if path.exists():
-            feature_importance = np.load(path)
+            feature_importance = np.loadtxt(path)
         
         else:
             xgb = XGBClassifier(
@@ -280,6 +280,9 @@ class InputShapeSetterMLP_PWL(skorch.callbacks.Callback):
             )
             xgb.fit(X, y)
             feature_importance = xgb.feature_importances_
+
+            path.parent.mkdir(parents=True, exist_ok=True)
+            np.savetxt(path, feature_importance)
             
         net.set_params(module__d_in=d_in,
                        module__feature_importance=feature_importance,
