@@ -20,7 +20,9 @@ config_random = {
         "value": "kaiming"
     },
     "model__module__n_layers": {
-        "value": 6
+        "distribution": "q_uniform",
+        "min": 1,
+        "max": 6
     },
     "model__module__n_heads": {
         "value": 8,
@@ -56,7 +58,9 @@ config_random = {
         "max": 1e-3
     },
     "d_token": { #modified in run_experiment.py
-        "value": 512
+        "distribution": "q_uniform",
+        "min": 64,
+        "max": 512
     },
     "model__lr_scheduler": {
         "values": [True, False]
@@ -89,7 +93,7 @@ config_default = {
         "value": "kaiming"
     },
     "model__module__n_layers": {
-        "value": 6
+        "value": 3
     },
     "model__module__n_heads": {
         "value": 8,
@@ -113,7 +117,7 @@ config_default = {
         "value": 1e-5,
     },
     "d_token": {
-        "value": 512
+        "value": 192
     },
     "use_gpu": {
         "value": True

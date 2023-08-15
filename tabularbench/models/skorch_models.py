@@ -203,7 +203,6 @@ def create_rtdl_mlp_pwl_skorch(id, wandb_run=None, use_checkpoints=True,
         iterator_train__shuffle=True,
         module__d_in=1,  # will be change when fitted
         module__categories=None,  # will be change when fitted
-        module__feature_representation_list=None,  # will be change when fitted
         module__d_out=1,  # idem
         module__regression=False,
         module__categorical_indicator=categorical_indicator,

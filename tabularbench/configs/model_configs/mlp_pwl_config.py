@@ -21,8 +21,8 @@ config_random  = {
     },
     "model__module__d_embedding": {
         "distribution": "q_uniform",
-        "min": 16,
-        "max": 128
+        "min": 64,
+        "max": 512
     },
     "model__lr_scheduler": {
         "values": [True, False]
@@ -49,7 +49,7 @@ config_default = {
         "value": 1e-3,
     },
     "model__module__d_embedding": {
-        "value": 32
+        "value": 128
     },
     "use_gpu": {
         "value": True
@@ -60,7 +60,7 @@ config_regression = dict(config_random ,
                              **skorch_config,
                              **{
                                  "model_name": {
-                                     "value": "rtdl_mlp_pwl_regressor"
+                                     "value": "rtdl_mlp_regressor"
                                  },
                              })
 
@@ -68,7 +68,7 @@ config_regression_default = dict(config_default,
                              **skorch_config_default,
                              **{
                                  "model_name": {
-                                     "value": "rtdl_mlp_pwl_regressor"
+                                     "value": "rtdl_mlp_regressor"
                                  },
                              })
 
@@ -76,7 +76,7 @@ config_classif = dict(config_random ,
                           **skorch_config,
                           **{
                               "model_name": {
-                                  "value": "rtdl_mlp_pwl"
+                                  "value": "rtdl_mlp"
                               },
                           })
 
@@ -84,6 +84,6 @@ config_classif_default = dict(config_default,
                           **skorch_config_default,
                           **{
                               "model_name": {
-                                  "value": "rtdl_mlp_pwl"
+                                  "value": "rtdl_mlp"
                               },
                           })
