@@ -151,43 +151,6 @@ class MultiheadAttention(nn.Module):
         return x
 
 
-class MultiheadAttentionSquid(nn.Module):
-    def __init__(
-        self, d: int, n_heads: int, n_tokens: int, dropout: float, initialization: str
-    ) -> None:
-        if n_heads > 1:
-            assert d % n_heads == 0
-        assert initialization in ['xavier', 'kaiming']
-
-        super().__init__()
-
-        self.n_tokens = n_tokens
-        self.attentions = nn.ModuleList([])
-
-        for i in range(n_tokens):
-            self.attentions.append(MultiheadAttention(d, n_heads, dropout, initialization))
-
-    def forward(
-        self,
-        x_q: Tensor,
-        x_kv: Tensor,
-        key_compression: ty.Optional[nn.Linear],
-        value_compression: ty.Optional[nn.Linear],
-    ) -> Tensor:
-        
-        x_q_split = torch.split(x_q, 1, dim=1)
-        x_kv_split = torch.split(x_kv, 1, dim=1)
-
-        x_s = []
-        for i in range(self.n_tokens):
-            x_s.append(self.attentions[i](x_q_split[i], x_kv_split[i], None, None))
-
-        x = torch.cat(x_s, dim=1)
-
-        return x
-
-
-
 class Transformer(nn.Module):
     """Transformer.
 
@@ -256,9 +219,7 @@ class Transformer(nn.Module):
         for layer_idx in range(n_layers):
             layer = nn.ModuleDict(
                 {
-                    'attention': MultiheadAttentionSquid(
-                        d_token, n_heads, n_tokens, attention_dropout, initialization
-                    ) if layer_idx <= 1 else MultiheadAttention(
+                    'attention': MultiheadAttention(
                         d_token, n_heads, attention_dropout, initialization
                     ),
                     'linear0': nn.Linear(
