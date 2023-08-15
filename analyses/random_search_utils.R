@@ -166,9 +166,9 @@ random_search_no_variable <- function(df, n_shuffles, default_first=F, equalize_
       group_by(model_name, data__keyword) %>%  #for fairness, match the min number of iteration for each dataset and model
       mutate(num_iters = sum(!is.na(mean_val_score))) %>% 
       ungroup() %>% 
-      group_by(data__keyword) %>% 
-      filter(random_rank <= min(num_iters)) %>% 
-      ungroup()
+      # group_by(data__keyword) %>% 
+      filter(random_rank <= min(num_iters))
+      # ungroup()
     
     
     res <- res %>%  bind_rows(new_df %>% 
