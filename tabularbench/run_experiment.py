@@ -190,7 +190,7 @@ def train_model_on_config(config=None) -> dict:
             #except:
             #print("could not remove params file")
 
-        # raise e
+        raise e
 
         return -1
     
@@ -200,98 +200,7 @@ def train_model_on_config(config=None) -> dict:
 
 
 if __name__ == """__main__""":
-    # config = {'data__categorical': False, 'data__keyword': 'sulfur', 'data__method_name': 'real_data', 'data__regression': True,
-    #  'max_train_samples': 10000, 'model__criterion': 'squared_error', 'model__learning_rate': 0.0096842939564663,
-    #  'model__loss': 'huber', 'model__max_depth': 5, 'model__max_leaf_nodes': 5, 'model__min_impurity_decrease': 0,
-    #  'model__min_samples_leaf': 25, 'model__min_samples_split': 2, 'model__n_estimators': 1000,
-    #  'model__n_iter_no_change': 20, 'model__subsample': 0.9976203905983656, 'model__validation_fraction': 0.2,
-    #  'model_name': 'gbt_r', 'model_type': 'sklearn', 'n_iter': 'auto', 'one_hot_encoder': True, 'regression': True,
-    #  'transformed_target': False, 'train_prop': 0.7, 'val_test_prop': 0.3, 'max_val_samples': 50000,
-    #  'max_test_samples': 50000}
+    
+    config = {'data__categorical': True, 'data__method_name': 'openml_no_transform', 'data__regression': False, 'regression': False, 'n_iter': 'auto', 'max_train_samples': 10000, 'data__keyword': 361282, 'model__lr_scheduler': True, 'model__module__n_layers': 4, 'model__module__d_layers': 256, 'model__module__dropout': 0.0, 'model__lr': 0.001, 'model__module__d_embedding': 128, 'use_gpu': True, 'log_training': True, 'model__device': 'cuda', 'model_type': 'skorch', 'model__use_checkpoints': True, 'model__optimizer': 'adamw', 'model__batch_size': 512, 'model__max_epochs': 300, 'transform__0__method_name': 'gaussienize', 'transform__0__type': 'quantile', 'transform__0__apply_on': 'numerical', 'transformed_target': True, 'model_name': 'rtdl_mlp', 'hp': 'default', 'seed': 0, 'train_prop': 0.7, 'val_test_prop': 0.3, 'max_val_samples': 50000, 'max_test_samples': 50000}
 
-    # config = {"model_type": "sklearn",
-    #           "model_name": "gbt_c",
-    #           "regression": False,
-    #           "data__regression": False,
-    #           "data__categorical": False,
-    #           "model__n_estimators": 100,
-    #           "data__method_name": "real_data",
-    #           "data__keyword": "california",
-    #           "transform__0__method_name": "add_uninformative_features",
-    #           "n_iter": 1,
-    #           "max_train_samples": 10000}
-
-    # config = {
-    #     "model_type": "skorch",
-    #     "model_name": "npt",
-    #     "n_iter": 1,
-    #     "model__optimizer": "adamw",
-    #     "model__lr": 0.001,
-    #     "model__batch_size": 64,
-    #     "data__method_name": "real_data",
-    #     "data__keyword": "electricity",
-    #     "regression": False
-    # }
-
-    # config = {"model_type": "skorch",
-    #           "model_name": "rtdl_resnet",
-    #           "regression": False,
-    #           "data__regression": False,
-    #           "data__categorical": False,
-    #           "n_iter": 1,
-    #           "max_train_samples": 1000,
-    #           "model__device": "cpu",
-    #           "model__optimizer": "adam",
-    #           "model__lr_scheduler": "adam",
-    #           "model__use_checkpoints": True,
-    #           "model__batch_size": 64,
-    #           "model__max_epochs": 10,
-    #           "model__lr": 1e-3,
-    #           "model__module__n_layers": 2,
-    #           "model__module__d": 64,
-    #           "model__module__d_hidden_factor": 3,
-    #           "model__module__hidden_dropout": 0.2,
-    #           "model__module__residual_dropout": 0.1,
-    #           "model__module__d_embedding": 64,
-    #           "model__module__normalization": "batchnorm",
-    #           "model__module__activation": "reglu",
-    #           "data__method_name": "real_data",
-    #           "data__keyword": "electricity",
-    #           #"max_train_samples": None,
-    #           #"max_test_samples": None,
-    #           }
-
-
-    # config = {
-    #     "data__categorical": True,
-    #     "data__keyword": 361282,
-    #     "data__method_name": "openml_no_transform",
-    #     "data__regression": False,
-    #     "log_training": True,
-    #     "max_train_samples": 10000,
-    #     "model__batch_size": 512,
-    #     "model__device": "cuda",
-    #     "model__lr": 0.001,
-    #     "model__lr_scheduler": True,
-    #     "model__max_epochs": 300,
-    #     "model__module__d_embedding": 128,
-    #     "model__module__d_layers": 256,
-    #     "model__module__dropout": 0,
-    #     "model__module__n_layers": 4,
-    #     "model__optimizer": "adamw",
-    #     "model__use_checkpoints": True,
-    #     "model_name": "rtdl_mlp_pwl",
-    #     "model_type": 'skorch',
-    #     "n_iter": "auto",
-    #     "regression": False,
-    #     "transform__0__apply_on": "numerical",
-    #     "transform__0__method_name": "gaussienize",
-    #     "transform__0__type": "quantile",
-    #     "transformed_target": True,
-    #     "use_gpu": True
-    # }
-
-    # config = {'data__categorical': True, 'data__method_name': 'openml_no_transform', 'data__regression': False, 'regression': False, 'n_iter': 'auto', 'max_train_samples': 10000, 'data__keyword': 361113, 'model__module__activation': 'reglu', 'model__module__token_bias': True, 'model__module__prenormalization': True, 'model__module__kv_compression': True, 'model__module__kv_compression_sharing': 'headwise', 'model__module__initialization': 'kaiming', 'model__module__n_layers': 12, 'model__module__n_heads': 12, 'model__module__d_ffn_factor': 1., 'model__module__ffn_dropout': 0.3352337550892011, 'model__module__attention_dropout': 0.20865240118356349, 'model__module__residual_dropout': 0.27934491422287583, 'model__lr': 1.9088591198098547e-05, 'model__optimizer__weight_decay': 6.200203677164721e-06, 'd_token': 768, 'model__lr_scheduler': False, 'use_gpu': True, 'log_training': True, 'model__device': 'cuda', 'model_type': 'skorch', 'model__use_checkpoints': True, 'model__optimizer': 'adamw', 'model__batch_size': 256, 'model__max_epochs': 300, 'transform__0__method_name': 'gaussienize', 'transform__0__type': 'quantile', 'transform__0__apply_on': 'numerical', 'transformed_target': False, 'model_name': 'ft_transformer', 'hp': 'random', 'seed': 1, 'train_prop': 0.7, 'val_test_prop': 0.3, 'max_val_samples': 50000, 'max_test_samples': 50000, 'model__module__d_token': 768}
-    # config = {'data__categorical': True, 'data__method_name': 'openml_no_transform', 'data__regression': False, 'regression': False, 'n_iter': 'auto', 'max_train_samples': 10000, 'data__keyword': 361113, 'model__module__activation': 'reglu', 'model__module__token_bias': True, 'model__module__prenormalization': True, 'model__module__kv_compression': True, 'model__module__kv_compression_sharing': 'headwise', 'model__module__initialization': 'kaiming', 'model__module__n_layers': 3, 'model__module__n_heads': 8, 'model__module__d_ffn_factor': 4. / 3, 'model__module__ffn_dropout': 0.1, 'model__module__attention_dropout': 0.1, 'model__module__residual_dropout': 0.0, 'model__lr': 1.0e-04, 'model__optimizer__weight_decay': 1e-5, 'd_token': 192, 'model__lr_scheduler': False, 'use_gpu': True, 'log_training': True, 'model__device': 'cuda', 'model_type': 'skorch', 'model__use_checkpoints': True, 'model__optimizer': 'adamw', 'model__batch_size': 256, 'model__max_epochs': 300, 'transform__0__method_name': 'gaussienize', 'transform__0__type': 'quantile', 'transform__0__apply_on': 'numerical', 'transformed_target': False, 'model_name': 'ft_transformer', 'hp': 'random', 'seed': 1, 'train_prop': 0.7, 'val_test_prop': 0.3, 'max_val_samples': 50000, 'max_test_samples': 50000, 'model__module__d_token': 768}
-    config = {'data__categorical': True, 'data__method_name': 'openml_no_transform', 'data__regression': False, 'regression': False, 'n_iter': 'auto', 'max_train_samples': 10000, 'data__keyword': 361110, 'model__lr_scheduler': False, 'model__module__activation': 'reglu', 'model__module__token_bias': True, 'model__module__prenormalization': True, 'model__module__kv_compression': False, 'model__module__kv_compression_sharing': 'headwise', 'model__module__initialization': 'kaiming', 'model__module__n_layers': 12, 'model__module__n_heads': 12, 'model__module__d_ffn_factor': 1, 'model__module__ffn_dropout': 0.1, 'model__module__attention_dropout': 0.1, 'model__module__residual_dropout': 0.0, 'model__lr': 0.0001, 'model__optimizer__weight_decay': 0.01, 'd_token': 768, 'use_gpu': True, 'log_training': True, 'model__device': 'cuda', 'model_type': 'skorch', 'model__use_checkpoints': True, 'model__optimizer': 'adamw', 'model__batch_size': 512, 'model__max_epochs': 300, 'transform__0__method_name': 'gaussienize', 'transform__0__type': 'quantile', 'transform__0__apply_on': 'numerical', 'transformed_target': True, 'model_name': 'ft_transformer', 'hp': 'default', 'seed': 1, 'train_prop': 0.7, 'val_test_prop': 0.3, 'max_val_samples': 50000, 'max_test_samples': 50000}
     train_model_on_config(config)

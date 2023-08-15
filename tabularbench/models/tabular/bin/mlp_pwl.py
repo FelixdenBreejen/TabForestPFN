@@ -108,7 +108,7 @@ class TokenizerSquid(nn.Module):
         if categories is not None:  
             self.category_embeddings = nn.ModuleList()     
             for i, cat in enumerate(categories):
-                d_token_this = int(d_per_token * feature_importance_cat[i] * d_bias)
+                d_token_this = int(d_per_token * feature_importance_cat[i] * d_bias) + 1
                 self.d_tokens.append(d_token_this)
                 self.category_embeddings.append(nn.Embedding(cat, d_token_this))
                 nn_init.kaiming_uniform_(self.category_embeddings[i].weight, a=math.sqrt(5))
@@ -123,7 +123,7 @@ class TokenizerSquid(nn.Module):
         feature_importance_num = feature_importance[~categorical_indicator]
         
         for i in range(d_numerical):
-            d_token_this = int(d_per_token * feature_importance_num[i] * d_bias)
+            d_token_this = int(d_per_token * feature_importance_num[i] * d_bias) + 1
             self.d_tokens.append(d_token_this)
             self.weight.append(nn.Parameter(Tensor(1, d_token_this)))
             if bias:
