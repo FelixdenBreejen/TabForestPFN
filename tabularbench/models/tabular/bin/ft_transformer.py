@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import typing as ty
 
+import scipy
 import skorch
 import numpy as np
 import torch
@@ -95,6 +96,7 @@ class Tokenizer(nn.Module):
                 ]
             )
             x = x + bias[None]
+
         return x
     
 
@@ -108,6 +110,7 @@ class QuantizationEmbedding(torch.nn.Module):
         self.ordinal_r = ordinal_r
 
         self.cls = nn.Parameter(Tensor(1, d_token * (onehot + ordinal + ordinal_r)))
+        nn_init.kaiming_uniform_(self.cls, a=math.sqrt(5))
 
         self.linears = nn.ModuleList()
         for i, feature_representation in enumerate(feature_representation_list):
@@ -115,7 +118,7 @@ class QuantizationEmbedding(torch.nn.Module):
             self.register_buffer(f'unique_{i}', unique_values)
             
             dim_in = len(unique_values) * (onehot + ordinal + ordinal_r) + onehot
-            lin = nn.Linear(dim_in, d_token * (onehot + ordinal + ordinal_r), bias=False)
+            lin = nn.Linear(dim_in, d_token * (onehot + ordinal + ordinal_r), bias=True)
             self.linears.append(lin)
 
 
@@ -152,6 +155,7 @@ class QuantizationEmbedding(torch.nn.Module):
             x_embs.append(self.linears[i](embd)[:, None, :])
 
         x = torch.cat(x_embs, dim=1)
+
         return x
 
 
@@ -395,6 +399,7 @@ class Transformer(nn.Module):
         x = self.head(x)
         if not self.regression:
             x = x.squeeze(-1)
+
         return x
 
 

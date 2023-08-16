@@ -141,12 +141,9 @@ def save_results(results: dict, results_path: Path):
         results_path.parent.mkdir(parents=True, exist_ok=True)
         df_new.to_csv(results_path, mode='w', index=False, header=True)
     else:
-        with open(results_path, "a+") as g:
-            fcntl.flock(g, fcntl.LOCK_EX)
-            df = pd.read_csv(g)
-            df = df.append(df_new, ignore_index=True)
-            df.to_csv(g, mode='w', index=False, header=True)
-            fcntl.flock(g, fcntl.LOCK_UN)
+        df = pd.read_csv(results_path)
+        df = df.append(df_new, ignore_index=True)
+        df.to_csv(results_path, mode='w', index=False, header=True)
 
 
 if __name__ == '__main__':
