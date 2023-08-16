@@ -11,10 +11,10 @@ config_random = {
         "value": True
     },
     "model__module__kv_compression": {
-        "value": False
+        "values": [True, False]
     },
     "model__module__kv_compression_sharing": {
-        "value": "bullshit"
+        "values": ["headwise", 'key-value']
     },
     "model__module__initialization": {
         "value": "kaiming"
@@ -84,10 +84,10 @@ config_default = {
         "value": True
     },
     "model__module__kv_compression": {
-        "value": False
+        "value": True
     },
     "model__module__kv_compression_sharing": {
-        "value": "bullshit"
+        "value": "headwise"
     },
     "model__module__initialization": {
         "value": "kaiming"

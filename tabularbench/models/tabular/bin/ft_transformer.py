@@ -47,14 +47,12 @@ class Tokenizer(nn.Module):
         ordinal = True
         ordinal_r = True
 
-        d_token_small = d_token // (1 + onehot + ordinal + ordinal_r)
-
         if feature_representation is not None:
-            self.qe = QuantizationEmbedding(onehot, ordinal, ordinal_r, d_token=d_token_small, feature_representation_list=feature_representation)
+            self.qe = QuantizationEmbedding(onehot, ordinal, ordinal_r, d_token=d_token, feature_representation_list=feature_representation)
 
 
         # take [CLS] token into account
-        self.weight = nn.Parameter(Tensor(d_numerical + 1, d_token_small))
+        self.weight = nn.Parameter(Tensor(d_numerical + 1, d_token))
         self.bias = nn.Parameter(Tensor(d_bias, d_token)) if bias else None
         # The initialization is inspired by nn.Linear
         nn_init.kaiming_uniform_(self.weight, a=math.sqrt(5))
@@ -80,7 +78,7 @@ class Tokenizer(nn.Module):
         )
         x = self.weight[None] * x_num[:, :, None]
 
-        x = torch.cat([x, x_qe], dim=2)
+        x = x + x_qe
 
 
         if x_cat is not None:
@@ -109,7 +107,7 @@ class QuantizationEmbedding(torch.nn.Module):
         self.ordinal = ordinal
         self.ordinal_r = ordinal_r
 
-        self.cls = nn.Parameter(Tensor(1, d_token * (onehot + ordinal + ordinal_r)))
+        self.cls = nn.Parameter(Tensor(1, d_token))
         nn_init.kaiming_uniform_(self.cls, a=math.sqrt(5))
 
         self.linears = nn.ModuleList()
@@ -117,8 +115,12 @@ class QuantizationEmbedding(torch.nn.Module):
             unique_values = torch.from_numpy(feature_representation.get_bounds()).float()
             self.register_buffer(f'unique_{i}', unique_values)
             
-            dim_in = len(unique_values) * (onehot + ordinal + ordinal_r) + onehot
-            lin = nn.Linear(dim_in, d_token * (onehot + ordinal + ordinal_r), bias=True)
+            dim_in = len(unique_values)
+            lin = nn.ModuleList([
+                nn.Linear(dim_in+1, d_token * onehot, bias=False),
+                nn.Linear(dim_in  , d_token * ordinal, bias=False),
+                nn.Linear(dim_in  , d_token * ordinal_r, bias=False),
+            ])
             self.linears.append(lin)
 
 
@@ -145,14 +147,14 @@ class QuantizationEmbedding(torch.nn.Module):
             all_embds = []
 
             if self.onehot:
-                all_embds.append(onehot.float())
+                all_embds.append(self.linears[i][0](onehot.float()))
             if self.ordinal:
-                all_embds.append(lowerbound.float())
+                all_embds.append(self.linears[i][1](lowerbound.float()))
             if self.ordinal_r:
-                all_embds.append((~lowerbound).float())   # TODO: check if this is the correct expression
+                all_embds.append(self.linears[i][2]((~lowerbound).float())) # TODO: check if this is the correct expression
             
-            embd = torch.cat(all_embds, dim=1)
-            x_embs.append(self.linears[i](embd)[:, None, :])
+            embd = sum(all_embds)
+            x_embs.append(embd[:, None, :])
 
         x = torch.cat(x_embs, dim=1)
 
@@ -269,8 +271,6 @@ class Transformer(nn.Module):
     ) -> None:
         assert (kv_compression is None) ^ (kv_compression_sharing is not None)
         super().__init__()
-
-        d_token = d_token // 12 * 12
 
         self.tokenizer = Tokenizer(d_numerical, categories, feature_representation, d_token, token_bias)
         n_tokens = self.tokenizer.n_tokens
