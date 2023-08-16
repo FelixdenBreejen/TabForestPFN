@@ -9,7 +9,7 @@ sys.path.append("")
 from tabularbench.models.tabular.bin.resnet import ResNet, InputShapeSetterResnet
 from tabularbench.models.tabular.bin.mlp import MLP, InputShapeSetterMLP
 from tabularbench.models.tabular.bin.mlp_pwl import MLP_PWL, InputShapeSetterMLP_PWL
-from tabularbench.models.tabular.bin.ft_transformer import Transformer
+from tabularbench.models.tabular.bin.ft_transformer import Transformer, InputShapeSetterTransformer
 from tabularbench.models.skorch_models import LearningRateLogger
 
 class NeuralNetRegressorBis(NeuralNetRegressor):
@@ -229,7 +229,7 @@ def create_ft_transformer_regressor_skorch(id, wandb_run=None, use_checkpoints=T
         categories = None
     else:
         categories = kwargs.pop('categories')
-    callbacks = [InputShapeSetterResnet(regression=True,
+    callbacks = [InputShapeSetterTransformer(regression=True,
                                         categorical_indicator=categorical_indicator,
                                         categories=categories),
                        EarlyStopping(monitor="valid_loss", patience=es_patience)] #TODO try with train_loss, and in this case use checkpoint

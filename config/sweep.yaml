@@ -6,15 +6,15 @@ hydra:
 continue_last_output: False
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [0]
-runs_per_device: 2
+devices: [6, 7]
+runs_per_device: 1
 runs_per_dataset: 1000                   # suggested: 500, only for random search
 monitor_interval_in_seconds: 100       # plot the results every x seconds
 
 models:
-  - mlp_pwl
+  - ft_transformer
 model_plot_names:
-  - MLP Feature Importance
+  - FT Transformer QE
 benchmarks:
   - categorical_classification
   # - numerical_classification

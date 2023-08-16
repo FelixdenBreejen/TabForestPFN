@@ -9,7 +9,7 @@ sys.path.append("")
 from tabularbench.models.tabular.bin.resnet import ResNet, InputShapeSetterResnet
 from tabularbench.models.tabular.bin.mlp import MLP, InputShapeSetterMLP
 from tabularbench.models.tabular.bin.mlp_pwl import MLP_PWL, InputShapeSetterMLP_PWL
-from tabularbench.models.tabular.bin.ft_transformer import Transformer
+from tabularbench.models.tabular.bin.ft_transformer import Transformer, InputShapeSetterTransformer
 
 from skorch.callbacks import Callback
 import numpy as np
@@ -241,7 +241,7 @@ def create_ft_transformer_skorch(id, wandb_run=None, use_checkpoints=True,
         categories = None
     else:
         categories = kwargs.pop('categories')
-    callbacks = [InputShapeSetterResnet(categorical_indicator=categorical_indicator, categories=categories),
+    callbacks = [InputShapeSetterTransformer(categorical_indicator=categorical_indicator, categories=categories),
                  EarlyStopping(monitor="valid_loss",
                                patience=es_patience)]  # TODO try with train_loss, and in this case use checkpoint
     callbacks.append(EpochScoring(scoring='accuracy', name='train_accuracy', on_train=True))
@@ -270,6 +270,7 @@ def create_ft_transformer_skorch(id, wandb_run=None, use_checkpoints=True,
         module__d_out=1,  # idem
         module__regression=False,
         module__categorical_indicator=categorical_indicator,
+        module__feature_representation=None,
         verbose=0,
         callbacks=callbacks,
         **kwargs

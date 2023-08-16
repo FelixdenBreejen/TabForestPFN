@@ -1,14 +1,14 @@
 # %%
+from __future__ import annotations
 import math
 import typing as ty
-from pathlib import Path
 
+import skorch
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as nn_init
-import zero
 from torch import Tensor
 
 import sys
@@ -24,6 +24,7 @@ class Tokenizer(nn.Module):
         self,
         d_numerical: int,
         categories: ty.Optional[ty.List[int]],
+        feature_representation: FeatureRepresentationList,
         d_token: int,
         bias: bool,
     ) -> None:
@@ -41,8 +42,18 @@ class Tokenizer(nn.Module):
             nn_init.kaiming_uniform_(self.category_embeddings.weight, a=math.sqrt(5))
             print(f'{self.category_embeddings.weight.shape=}')
 
+        onehot = True
+        ordinal = True
+        ordinal_r = True
+
+        d_token_small = d_token // (1 + onehot + ordinal + ordinal_r)
+
+        if feature_representation is not None:
+            self.qe = QuantizationEmbedding(onehot, ordinal, ordinal_r, d_token=d_token_small, feature_representation_list=feature_representation)
+
+
         # take [CLS] token into account
-        self.weight = nn.Parameter(Tensor(d_numerical + 1, d_token))
+        self.weight = nn.Parameter(Tensor(d_numerical + 1, d_token_small))
         self.bias = nn.Parameter(Tensor(d_bias, d_token)) if bias else None
         # The initialization is inspired by nn.Linear
         nn_init.kaiming_uniform_(self.weight, a=math.sqrt(5))
@@ -58,12 +69,19 @@ class Tokenizer(nn.Module):
     def forward(self, x_num: Tensor, x_cat: ty.Optional[Tensor]) -> Tensor:
         x_some = x_num if x_cat is None else x_cat
         assert x_some is not None
+
+        x_qe = self.qe(x_num)
+
         x_num = torch.cat(
             [torch.ones(len(x_some), 1, device=x_some.device)]  # [CLS]
             + ([] if x_num is None else [x_num]),
             dim=1,
         )
         x = self.weight[None] * x_num[:, :, None]
+
+        x = torch.cat([x, x_qe], dim=2)
+
+
         if x_cat is not None:
             x = torch.cat(
                 [x, self.category_embeddings(x_cat + self.category_offsets[None])],
@@ -78,6 +96,64 @@ class Tokenizer(nn.Module):
             )
             x = x + bias[None]
         return x
+    
+
+class QuantizationEmbedding(torch.nn.Module):
+
+    def __init__(self, onehot: bool, ordinal: bool, ordinal_r: bool, d_token: int, feature_representation_list: FeatureRepresentationList):
+        super().__init__()
+
+        self.onehot = onehot
+        self.ordinal = ordinal
+        self.ordinal_r = ordinal_r
+
+        self.cls = nn.Parameter(Tensor(1, d_token * (onehot + ordinal + ordinal_r)))
+
+        self.linears = nn.ModuleList()
+        for i, feature_representation in enumerate(feature_representation_list):
+            unique_values = torch.from_numpy(feature_representation.get_bounds()).float()
+            self.register_buffer(f'unique_{i}', unique_values)
+            
+            dim_in = len(unique_values) * (onehot + ordinal + ordinal_r) + onehot
+            lin = nn.Linear(dim_in, d_token * (onehot + ordinal + ordinal_r), bias=False)
+            self.linears.append(lin)
+
+
+    def forward(self, X):
+
+        batch_size = X.shape[0]
+        num_features = X.shape[1]
+        x_embs = []
+
+        x_embs.append(self.cls.expand(batch_size, -1)[:, None, :])
+
+        for i in range(num_features):
+
+            bounds = getattr(self, f"unique_{i}")
+
+            lowerbound = X[:, i, None] > bounds[None, :]
+    
+            zeropad = torch.zeros((batch_size, 1), device=X.device).bool()
+            onespad = torch.ones((batch_size, 1), device=X.device).bool()
+            padded = torch.cat((onespad, lowerbound, zeropad), dim=1)
+
+            onehot = padded[:, 1:] ^ padded[:, :-1]
+
+            all_embds = []
+
+            if self.onehot:
+                all_embds.append(onehot.float())
+            if self.ordinal:
+                all_embds.append(lowerbound.float())
+            if self.ordinal_r:
+                all_embds.append((~lowerbound).float())   # TODO: check if this is the correct expression
+            
+            embd = torch.cat(all_embds, dim=1)
+            x_embs.append(self.linears[i](embd)[:, None, :])
+
+        x = torch.cat(x_embs, dim=1)
+        return x
+
 
 
 class MultiheadAttention(nn.Module):
@@ -178,6 +254,7 @@ class Transformer(nn.Module):
         activation: str,
         prenormalization: bool,
         initialization: str,
+        feature_representation: FeatureRepresentationList,
         # linformer
         kv_compression: ty.Optional[float],
         kv_compression_sharing: ty.Optional[str],
@@ -188,7 +265,10 @@ class Transformer(nn.Module):
     ) -> None:
         assert (kv_compression is None) ^ (kv_compression_sharing is not None)
         super().__init__()
-        self.tokenizer = Tokenizer(d_numerical, categories, d_token, token_bias)
+
+        d_token = d_token // 12 * 12
+
+        self.tokenizer = Tokenizer(d_numerical, categories, feature_representation, d_token, token_bias)
         n_tokens = self.tokenizer.n_tokens
         print("d_token {}".format(d_token))
 
@@ -318,232 +398,220 @@ class Transformer(nn.Module):
         return x
 
 
-# %%
-if __name__ == "__main__":
-    args, output = lib.load_config()
-    args['model'].setdefault('token_bias', True)
-    args['model'].setdefault('kv_compression', None)
-    args['model'].setdefault('kv_compression_sharing', None)
 
-    # %%
-    zero.set_randomness(args['seed'])
-    dataset_dir = lib.get_path(args['data']['path'])
-    stats: ty.Dict[str, ty.Any] = {
-        'dataset': dataset_dir.name,
-        'algorithm': Path(__file__).stem,
-        **lib.load_json(output / 'stats.json'),
-    }
-    timer = zero.Timer()
-    timer.run()
 
-    D = lib.Dataset.from_dir(dataset_dir)
-    X = D.build_X(
-        normalization=args['data'].get('normalization'),
-        num_nan_policy='mean',
-        cat_nan_policy='new',
-        cat_policy=args['data'].get('cat_policy', 'indices'),
-        cat_min_frequency=args['data'].get('cat_min_frequency', 0.0),
-        seed=args['seed'],
-    )
-    if not isinstance(X, tuple):
-        X = (X, None)
-    zero.set_randomness(args['seed'])
-    Y, y_info = D.build_y(args['data'].get('y_policy'))
-    lib.dump_pickle(y_info, output / 'y_info.pickle')
-    X = tuple(None if x is None else lib.to_tensors(x) for x in X)
-    Y = lib.to_tensors(Y)
-    device = lib.get_device()
-    if device.type != 'cpu':
-        X = tuple(
-            None if x is None else {k: v.to(device) for k, v in x.items()} for x in X
-        )
-        Y_device = {k: v.to(device) for k, v in Y.items()}
-    else:
-        Y_device = Y
-    X_num, X_cat = X
-    del X
-    if not D.is_multiclass:
-        Y_device = {k: v.float() for k, v in Y_device.items()}
+class InputShapeSetterTransformer(skorch.callbacks.Callback):
+    def __init__(self, regression=False, batch_size=None,
+                 categorical_indicator=None, categories=None):
+        self.categorical_indicator = categorical_indicator
+        self.regression = regression
+        self.batch_size = batch_size
+        self.categories = categories
 
-    train_size = D.size(lib.TRAIN)
-    batch_size = args['training']['batch_size']
-    epoch_size = stats['epoch_size'] = math.ceil(train_size / batch_size)
-    eval_batch_size = args['training']['eval_batch_size']
-    chunk_size = None
+    def on_train_begin(self, net, X, y):
+        print("categorical_indicator", self.categorical_indicator)
+        if self.categorical_indicator is None:
+            d_numerical = X.shape[1]
+            categories = None
+        else:
+            d_numerical = X.shape[1] - sum(self.categorical_indicator)
+            if self.categories is None:
+                categories = list((X[:, self.categorical_indicator].max(0) + 1).astype(int))
+            else:
+                categories = self.categories
 
-    loss_fn = (
-        F.binary_cross_entropy_with_logits
-        if D.is_binclass
-        else F.cross_entropy
-        if D.is_multiclass
-        else F.mse_loss
-    )
-    model = Transformer(
-        d_numerical=0 if X_num is None else X_num['train'].shape[1],
-        categories=lib.get_categories(X_cat),
-        d_out=D.info['n_classes'] if D.is_multiclass else 1,
-        **args['model'],
-    ).to(device)
-    if torch.cuda.device_count() > 1:  # type: ignore[code]
-        print('Using nn.DataParallel')
-        model = nn.DataParallel(model)
-    stats['n_parameters'] = lib.get_n_parameters(model)
+        feature_representation = FeatureRepresentationList.create_representations("quantile", 100, X[:, ~self.categorical_indicator])
 
-    def needs_wd(name):
-        return all(x not in name for x in ['tokenizer', '.norm', '.bias'])
+        net.set_params(module__d_numerical=d_numerical,
+        module__categories=categories, #FIXME #lib.get_categories(X_cat),
+        module__feature_representation=feature_representation,
+        module__d_out=2 if self.regression == False else 1) #FIXME#D.info['n_classes'] if D.is_multiclass else 1,
+        print("Numerical features: {}".format(d_numerical))
+        print("Categories {}".format(categories))
 
-    for x in ['tokenizer', '.norm', '.bias']:
-        assert any(x in a for a in (b[0] for b in model.named_parameters()))
-    parameters_with_wd = [v for k, v in model.named_parameters() if needs_wd(k)]
-    parameters_without_wd = [v for k, v in model.named_parameters() if not needs_wd(k)]
-    optimizer = lib.make_optimizer(
-        args['training']['optimizer'],
-        (
-            [
-                {'params': parameters_with_wd},
-                {'params': parameters_without_wd, 'weight_decay': 0.0},
-            ]
-        ),
-        args['training']['lr'],
-        args['training']['weight_decay'],
-    )
 
-    stream = zero.Stream(lib.IndexLoader(train_size, batch_size, True, device))
-    progress = zero.ProgressTracker(args['training']['patience'])
-    training_log = {lib.TRAIN: [], lib.VAL: [], lib.TEST: []}
-    timer = zero.Timer()
-    checkpoint_path = output / 'checkpoint.pt'
 
-    def print_epoch_info():
-        print(f'\n>>> Epoch {stream.epoch} | {lib.format_seconds(timer())} | {output}')
-        print(
-            ' | '.join(
-                f'{k} = {v}'
-                for k, v in {
-                    'lr': lib.get_lr(optimizer),
-                    'batch_size': batch_size,
-                    'chunk_size': chunk_size,
-                    'epoch_size': stats['epoch_size'],
-                    'n_parameters': stats['n_parameters'],
-                }.items()
-            )
-        )
 
-    def apply_model(part, idx):
-        return model(
-            None if X_num is None else X_num[part][idx],
-            None if X_cat is None else X_cat[part][idx],
-        )
+class FeatureRepresentation(np.ndarray):
+    """
+    A feature representation is a summary of a feature in a dataset.
+    It is a 1D numpy array of shape (n), where n is the size of the feature representation.
+    The feature representation should have a significant smaller size than the original feature.
+    Also, all values in the feature representation should be unique.
+    """
 
-    @torch.no_grad()
-    def evaluate(parts):
-        global eval_batch_size
-        model.eval()
-        metrics = {}
-        predictions = {}
-        for part in parts:
-            while eval_batch_size:
-                try:
-                    predictions[part] = (
-                        torch.cat(
-                            [
-                                apply_model(part, idx)
-                                for idx in lib.IndexLoader(
-                                    D.size(part), eval_batch_size, False, device
-                                )
-                            ]
-                        )
-                        .cpu()
-                        .numpy()
-                    )
-                except RuntimeError as err:
-                    if not lib.is_oom_exception(err):
-                        raise
-                    eval_batch_size //= 2
-                    print('New eval batch size:', eval_batch_size)
-                    stats['eval_batch_size'] = eval_batch_size
-                else:
-                    break
-            if not eval_batch_size:
-                RuntimeError('Not enough memory even for eval_batch_size=1')
-            metrics[part] = lib.calculate_metrics(
-                D.info['task_type'],
-                Y[part].numpy(),  # type: ignore[code]
-                predictions[part],  # type: ignore[code]
-                'logits',
-                y_info,
-            )
-        for part, part_metrics in metrics.items():
-            print(f'[{part:<5}]', lib.make_summary(part_metrics))
-        return metrics, predictions
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def save_checkpoint(final):
-        torch.save(
-            {
-                'model': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'stream': stream.state_dict(),
-                'random_state': zero.get_random_state(),
-                **{
-                    x: globals()[x]
-                    for x in [
-                        'progress',
-                        'stats',
-                        'timer',
-                        'training_log',
-                    ]
-                },
-            },
-            checkpoint_path,
-        )
-        lib.dump_stats(stats, output, final)
-        lib.backup_output(output)
+    
+    def get_values(self) -> np.ndarray:
+        """
+        Return the values of the feature representation.
+        """
+        return self
 
-    # %%
-    timer.run()
-    for epoch in stream.epochs(args['training']['n_epochs']):
-        print_epoch_info()
 
-        model.train()
-        epoch_losses = []
-        for batch_idx in epoch:
-            loss, new_chunk_size = lib.train_with_auto_virtual_batch(
-                optimizer,
-                loss_fn,
-                lambda x: (apply_model(lib.TRAIN, x), Y_device[lib.TRAIN][x]),
-                batch_idx,
-                chunk_size or batch_size,
-            )
-            epoch_losses.append(loss.detach())
-            if new_chunk_size and new_chunk_size < (chunk_size or batch_size):
-                stats['chunk_size'] = chunk_size = new_chunk_size
-                print('New chunk size:', chunk_size)
-        epoch_losses = torch.stack(epoch_losses).tolist()
-        training_log[lib.TRAIN].extend(epoch_losses)
-        print(f'[{lib.TRAIN}] loss = {round(sum(epoch_losses) / len(epoch_losses), 3)}')
+    def get_bounds(self, add_inf: bool = False) -> np.ndarray:
+        """
+        In case we have the array [1, 2, 3], we want to have the following intervals:
+        (-inf, 1.5), [1.5, 2.5), [2.5, inf).
+        This function returns creates the bounds without the infs: [1.5, 2.5].
+        If add_inf is True, then it returns [-inf, 1.5, 2.5, inf].
+        """
 
-        metrics, predictions = evaluate([lib.VAL, lib.TEST])
-        for k, v in metrics.items():
-            training_log[k].append(v)
-        progress.update(metrics[lib.VAL]['score'])
+        right_midpoints = self[1:]
+        left_midpoints = self[:-1]
+        bound = (right_midpoints + left_midpoints) / 2
 
-        if progress.success:
-            print('New best epoch!')
-            stats['best_epoch'] = stream.epoch
-            stats['metrics'] = metrics
-            save_checkpoint(False)
-            for k, v in predictions.items():
-                np.save(output / f'p_{k}.npy', v)
+        if add_inf:
+            bound = np.concatenate([[-np.inf], self, [np.inf]])
 
-        elif progress.fail:
-            break
+        return bound.view(np.ndarray)
 
-    # %%
-    print('\nRunning the final evaluation...')
-    model.load_state_dict(torch.load(checkpoint_path)['model'])
-    stats['metrics'], predictions = evaluate(lib.PARTS)
-    for k, v in predictions.items():
-        np.save(output / f'p_{k}.npy', v)
-    stats['time'] = lib.format_seconds(timer())
-    save_checkpoint(True)
-    print('Done!')
+    
+    @classmethod
+    def create_feature_representation_from_column(cls, repr_type: str, max_size: int, X: np.ndarray) -> 'FeatureRepresentation':
+        
+        if repr_type == 'quantile':
+            return cls.create_quantile_representation(max_size, X)
+        elif repr_type == 'unique':
+            return cls.create_unique_rounded_representation(max_size, X)
+        elif repr_type == 'uniform':
+            return cls.create_uniform_representation(max_size, X)
+        else:
+            raise ValueError('Feature Representation type not supported')
+
+
+    @classmethod
+    def create_quantile_representation(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+        
+        """
+        For a given dataset, gather the quantile information for each feature.
+        We have n_buckets+1 values because we include the minimum and
+        maximum values of each feature. For example, if n_buckets=4, then we
+        have 5 values: [min, q1, q2, q3, max].
+        In case of duplicate values, we remove them.
+        """
+        
+        n_buckets = max_size
+        quantiles = [i/n_buckets for i in range(n_buckets+1)]
+
+        values = np.quantile(x, q=quantiles, interpolation='midpoint')
+        values_unique = np.unique(values)
+
+        return values_unique.view(cls)
+
+    
+    @classmethod
+    def create_unique_rounded_representation(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+
+        """
+        Here we create the representation for the unique values.
+        The feature representation is a 1D numpy array of shape (n), where n is the number of unique values.
+        In case there are too many unique values, we round the values to a certain number of digits.
+        """
+
+        unique_values = unique_values_through_rounding(max_size, x)
+        return unique_values.view(cls)
+    
+
+    @classmethod
+    def create_unique_values(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+
+        """
+        Here we create the representation for the unique values.
+        The feature representation is a 1D numpy array of shape (n), where n is the number of unique values.
+        """
+
+        unique_values = np.unique(x)
+        return unique_values.view(cls)
+    
+    @classmethod
+    def create_uniform_representation(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+
+        """
+        Here we create the representation for the uniform values.
+        The feature representation is a 1D numpy array of shape (n), where n is the specified size.
+        """
+
+        max_element = np.max(x)
+        min_element = np.min(x)
+        size = max_size
+        uniform_values = np.linspace(min_element, max_element, size)
+
+        return uniform_values.view(cls)
+
+
+
+def unique_values_through_rounding(max_size: int, features: np.ndarray) -> np.ndarray:
+    """
+    We want to find the number of unique values in a feature.
+    In case there are too many unique values, we round the values to a certain number of digits.
+    We try to pick a number of digits that results in the highest number of unique values 
+    that is less than a certain threshold.
+    'digits' is the number of digits we round to, but it is not necessarily an integer.
+    """
+
+    unique_values = np.unique(features)
+    max_dim = max_size
+
+    if len(unique_values) <= max_dim:
+        return unique_values
+       
+    func = min_dist_max_dim(features, max_dim)
+    digits = scipy.optimize.minimize(func, 3, method='Nelder-Mead')['x'][0]
+    unique_values = get_unique_values(features, digits)
+
+    return unique_values
+
+
+def get_unique_values(features, digits):
+    rounded = (features // 10**(-digits)) * 10**(-digits)
+    unique_values = np.unique(rounded)
+    return unique_values
+
+
+def min_dist_max_dim(features, max_dim):
+
+    def f(digits):
+        unique_values = get_unique_values(features, digits)
+        return (math.log(len(unique_values)) - math.log(max_dim)) ** 2
+
+    return f
+
+
+
+
+class FeatureRepresentationList(ty.List[FeatureRepresentation]):
+    """
+    This is a list of feature representations
+    """
+
+    def __init__(self):
+        super().__init__()
+
+
+    @classmethod
+    def create_representations(cls, repr_type: str, max_size: int, X: np.ndarray):
+
+        num_features = X.shape[1]
+        bounds = cls()
+
+        for i_feature in range(num_features):
+            bound = FeatureRepresentation.create_feature_representation_from_column(repr_type, max_size, X[:, i_feature])
+            bounds.append(bound)
+
+        return bounds
+    
+
+    @classmethod
+    def create_unique_values(cls, max_size: int, X: np.ndarray):
+
+        num_features = X.shape[1]
+        bounds = cls()
+
+        for i_feature in range(num_features):
+            bound = FeatureRepresentation.create_unique_values(max_size, X[:, i_feature])
+            bounds.append(bound)
+
+        return bounds
