@@ -114,12 +114,11 @@ class MultiheadAttention(nn.Module):
 
     def forward(
         self,
-        x_q: Tensor,
-        x_kv: Tensor,
+        x_qkv: Tensor,
         key_compression: ty.Optional[nn.Linear],
         value_compression: ty.Optional[nn.Linear],
     ) -> Tensor:
-        q, k, v = self.W_q(x_q), self.W_k(x_kv), self.W_v(x_kv)
+        q, k, v = self.W_q(x_qkv), self.W_k(x_qkv), self.W_v(x_qkv)
         for tensor in [q, k, v]:
             assert tensor.shape[-1] % self.n_heads == 0
         if key_compression is not None:
@@ -136,10 +135,17 @@ class MultiheadAttention(nn.Module):
 
         q = self._reshape(q)
         k = self._reshape(k)
-        attention = F.softmax(q @ k.transpose(1, 2) / math.sqrt(d_head_key), dim=-1)
+
+        attention = F.softmax(- (q-k) @ (q-k).transpose(1, 2), dim=-1)
+
+        # attention = F.softmax(q @ k.transpose(1, 2) / math.sqrt(d_head_key), dim=-1)
+
         if self.dropout is not None:
             attention = self.dropout(attention)
+
+        # x = attention @ self._reshape(v)
         x = attention @ self._reshape(v)
+        
         x = (
             x.reshape(batch_size, self.n_heads, n_q_tokens, d_head_value)
             .transpose(1, 2)
@@ -289,10 +295,11 @@ class Transformer(nn.Module):
             x_residual = self._start_residual(x, layer, 0)
             x_residual = layer['attention'](
                 # for the last attention, it is enough to process only [CLS]
-                (x_residual[:, :1] if is_last_layer else x_residual),
                 x_residual,
                 *self._get_kv_compressions(layer),
             )
+            x_residual = x_residual[:, :1] if is_last_layer else x_residual
+
             if is_last_layer:
                 x = x[:, : x_residual.shape[1]]
             x = self._end_residual(x, x_residual, layer, 0)
