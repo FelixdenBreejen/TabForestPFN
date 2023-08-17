@@ -1,7 +1,9 @@
 # %%
+from __future__ import annotations
 import math
 import typing as ty
 
+import scipy
 import skorch
 import numpy as np
 import torch
@@ -23,6 +25,7 @@ class Tokenizer(nn.Module):
         self,
         d_numerical: int,
         categories: ty.Optional[ty.List[int]],
+        feature_representation: FeatureRepresentationList,
         d_token: int,
         bias: bool,
     ) -> None:
@@ -39,6 +42,14 @@ class Tokenizer(nn.Module):
             self.category_embeddings = nn.Embedding(sum(categories), d_token)
             nn_init.kaiming_uniform_(self.category_embeddings.weight, a=math.sqrt(5))
             print(f'{self.category_embeddings.weight.shape=}')
+
+        onehot = True
+        ordinal = True
+        ordinal_r = True
+
+        if feature_representation is not None:
+            self.qe = QuantizationEmbedding(onehot, ordinal, ordinal_r, d_token=d_token, feature_representation_list=feature_representation)
+
 
         # take [CLS] token into account
         self.weight = nn.Parameter(Tensor(d_numerical + 1, d_token))
@@ -57,12 +68,19 @@ class Tokenizer(nn.Module):
     def forward(self, x_num: Tensor, x_cat: ty.Optional[Tensor]) -> Tensor:
         x_some = x_num if x_cat is None else x_cat
         assert x_some is not None
+
+        x_qe = self.qe(x_num)
+
         x_num = torch.cat(
             [torch.ones(len(x_some), 1, device=x_some.device)]  # [CLS]
             + ([] if x_num is None else [x_num]),
             dim=1,
         )
         x = self.weight[None] * x_num[:, :, None]
+
+        x = x + x_qe
+
+
         if x_cat is not None:
             x = torch.cat(
                 [x, self.category_embeddings(x_cat + self.category_offsets[None])],
@@ -76,7 +94,72 @@ class Tokenizer(nn.Module):
                 ]
             )
             x = x + bias[None]
+
         return x
+    
+
+class QuantizationEmbedding(torch.nn.Module):
+
+    def __init__(self, onehot: bool, ordinal: bool, ordinal_r: bool, d_token: int, feature_representation_list: FeatureRepresentationList):
+        super().__init__()
+
+        self.onehot = onehot
+        self.ordinal = ordinal
+        self.ordinal_r = ordinal_r
+
+        self.cls = nn.Parameter(Tensor(1, d_token))
+        nn_init.kaiming_uniform_(self.cls, a=math.sqrt(5))
+
+        self.linears = nn.ModuleList()
+        for i, feature_representation in enumerate(feature_representation_list):
+            unique_values = torch.from_numpy(feature_representation.get_bounds()).float()
+            self.register_buffer(f'unique_{i}', unique_values)
+            
+            dim_in = len(unique_values)
+            lin = nn.ModuleList([
+                nn.Linear(dim_in+1, d_token * onehot, bias=False),
+                nn.Linear(dim_in  , d_token * ordinal, bias=False),
+                nn.Linear(dim_in  , d_token * ordinal_r, bias=False),
+            ])
+            self.linears.append(lin)
+
+
+    def forward(self, X):
+
+        batch_size = X.shape[0]
+        num_features = X.shape[1]
+        x_embs = []
+
+        x_embs.append(self.cls.expand(batch_size, -1)[:, None, :])
+
+        for i in range(num_features):
+
+            bounds = getattr(self, f"unique_{i}")
+
+            lowerbound = X[:, i, None] > bounds[None, :]
+    
+            zeropad = torch.zeros((batch_size, 1), device=X.device).bool()
+            onespad = torch.ones((batch_size, 1), device=X.device).bool()
+            padded = torch.cat((onespad, lowerbound, zeropad), dim=1)
+
+            onehot = padded[:, 1:] ^ padded[:, :-1]
+
+            all_embds = []
+
+            if self.onehot:
+                all_embds.append(self.linears[i][0](onehot.float()))
+            if self.ordinal:
+                all_embds.append(self.linears[i][1](lowerbound.float()))
+            if self.ordinal_r:
+                all_embds.append(self.linears[i][2]((~lowerbound).float())) # TODO: check if this is the correct expression
+            
+            embd = sum(all_embds)
+            x_embs.append(embd[:, None, :])
+
+        x = torch.cat(x_embs, dim=1)
+
+        return x
+
 
 
 class MultiheadAttention(nn.Module):
@@ -177,6 +260,7 @@ class Transformer(nn.Module):
         activation: str,
         prenormalization: bool,
         initialization: str,
+        feature_representation: FeatureRepresentationList,
         # linformer
         kv_compression: ty.Optional[float],
         kv_compression_sharing: ty.Optional[str],
@@ -187,7 +271,8 @@ class Transformer(nn.Module):
     ) -> None:
         assert (kv_compression is None) ^ (kv_compression_sharing is not None)
         super().__init__()
-        self.tokenizer = Tokenizer(d_numerical, categories, d_token, token_bias)
+
+        self.tokenizer = Tokenizer(d_numerical, categories, feature_representation, d_token, token_bias)
         n_tokens = self.tokenizer.n_tokens
         print("d_token {}".format(d_token))
 
@@ -214,6 +299,7 @@ class Transformer(nn.Module):
 
         d_hidden = int(d_token * d_ffn_factor)
         self.layers = nn.ModuleList([])
+
         for layer_idx in range(n_layers):
             layer = nn.ModuleDict(
                 {
@@ -313,8 +399,11 @@ class Transformer(nn.Module):
         x = self.head(x)
         if not self.regression:
             x = x.squeeze(-1)
+
         return x
-    
+
+
+
 
 class InputShapeSetterTransformer(skorch.callbacks.Callback):
     def __init__(self, regression=False, batch_size=None,
@@ -336,8 +425,198 @@ class InputShapeSetterTransformer(skorch.callbacks.Callback):
             else:
                 categories = self.categories
 
+        feature_representation = FeatureRepresentationList.create_representations("quantile", 100, X[:, ~self.categorical_indicator])
+
         net.set_params(module__d_numerical=d_numerical,
         module__categories=categories, #FIXME #lib.get_categories(X_cat),
+        module__feature_representation=feature_representation,
         module__d_out=2 if self.regression == False else 1) #FIXME#D.info['n_classes'] if D.is_multiclass else 1,
         print("Numerical features: {}".format(d_numerical))
         print("Categories {}".format(categories))
+
+
+
+
+class FeatureRepresentation(np.ndarray):
+    """
+    A feature representation is a summary of a feature in a dataset.
+    It is a 1D numpy array of shape (n), where n is the size of the feature representation.
+    The feature representation should have a significant smaller size than the original feature.
+    Also, all values in the feature representation should be unique.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    
+    def get_values(self) -> np.ndarray:
+        """
+        Return the values of the feature representation.
+        """
+        return self
+
+
+    def get_bounds(self, add_inf: bool = False) -> np.ndarray:
+        """
+        In case we have the array [1, 2, 3], we want to have the following intervals:
+        (-inf, 1.5), [1.5, 2.5), [2.5, inf).
+        This function returns creates the bounds without the infs: [1.5, 2.5].
+        If add_inf is True, then it returns [-inf, 1.5, 2.5, inf].
+        """
+
+        right_midpoints = self[1:]
+        left_midpoints = self[:-1]
+        bound = (right_midpoints + left_midpoints) / 2
+
+        if add_inf:
+            bound = np.concatenate([[-np.inf], self, [np.inf]])
+
+        return bound.view(np.ndarray)
+
+    
+    @classmethod
+    def create_feature_representation_from_column(cls, repr_type: str, max_size: int, X: np.ndarray) -> 'FeatureRepresentation':
+        
+        if repr_type == 'quantile':
+            return cls.create_quantile_representation(max_size, X)
+        elif repr_type == 'unique':
+            return cls.create_unique_rounded_representation(max_size, X)
+        elif repr_type == 'uniform':
+            return cls.create_uniform_representation(max_size, X)
+        else:
+            raise ValueError('Feature Representation type not supported')
+
+
+    @classmethod
+    def create_quantile_representation(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+        
+        """
+        For a given dataset, gather the quantile information for each feature.
+        We have n_buckets+1 values because we include the minimum and
+        maximum values of each feature. For example, if n_buckets=4, then we
+        have 5 values: [min, q1, q2, q3, max].
+        In case of duplicate values, we remove them.
+        """
+        
+        n_buckets = max_size
+        quantiles = [i/n_buckets for i in range(n_buckets+1)]
+
+        values = np.quantile(x, q=quantiles, interpolation='midpoint')
+        values_unique = np.unique(values)
+
+        return values_unique.view(cls)
+
+    
+    @classmethod
+    def create_unique_rounded_representation(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+
+        """
+        Here we create the representation for the unique values.
+        The feature representation is a 1D numpy array of shape (n), where n is the number of unique values.
+        In case there are too many unique values, we round the values to a certain number of digits.
+        """
+
+        unique_values = unique_values_through_rounding(max_size, x)
+        return unique_values.view(cls)
+    
+
+    @classmethod
+    def create_unique_values(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+
+        """
+        Here we create the representation for the unique values.
+        The feature representation is a 1D numpy array of shape (n), where n is the number of unique values.
+        """
+
+        unique_values = np.unique(x)
+        return unique_values.view(cls)
+    
+    @classmethod
+    def create_uniform_representation(cls, max_size: int, x: np.ndarray) -> 'FeatureRepresentation':
+
+        """
+        Here we create the representation for the uniform values.
+        The feature representation is a 1D numpy array of shape (n), where n is the specified size.
+        """
+
+        max_element = np.max(x)
+        min_element = np.min(x)
+        size = max_size
+        uniform_values = np.linspace(min_element, max_element, size)
+
+        return uniform_values.view(cls)
+
+
+
+def unique_values_through_rounding(max_size: int, features: np.ndarray) -> np.ndarray:
+    """
+    We want to find the number of unique values in a feature.
+    In case there are too many unique values, we round the values to a certain number of digits.
+    We try to pick a number of digits that results in the highest number of unique values 
+    that is less than a certain threshold.
+    'digits' is the number of digits we round to, but it is not necessarily an integer.
+    """
+
+    unique_values = np.unique(features)
+    max_dim = max_size
+
+    if len(unique_values) <= max_dim:
+        return unique_values
+       
+    func = min_dist_max_dim(features, max_dim)
+    digits = scipy.optimize.minimize(func, 3, method='Nelder-Mead')['x'][0]
+    unique_values = get_unique_values(features, digits)
+
+    return unique_values
+
+
+def get_unique_values(features, digits):
+    rounded = (features // 10**(-digits)) * 10**(-digits)
+    unique_values = np.unique(rounded)
+    return unique_values
+
+
+def min_dist_max_dim(features, max_dim):
+
+    def f(digits):
+        unique_values = get_unique_values(features, digits)
+        return (math.log(len(unique_values)) - math.log(max_dim)) ** 2
+
+    return f
+
+
+
+
+class FeatureRepresentationList(ty.List[FeatureRepresentation]):
+    """
+    This is a list of feature representations
+    """
+
+    def __init__(self):
+        super().__init__()
+
+
+    @classmethod
+    def create_representations(cls, repr_type: str, max_size: int, X: np.ndarray):
+
+        num_features = X.shape[1]
+        bounds = cls()
+
+        for i_feature in range(num_features):
+            bound = FeatureRepresentation.create_feature_representation_from_column(repr_type, max_size, X[:, i_feature])
+            bounds.append(bound)
+
+        return bounds
+    
+
+    @classmethod
+    def create_unique_values(cls, max_size: int, X: np.ndarray):
+
+        num_features = X.shape[1]
+        bounds = cls()
+
+        for i_feature in range(num_features):
+            bound = FeatureRepresentation.create_unique_values(max_size, X[:, i_feature])
+            bounds.append(bound)
+
+        return bounds
