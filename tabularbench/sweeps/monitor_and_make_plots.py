@@ -6,6 +6,7 @@ import time
 
 import pandas as pd
 
+from tabularbench.configs.all_model_configs import total_config
 from tabularbench.sweeps.sweep_config import SweepConfig, sweep_config_maker
 from tabularbench.sweeps.datasets import get_unfinished_task_ids
 from tabularbench.sweeps.paths_and_filenames import (
@@ -29,6 +30,8 @@ def monitor_and_make_plots(output_dir: str, delay_in_seconds: int = 10):
             time.sleep(delay_in_seconds)
 
         while True:
+            make_results_csv_modified_for_plotting(sweep)
+            make_hyperparam_plots(sweep)
             make_random_sweep_plots(sweep)
 
             if sweep_random_finished(sweep) or not sweep.random_search:
@@ -84,7 +87,7 @@ def make_default_results(sweep: SweepConfig):
     df_new.to_csv(sweep.path / DEFAULT_RESULTS_FILE_NAME, mode='w', index=True, header=True)
 
 
-def make_random_sweep_plots(sweep: SweepConfig):
+def make_results_csv_modified_for_plotting(sweep: SweepConfig):
 
     results_path = sweep.path / RESULTS_FILE_NAME
     
@@ -98,10 +101,37 @@ def make_random_sweep_plots(sweep: SweepConfig):
 
     df.to_csv(sweep.path / RESULTS_MODIFIED_FILE_NAME, mode='w', index=False, header=True)
 
+
+def make_random_sweep_plots(sweep: SweepConfig):
+
     script_name = f"bench_script_{sweep.benchmark}"
     script_path = 'analyses/' + script_name + '.R'
     results_csv_path = str(sweep.path)
     subprocess.run(['Rscript', script_path, results_csv_path])
+
+
+def make_hyperparam_plots(sweep: SweepConfig):
+    
+    df = pd.read_csv(sweep.path / RESULTS_MODIFIED_FILE_NAME)
+    config = total_config[sweep.model][sweep.task]
+
+    for dataset_name in sweep.dataset_names:
+        for random_var in config['random'].keys():
+                
+            this_dataset = df['data__keyword'] == dataset_name
+            fig = None
+
+            if 'min' in config['random'][random_var]:
+                is_log = 'log' in config['random'][random_var]['distribution']
+                fig = df[this_dataset].plot(kind='scatter', x=random_var, y='mean_test_score', logx=is_log).get_figure()
+
+            elif 'values' in config['random'][random_var]:
+                fig = df[this_dataset].boxplot(column='mean_test_score', by=random_var).get_figure()
+
+            if fig is not None:
+                png_path = sweep.path / 'hyperparam_plots' / f'{dataset_name}_{random_var}.png'
+                png_path.parent.mkdir(parents=True, exist_ok=True)
+                fig.savefig(png_path)
 
 
 if __name__ == '__main__':
