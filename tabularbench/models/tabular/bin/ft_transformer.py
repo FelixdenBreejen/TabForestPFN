@@ -294,7 +294,6 @@ class Transformer(nn.Module):
 
             x_residual = self._start_residual(x, layer, 0)
             x_residual = layer['attention'](
-                # for the last attention, it is enough to process only [CLS]
                 x_residual,
                 *self._get_kv_compressions(layer),
             )

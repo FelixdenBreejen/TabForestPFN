@@ -86,8 +86,12 @@ def launch_sweeps(cfg) -> None:
     gpus = list(cfg.devices) * cfg.runs_per_device
     path = cfg.output_dir
 
+    time_seed = int(time.time()) * cfg.continue_last_output
+
     processes = []
     for seed, gpu in enumerate(gpus):
+        
+        seed += time_seed
         process = mp.Process(target=run_sweeps, args=(path, gpu, seed), )
         process.start()
         processes.append(process)
