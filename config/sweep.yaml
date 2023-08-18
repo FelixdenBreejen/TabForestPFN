@@ -3,7 +3,7 @@ hydra:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
 
-continue_last_output: True
+continue_last_output: False
 output_dir: ${hydra:run.dir}
 seed: 0
 devices: [6, 7]
@@ -14,7 +14,7 @@ monitor_interval_in_seconds: 10       # plot the results every x seconds
 models:
   - ft_transformer
 model_plot_names:
-  - FT Transformer Norm
+  - FT Transformer Norm+GeLU
 benchmarks:
   - categorical_classification
   # - numerical_classification

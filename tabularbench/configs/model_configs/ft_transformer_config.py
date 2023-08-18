@@ -2,7 +2,7 @@ from tabularbench.configs.model_configs.skorch_config import skorch_config, skor
 
 config_random = {
     "model__module__activation": {
-        "value": "reglu"
+        "value": "gelu"
     },
     "model__module__token_bias": {
         "value": True
@@ -75,7 +75,7 @@ config_default = {
         "value": False
     },
     "model__module__activation": {
-        "value": "reglu"
+        "value": "gelu"
     },
     "model__module__token_bias": {
         "value": True
