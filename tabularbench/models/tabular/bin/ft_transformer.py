@@ -199,6 +199,15 @@ class Transformer(nn.Module):
         self.categorical_indicator = categorical_indicator
         self.regression = regression
 
+        self.feature_linears = nn.ModuleList([])
+
+        for feature_repr in feature_representation_list:
+
+            feature_repr_len = len(feature_repr)
+            feature_linear = nn.Linear(d_token, feature_repr_len)
+            self.feature_linears.append(feature_linear)
+
+
         def make_kv_compression():
             assert kv_compression
             compression = nn.Linear(
@@ -314,13 +323,17 @@ class Transformer(nn.Module):
         x = x[:, 0]
         if self.last_normalization is not None:
             x = self.last_normalization(x)
-        x = self.last_activation(x)
-        x = self.head(x)
+        x_prehead = self.last_activation(x)
+        x = self.head(x_prehead)
         if not self.regression:
             x = x.squeeze(-1)
 
+        x_regs_list = []
+        for feature_linear in self.feature_linears:
+            x_regs = feature_linear(x_prehead)
+            x_regs_list.append(x_regs)
 
-        return x    
+        return x, x_regs_list
 
 
 class InputShapeSetterTransformer(skorch.callbacks.Callback):
