@@ -48,7 +48,7 @@ def train_model_on_config(config=None) -> dict:
         return train_model_config(config)
     
     try:
-        train_model_config(config)
+        return train_model_config(config)
     except Exception as e:
         # Print to the console
         print("ERROR")
@@ -209,7 +209,6 @@ def train_model_config(config) -> dict:
                 "n_features": x_train.shape[1],
                 "data_generation_time": data_generation_time})   
     
-        
     return config
 
 
