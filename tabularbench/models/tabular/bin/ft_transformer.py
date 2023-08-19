@@ -345,21 +345,23 @@ class InputShapeSetterTransformer(skorch.callbacks.Callback):
 
         feature_representation = FeatureRepresentationList.create_representations("quantile", 10, X[:, ~self.categorical_indicator])
 
-        # print("Numerical features: {}".format(d_numerical))
-        # print("Categories {}".format(categories))
-
-        # return {
-        #     'module__d_numerical': d_numerical,
-        #     'module__categories': categories,
-        #     'module__feature_representation_list': feature_representation,
-        #     'module__d_out': 2 if self.regression == False else 1
-        # }
-
-        net.set_params(module__d_numerical=d_numerical,
-        module__categories=categories, #FIXME #lib.get_categories(X_cat),
-        module__d_out=2 if self.regression == False else 1) #FIXME#D.info['n_classes'] if D.is_multiclass else 1,
         print("Numerical features: {}".format(d_numerical))
         print("Categories {}".format(categories))
+
+        return {
+            'module__d_numerical': d_numerical,
+            'module__categories': categories,
+            'module__feature_representation_list': feature_representation,
+            'module__d_out': 2 if self.regression == False else 1
+        }
+
+        # skorch code
+
+        # net.set_params(module__d_numerical=d_numerical,
+        # module__categories=categories, #FIXME #lib.get_categories(X_cat),
+        # module__d_out=2 if self.regression == False else 1) #FIXME#D.info['n_classes'] if D.is_multiclass else 1,
+        # print("Numerical features: {}".format(d_numerical))
+        # print("Categories {}".format(categories))
 
 
 

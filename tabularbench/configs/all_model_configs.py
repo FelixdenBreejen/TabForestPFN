@@ -137,8 +137,8 @@ total_config[keyword] = {
                             "default": config_regression_default},
 }
 
-model_keyword_dic[config_regression["model_name"]["value"]] = create_ft_transformer_regressor_skorch
-model_keyword_dic[config_classif["model_name"]["value"]] = create_ft_transformer_skorch
+model_keyword_dic[config_regression["model_name"]["value"]] = create_ft_transformer_regressor_torch
+model_keyword_dic[config_classif["model_name"]["value"]] = create_ft_transformer_torch
 
 from tabularbench.configs.model_configs.saint_config import config_classif, config_regression, config_classif_default, config_regression_default
 keyword = "saint"

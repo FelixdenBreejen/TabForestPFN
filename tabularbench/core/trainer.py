@@ -45,7 +45,7 @@ class Checkpoint():
         self.curr_best_loss = np.inf
         
 
-    def __call__(self, net, id, loss):
+    def __call__(self, net, loss):
         
         if loss < self.curr_best_loss:
             self.curr_best_loss = loss
