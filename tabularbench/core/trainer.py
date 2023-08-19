@@ -37,6 +37,23 @@ class EarlyStopping():
         return self.early_stop
 
 
+class Checkpoint():
+
+    def __init__(self, dirname, id):
+        self.dirname = dirname
+        self.id = id
+        self.curr_best_loss = np.inf
+        
+
+    def __call__(self, net, id, loss):
+        
+        if loss < self.curr_best_loss:
+            self.curr_best_loss = loss
+            path = Path(self.dirname) / f"params_{self.id}.pt"
+            path.parent.mkdir(exist_ok=True)
+            torch.save(net.state_dict(), path)
+
+
 class Trainer(BaseEstimator):
 
     def __init__(
@@ -51,11 +68,7 @@ class Trainer(BaseEstimator):
         self.cfg = model_config
 
         self.early_stopping = EarlyStopping(patience=self.cfg['es_patience'])
-
-        # EpochScoring(scoring='neg_root_mean_squared_error', name='train_accuracy', on_train=True)
-        # EpochScoring(scoring='accuracy', name='train_accuracy', on_train=True) # FIXME make customizable
-        # Checkpoint(dirname="skorch_cp", f_params=r"params_{}.pt".format(id), f_optimizer=None, f_criterion=None))
-
+        self.checkpoint = Checkpoint("temp_weights", self.cfg['id'])
         
         if self.cfg['categorical_indicator'] is not None:
             self.categorical_indicator = torch.BoolTensor(self.cfg['categorical_indicator'])
@@ -125,9 +138,7 @@ class Trainer(BaseEstimator):
 
             print(f"Epoch {epoch} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Valid loss: {loss_valid:.4f} | Valid score: {score_valid:.4f}")
 
-            path = Path("temp_weights") / f"params_{self.cfg['id']}.pt"
-            path.parent.mkdir(exist_ok=True)
-            torch.save(self.model.state_dict(), path)
+            self.checkpoint(self.model, loss_valid)
             
             self.early_stopping(loss_valid)
             if self.early_stopping.we_should_stop():

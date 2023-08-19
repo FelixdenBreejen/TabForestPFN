@@ -70,6 +70,8 @@ def make_default_results(sweep: SweepConfig):
     index = df_all['model_name'].unique().tolist() + [sweep.plot_name]
     df_new = pd.DataFrame(columns=df['data__keyword'].unique().tolist(), index=index)
 
+    assert sweep.plot_name not in index, f"Don't use plot name {sweep.plot_name}, the benchmark already has a model with that name"
+
     df_new.loc[sweep.plot_name] = df[df['hp'] == 'default']['mean_test_score'].to_list()
 
     for model_name in df_all['model_name'].unique():
