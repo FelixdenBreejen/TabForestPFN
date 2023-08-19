@@ -67,10 +67,11 @@ def make_default_results(sweep: SweepConfig):
 
     df_all = pd.read_csv(PATH_TO_ALL_BENCH_CSV)
 
-    index = df_all['model_name'].unique().tolist() + [sweep.plot_name]
-    df_new = pd.DataFrame(columns=df['data__keyword'].unique().tolist(), index=index)
+    benchmark_plot_names = df_all['model_name'].unique().tolist()
+    assert sweep.plot_name not in benchmark_plot_names, f"Don't use plot name {sweep.plot_name}, the benchmark already has a model with that name"
 
-    assert sweep.plot_name not in index, f"Don't use plot name {sweep.plot_name}, the benchmark already has a model with that name"
+    index = benchmark_plot_names + [sweep.plot_name]
+    df_new = pd.DataFrame(columns=df['data__keyword'].unique().tolist(), index=index)
 
     df_new.loc[sweep.plot_name] = df[df['hp'] == 'default']['mean_test_score'].to_list()
 
