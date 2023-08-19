@@ -62,6 +62,9 @@ class Trainer(BaseEstimator):
         for epoch in range(self.cfg['max_epochs']):
             
             self.model.train()
+            n = 0
+            loss_train = 0
+            score_train = 0
 
             for batch in loader_train:
 
@@ -75,10 +78,17 @@ class Trainer(BaseEstimator):
                 loss.backward()
                 self.optimizer.step()
 
-                loss_train = loss.item()
-                score_train = self.score(y_hat_train, y)
+                n += x.shape[0]
+                loss_train += loss.item() * x.shape[0]
+                score_train += self.score(y_hat_train, y) * x.shape[0]
 
+            loss_train /= n
+            score_train /= n
             self.model.eval()
+
+            n = 0
+            loss_valid = 0
+            score_valid = 0
 
             with torch.no_grad():
 
@@ -87,8 +97,13 @@ class Trainer(BaseEstimator):
                     x = x.cuda()
                     y = y.cuda()
                     y_hat_valid = self.model(x)
-                    loss_valid = self.loss(y_hat_valid, y).item()
-                    score_valid = self.score(y_hat_valid, y)
+                    
+                    n += x.shape[0]
+                    loss_valid += self.loss(y_hat_valid, y).item() * x.shape[0]
+                    score_valid += self.score(y_hat_valid, y) * x.shape[0]
+
+            loss_valid /= n
+            score_valid /= n
 
             print(f"Epoch {epoch} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Valid loss: {loss_valid:.4f} | Valid score: {score_valid:.4f}")
 
@@ -165,7 +180,6 @@ class Trainer(BaseEstimator):
             raise ValueError("Optimizer not recognized")
         
         return optimizer
-        
         
 
     def select_scheduler(self):

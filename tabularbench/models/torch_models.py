@@ -47,23 +47,3 @@ def create_ft_transformer_torch(model_config, id, use_checkpoints=True):
     )
 
     return trainer
-
-    model_skorch = NeuralNetClassifier(
-        Transformer,
-        # Shuffle training data on each epoch
-        criterion=torch.nn.CrossEntropyLoss,
-        optimizer=optimizer,
-        batch_size=max(batch_size, 1),  # if batch size is float, it will be reset during fit
-        iterator_train__shuffle=True,
-        module__d_numerical=1,  # will be change when fitted
-        module__categories=None,  # will be change when fitted
-        module__d_out=1,  # idem
-        module__regression=False,
-        module__categorical_indicator=categorical_indicator,
-        module__feature_representation_list=None,
-        verbose=0,
-        callbacks=callbacks,
-        **kwargs
-    )
-
-    return model_skorch

@@ -8,7 +8,6 @@ from tabularbench.models.skorch_models import create_resnet_skorch, create_ft_tr
 from tabularbench.models.skorch_models_regression import create_resnet_regressor_skorch, create_ft_transformer_regressor_skorch, create_rtdl_mlp_regressor_skorch, \
                                             create_rtdl_mlp_pwl_regressor_skorch
 from tabularbench.models.torch_models import create_ft_transformer_torch
-from tabularbench.models.torch_models_regression import create_ft_transformer_regressor_torch
 from tabularbench.models.TabSurvey.models.saint import SAINT
 
 
@@ -137,7 +136,7 @@ total_config[keyword] = {
                             "default": config_regression_default},
 }
 
-model_keyword_dic[config_regression["model_name"]["value"]] = create_ft_transformer_regressor_torch
+model_keyword_dic[config_regression["model_name"]["value"]] = create_ft_transformer_torch
 model_keyword_dic[config_classif["model_name"]["value"]] = create_ft_transformer_torch
 
 from tabularbench.configs.model_configs.saint_config import config_classif, config_regression, config_classif_default, config_regression_default
