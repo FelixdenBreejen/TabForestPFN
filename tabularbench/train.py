@@ -86,6 +86,84 @@ def skorch_evaluation(model, x_train, x_val, x_test, y_train, y_val, y_test, con
     return train_score, val_score, test_score
 
 
+def torch_evaluation(model, x_train, x_val, x_test, y_train, y_val, y_test, config, model_id, return_r2,
+                      delete_checkpoint):
+    """
+    Evaluate the model
+    """
+    y_hat_train = model.predict(x_train)
+    if x_val is not None:
+        y_hat_val = model.predict(x_val)
+    y_hat_test = model.predict(x_test)
+
+    # Compute the best train score achieved
+    if "regression" in config.keys() and config["regression"]:
+        if np.any(np.isnan(y_hat_train)):
+            train_score = np.nan
+        else:
+            if return_r2:
+                train_score = r2_score(y_train.reshape(-1), y_hat_train.reshape(-1))
+            else:
+                train_score = np.sqrt(np.mean((y_hat_train.reshape(-1) - y_train.reshape(-1)) ** 2))
+    else:
+        train_score = np.sum((y_hat_train == y_train)) / len(y_train)
+
+    if "model__use_checkpoints" in config.keys() and config["model__use_checkpoints"]:
+        # check that r"skorch_cp/params_{}.pt".format(model_id) exists
+        if os.path.exists(r"temp_weights/params_{}.pt".format(model_id)):
+            print("Using checkpoint")
+            if not config["regression"]:
+                model.load_params(r"temp_weights/params_{}.pt".format(model_id))
+            else:
+                # TransformedTargetRegressor
+                if config["transformed_target"]:
+                    model.regressor_.load_params(r"temp_weights/params_{}.pt".format(model_id))
+                else:
+                    model.load_params(r"temp_weights/params_{}.pt".format(model_id))
+        else:
+            print("Checkpoint does not exist")
+            print("Outputting NaN")
+            return np.nan, np.nan, np.nan
+
+    y_hat_train = model.predict(x_train)
+    if x_val is not None:
+        y_hat_val = model.predict(x_val)
+    y_hat_test = model.predict(x_test)
+
+    if x_val is not None and not np.isnan(y_hat_val).any():
+        if "regression" in config.keys() and config["regression"]:
+            if return_r2:
+                val_score = r2_score(y_val.reshape(-1), y_hat_val.reshape(-1))
+            else:
+                val_score = np.sqrt(np.mean((y_hat_val.reshape(-1) - y_val.reshape(-1)) ** 2))
+        else:
+            val_score = np.sum((y_hat_val == y_val)) / len(y_val)
+    else:
+        val_score = np.nan
+
+    if not np.isnan(y_hat_test).any():
+        if "regression" in config.keys() and config["regression"]:
+            if return_r2:
+                test_score = r2_score(y_test.reshape(-1), y_hat_test.reshape(-1))
+            else:
+                test_score = np.sqrt(np.mean((y_hat_test.reshape(-1) - y_test.reshape(-1)) ** 2))
+        else:
+            test_score = np.sum((y_hat_test == y_test)) / len(y_test)
+            print(f"Train score checkpoint: {np.sum((y_hat_train == y_train)) / len(y_train)}")
+    else:
+        test_score = np.nan
+
+    if "model__use_checkpoints" in config.keys() and config["model__use_checkpoints"] and not return_r2 and \
+            delete_checkpoint:
+        try:
+            os.remove(r"temp_weights/params_{}.pt".format(model_id))
+        except:
+            print("could not remove params file")
+            pass
+
+    return train_score, val_score, test_score
+
+
 def sklearn_evaluation(fitted_model, x_train, x_val, x_test, y_train, y_val, y_test, config, return_r2):
     """
     Evaluate a fitted model from sklearn
@@ -134,6 +212,11 @@ def evaluate_model(fitted_model, x_train, y_train, x_val, y_val, x_test, y_test,
         train_score, val_score, test_score = skorch_evaluation(fitted_model, x_train, x_val, x_test, y_train, y_val,
                                                                y_test, config, model_id, return_r2=return_r2,
                                                                delete_checkpoint=delete_checkpoint)
+    elif config["model_type"] == "torch":
+        train_score, val_score, test_score = torch_evaluation(fitted_model, x_train, x_val, x_test, y_train, y_val,
+                                                               y_test, config, model_id, return_r2=return_r2,
+                                                               delete_checkpoint=delete_checkpoint)
+
     elif config["model_type"] == "tab_survey":
         train_score, val_score, test_score = sklearn_evaluation(fitted_model, x_train, x_val, x_test, y_train, y_val,
                                                                 y_test, config, return_r2=return_r2)
@@ -154,7 +237,7 @@ def train_model(iter, x_train, y_train, categorical_indicator, config, id):
         model_raw = create_model(config, categorical_indicator, num_features=x_train.shape[1], id=id,
                                  cat_dims=list((x_train[:, categorical_indicator].max(0) + 1).astype(int)))
     elif config["model_type"] == "torch":
-        model_raw = create_model(config, categorical_indicator)
+        model_raw = create_model(config, categorical_indicator, id=id)
 
     if config["regression"] and config["transformed_target"]:
         model = TransformedTargetRegressor(model_raw, transformer=QuantileTransformer(output_distribution="normal"))

@@ -17,7 +17,7 @@ from skorch.callbacks import Callback
 import numpy as np
 
 
-def modify_config(model_config):
+def modify_config(model_config, id):
 
     if "lr_scheduler" not in model_config:
         model_config['lr_scheduler'] = False
@@ -31,16 +31,18 @@ def modify_config(model_config):
     if "categories" not in model_config:
         model_config['categories'] = None
 
+    model_config['id'] = id
+
 
 def create_ft_transformer_torch(model_config, id, use_checkpoints=True):
 
     model_config = {**model_config}
     
-    modify_config(model_config)
+    modify_config(model_config, id)
 
     trainer = Trainer(
-        model=Transformer,
-        input_shape_setter=InputShapeSetterTransformer,
+        Model=Transformer,
+        InputShapeSetter=InputShapeSetterTransformer,
         model_config=model_config,
     )
 
