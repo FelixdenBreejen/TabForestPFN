@@ -126,7 +126,7 @@ config_default = {
 }
 
 config_regression = dict(config_random,
-                                        **torch_config,
+                                        **skorch_config,
                                         **{
                                             "model_name": {
                                                 "value": "ft_transformer_regressor"
@@ -134,7 +134,7 @@ config_regression = dict(config_random,
                                         })
 
 config_regression_default = dict(config_default,
-                                        **torch_config_default,
+                                        **skorch_config,
                                         **{
                                             "model_name": {
                                                 "value": "ft_transformer_regressor"
@@ -142,7 +142,7 @@ config_regression_default = dict(config_default,
                                         })
 
 config_classif = dict(config_random,
-                                     **torch_config,
+                                     **skorch_config,
                                      **{
                                          "model_name": {
                                              "value": "ft_transformer"
@@ -150,7 +150,7 @@ config_classif = dict(config_random,
                                      })
 
 config_classif_default = dict(config_default,
-                                     **torch_config_default,
+                                     **skorch_config,
                                      **{
                                          "model_name": {
                                              "value": "ft_transformer"

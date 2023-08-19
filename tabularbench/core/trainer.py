@@ -116,7 +116,6 @@ class Trainer(BaseEstimator):
             with torch.no_grad():
 
                 for batch in loader_valid:
-                        
                     x, y = batch
                     x = x.cuda()
                     y = y.cuda()
@@ -124,7 +123,7 @@ class Trainer(BaseEstimator):
                     loss_valid = self.loss(y_hat_valid, y).item()
                     score_valid = self.score(y_hat_valid, y)
 
-            print(f"Epoch {epoch} | Train loss: {loss_train} | Train score: {score_train} | Valid loss: {loss_valid} | Valid score: {score_valid}")
+            print(f"Epoch {epoch} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Valid loss: {loss_valid:.4f} | Valid score: {score_valid:.4f}")
 
             path = Path("temp_weights") / f"params_{self.cfg['id']}.pt"
             path.parent.mkdir(exist_ok=True)
@@ -135,7 +134,6 @@ class Trainer(BaseEstimator):
                 print("Early stopping")
                 break
 
-        
             self.scheduler.step()
 
 
