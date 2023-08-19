@@ -15,9 +15,11 @@ def create_model(config, categorical_indicator, num_features=None, id=None, cat_
     for key in config.keys():
         if key.startswith("model__"):
             model_config[key[len("model__"):]] = config[key]
+    model_config['regression'] = config["regression"]
+
     if config["model_type"] == "skorch" or config["model_type"] == "torch":
         model_config["categorical_indicator"] = categorical_indicator
-        return model_function(**model_config, id=id)
+        return model_function(model_config, id=id)
     elif config["model_type"] == "sklearn":
         if config["model_name"].startswith("hgbt"):
             # Use native support for categorical variables

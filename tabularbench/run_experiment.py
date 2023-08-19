@@ -42,7 +42,6 @@ def train_model_on_config(config=None) -> dict:
    
     config = {**config, **CONFIG_DEFAULT}
     print(config)
-    # Modify the config in certain cases
     config = modify_config(config)
 
     if debugger_is_active():

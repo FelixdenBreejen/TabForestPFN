@@ -11,63 +11,40 @@ from tabularbench.models.tabular.bin.mlp import MLP, InputShapeSetterMLP
 from tabularbench.models.tabular.bin.mlp_pwl import MLP_PWL, InputShapeSetterMLP_PWL
 from tabularbench.models.tabular.bin.ft_transformer import Transformer, InputShapeSetterTransformer
 
-from tabularbench.core.trainer import TrainerClassifier
+from tabularbench.core.trainer import Trainer
 
 from skorch.callbacks import Callback
 import numpy as np
 
 
-def create_ft_transformer_torch(id, use_checkpoints=True, categorical_indicator=None, **kwargs):
+def modify_config(model_config):
 
-    if "lr_scheduler" not in kwargs:
-        lr_scheduler = False
-    else:
-        lr_scheduler = kwargs.pop("lr_scheduler")
-    if "es_patience" not in kwargs.keys():
-        es_patience = 40
-    else:
-        es_patience = kwargs.pop('es_patience')
-    if "lr_patience" not in kwargs.keys():
-        lr_patience = 30
-    else:
-        lr_patience = kwargs.pop('lr_patience')
-    optimizer = kwargs.pop('optimizer')
-    if optimizer == "adam":
-        optimizer = Adam
-    elif optimizer == "adamw":
-        optimizer = AdamW
-    elif optimizer == "sgd":
-        optimizer = SGD
-
-    batch_size = kwargs.pop('batch_size')
-    if "categories" not in kwargs.keys():
-        categories = None
-    else:
-        categories = kwargs.pop('categories')
-
-    callbacks = [InputShapeSetterTransformer(categorical_indicator=categorical_indicator, categories=categories),
-                 EarlyStopping(monitor="valid_loss",
-                               patience=es_patience)]  # TODO try with train_loss, and in this case use checkpoint
-    callbacks.append(EpochScoring(scoring='accuracy', name='train_accuracy', on_train=True))
-    if lr_scheduler:
-        callbacks.append(LRScheduler(policy=ReduceLROnPlateau, patience=lr_patience, min_lr=2e-5,
-                                     factor=0.2))  # FIXME make customizable
-    if use_checkpoints:
-        callbacks.append(Checkpoint(dirname="skorch_cp", f_params=r"params_{}.pt".format(id), f_optimizer=None,
-                                    f_criterion=None))
-
-    if not categorical_indicator is None:
-        categorical_indicator = torch.BoolTensor(categorical_indicator)
+    if "lr_scheduler" not in model_config:
+        model_config['lr_scheduler'] = False
+        
+    if "es_patience" not in model_config:
+        model_config['es_patience'] = 40
+        
+    if "lr_patience" not in model_config:
+        model_config['lr_patience'] = 30
+        
+    if "categories" not in model_config:
+        model_config['categories'] = None
 
 
-    trainer = TrainerClassifier(
+def create_ft_transformer_torch(model_config, id, use_checkpoints=True):
+
+    model_config = {**model_config}
+    
+    modify_config(model_config)
+
+    trainer = Trainer(
         model=Transformer,
         input_shape_setter=InputShapeSetterTransformer,
-        optimizer=optimizer,
-        criterion=torch.nn.CrossEntropyLoss,
-        batch_size=batch_size
+        model_config=model_config,
     )
 
+    return trainer
 
     model_skorch = NeuralNetClassifier(
         Transformer,
