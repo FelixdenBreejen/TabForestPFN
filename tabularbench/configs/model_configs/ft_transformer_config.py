@@ -1,4 +1,5 @@
 from tabularbench.configs.model_configs.skorch_config import skorch_config, skorch_config_default
+from tabularbench.configs.model_configs.torch_config import torch_config, torch_config_default
 
 config_random = {
     "model__module__activation": {
@@ -125,7 +126,7 @@ config_default = {
 }
 
 config_regression = dict(config_random,
-                                        **skorch_config,
+                                        **torch_config,
                                         **{
                                             "model_name": {
                                                 "value": "ft_transformer_regressor"
@@ -133,7 +134,7 @@ config_regression = dict(config_random,
                                         })
 
 config_regression_default = dict(config_default,
-                                        **skorch_config_default,
+                                        **torch_config_default,
                                         **{
                                             "model_name": {
                                                 "value": "ft_transformer_regressor"
@@ -141,7 +142,7 @@ config_regression_default = dict(config_default,
                                         })
 
 config_classif = dict(config_random,
-                                     **skorch_config,
+                                     **torch_config,
                                      **{
                                          "model_name": {
                                              "value": "ft_transformer"
@@ -149,7 +150,7 @@ config_classif = dict(config_random,
                                      })
 
 config_classif_default = dict(config_default,
-                                     **skorch_config_default,
+                                     **torch_config_default,
                                      **{
                                          "model_name": {
                                              "value": "ft_transformer"

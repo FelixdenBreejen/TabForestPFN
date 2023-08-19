@@ -318,8 +318,9 @@ class Transformer(nn.Module):
         x = self.head(x)
         if not self.regression:
             x = x.squeeze(-1)
-        return x
-    
+
+
+        return x    
 
 
 class InputShapeSetterTransformer(skorch.callbacks.Callback):

@@ -153,6 +153,8 @@ def train_model(iter, x_train, y_train, categorical_indicator, config, id):
     elif config["model_type"] == "tab_survey":
         model_raw = create_model(config, categorical_indicator, num_features=x_train.shape[1], id=id,
                                  cat_dims=list((x_train[:, categorical_indicator].max(0) + 1).astype(int)))
+    elif config["model_type"] == "torch":
+        model_raw = create_model(config, categorical_indicator)
 
     if config["regression"] and config["transformed_target"]:
         model = TransformedTargetRegressor(model_raw, transformer=QuantileTransformer(output_distribution="normal"))
