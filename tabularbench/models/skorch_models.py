@@ -270,6 +270,7 @@ def create_ft_transformer_skorch(id, wandb_run=None, use_checkpoints=True,
         module__d_out=1,  # idem
         module__regression=False,
         module__categorical_indicator=categorical_indicator,
+        module__feature_representation_list=None,
         verbose=0,
         callbacks=callbacks,
         **kwargs
