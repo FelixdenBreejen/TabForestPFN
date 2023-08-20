@@ -51,3 +51,20 @@ class Checkpoint():
             path = Path(self.dirname) / f"params_{self.id}.pt"
             path.parent.mkdir(exist_ok=True)
             torch.save(net.state_dict(), path)
+
+
+
+class EpochStatistics():
+
+    def __init__(self) -> None:
+        self.n = 0
+        self.loss = 0
+        self.score = 0
+        
+    def update(self, loss, score, n):
+        self.n += n
+        self.loss += loss * n
+        self.score += score * n
+
+    def get(self):
+        return self.loss / self.n, self.score / self.n

@@ -5,7 +5,7 @@ from torch.optim import AdamW, Adam, SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 import numpy as np
 
-from tabularbench.core.callbacks import EarlyStopping, Checkpoint
+from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 
 
 class Trainer(BaseEstimator):
@@ -256,20 +256,6 @@ class Trainer(BaseEstimator):
         return loss
 
 
-class EpochStatistics():
-
-    def __init__(self) -> None:
-        self.n = 0
-        self.loss = 0
-        self.score = 0
-        
-    def update(self, loss, score, n):
-        self.n += n
-        self.loss += loss * n
-        self.score += score * n
-
-    def get(self):
-        return self.loss / self.n, self.score / self.n
 
 
 class NonLinearRegLoss(torch.nn.Module):
