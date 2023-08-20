@@ -63,9 +63,8 @@ class Trainer(BaseEstimator):
         for epoch in range(self.cfg['max_epochs']):
             
             self.model.train()
-            n = 0
-            loss_train = 0
-            score_train = 0
+        
+            epoch_statistics_train = EpochStatistics()
 
             for batch in loader_train:
 
@@ -76,23 +75,20 @@ class Trainer(BaseEstimator):
                 loss = self.loss(y_hat_train, y)
                 loss_reg = self.loss_reg(x_regs, x)
                 loss += loss_reg
+                score = self.score(y_hat_train, y)
 
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
 
-                n += x.shape[0]
-                loss_train += loss.item() * x.shape[0]
-                score_train += self.score(y_hat_train, y) * x.shape[0]
+                epoch_statistics_train.update(x.shape[0], loss.item(), score)
 
-            loss_train /= n
-            score_train /= n
+            loss_train, score_train = epoch_statistics_train.get()
+
             self.model.eval()
 
-            n = 0
-            loss_valid = 0
-            score_valid = 0
-
+            epoch_statistics_valid = EpochStatistics()
+            
             with torch.no_grad():
 
                 for batch in loader_valid:
@@ -100,13 +96,12 @@ class Trainer(BaseEstimator):
                     x = x.cuda()
                     y = y.cuda()
                     y_hat_valid, _ = self.model(x)
+                    loss_valid = self.loss(y_hat_valid, y)
+                    score_valid = self.score(y_hat_valid, y)
                     
-                    n += x.shape[0]
-                    loss_valid += self.loss(y_hat_valid, y).item() * x.shape[0]
-                    score_valid += self.score(y_hat_valid, y) * x.shape[0]
+                    epoch_statistics_valid.update(x.shape[0], loss_valid.item(), score_valid)
 
-            loss_valid /= n
-            score_valid /= n
+            loss_valid, score_valid = epoch_statistics_valid.get()
 
             print(f"Epoch {epoch} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Valid loss: {loss_valid:.4f} | Valid score: {score_valid:.4f}")
 
@@ -260,6 +255,21 @@ class Trainer(BaseEstimator):
 
         return loss
 
+
+class EpochStatistics():
+
+    def __init__(self) -> None:
+        self.n = 0
+        self.loss = 0
+        self.score = 0
+        
+    def update(self, loss, score, n):
+        self.n += n
+        self.loss += loss * n
+        self.score += score * n
+
+    def get(self):
+        return self.loss / self.n, self.score / self.n
 
 
 class NonLinearRegLoss(torch.nn.Module):

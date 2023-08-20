@@ -305,10 +305,10 @@ class Transformer(nn.Module):
                 x_residual,
                 *self._get_kv_compressions(layer),
             )
-            x_residual = x_residual[:, :1] if is_last_layer else x_residual
+            # x_residual = x_residual[:, :1] if is_last_layer else x_residual
 
-            if is_last_layer:
-                x = x[:, : x_residual.shape[1]]
+            # if is_last_layer:
+            #     x = x[:, : x_residual.shape[1]]
             x = self._end_residual(x, x_residual, layer, 0)
 
             x_residual = self._start_residual(x, layer, 1)
@@ -319,18 +319,22 @@ class Transformer(nn.Module):
             x_residual = layer['linear1'](x_residual)
             x = self._end_residual(x, x_residual, layer, 1)
 
-        assert x.shape[1] == 1
-        x = x[:, 0]
+        # assert x.shape[1] == 1
+        # x = x[:, 0]
         if self.last_normalization is not None:
             x = self.last_normalization(x)
-        x_prehead = self.last_activation(x)
-        x = self.head(x_prehead)
+        x = self.last_activation(x)
+        
+        x_featurewise = x.split(1, dim=1)
+        x_cls = x_featurewise[0]
+        
+        x = self.head(x_cls[:, 0, :])
         if not self.regression:
             x = x.squeeze(-1)
 
         x_regs_list = []
-        for feature_linear in self.feature_linears:
-            x_regs = feature_linear(x_prehead)
+        for i, feature_linear in enumerate(self.feature_linears):
+            x_regs = feature_linear(x_featurewise[i+1][:, 0, :])
             x_regs_list.append(x_regs)
 
         return x, x_regs_list
