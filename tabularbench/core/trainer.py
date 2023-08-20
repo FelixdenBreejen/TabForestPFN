@@ -81,7 +81,7 @@ class Trainer(BaseEstimator):
                 loss.backward()
                 self.optimizer.step()
 
-                epoch_statistics_train.update(x.shape[0], loss.item(), score)
+                epoch_statistics_train.update(loss.item(), score, x.shape[0])
 
             loss_train, score_train = epoch_statistics_train.get()
 
@@ -99,7 +99,7 @@ class Trainer(BaseEstimator):
                     loss_valid = self.loss(y_hat_valid, y)
                     score_valid = self.score(y_hat_valid, y)
                     
-                    epoch_statistics_valid.update(x.shape[0], loss_valid.item(), score_valid)
+                    epoch_statistics_valid.update(loss_valid.item(), score_valid, x.shape[0])
 
             loss_valid, score_valid = epoch_statistics_valid.get()
 
