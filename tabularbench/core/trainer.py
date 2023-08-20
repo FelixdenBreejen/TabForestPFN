@@ -112,7 +112,7 @@ class Trainer(BaseEstimator):
                 print("Early stopping")
                 break
 
-            self.scheduler.step()
+            self.scheduler.step(loss_valid)
 
 
     def predict(self, x: np.ndarray):
