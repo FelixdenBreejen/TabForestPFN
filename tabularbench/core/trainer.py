@@ -44,7 +44,6 @@ class Trainer(BaseEstimator):
 
         self.model = self.ModelClass(**module_config).cuda()
         self.loss = self.select_loss().cuda()
-        self.loss_reg = NonLinearRegLoss(module_config).cuda()
 
         self.optimizer = self.select_optimizer()
         self.scheduler = self.select_scheduler()
@@ -71,10 +70,8 @@ class Trainer(BaseEstimator):
                 x, y = batch
                 x = x.cuda()
                 y = y.cuda()
-                y_hat_train, x_regs = self.model(x)
+                y_hat_train = self.model(x)
                 loss = self.loss(y_hat_train, y)
-                loss_reg = self.loss_reg(x_regs, x)
-                loss += loss_reg
                 score = self.score(y_hat_train, y)
 
                 self.optimizer.zero_grad()
@@ -95,7 +92,7 @@ class Trainer(BaseEstimator):
                     x, y = batch
                     x = x.cuda()
                     y = y.cuda()
-                    y_hat_valid, _ = self.model(x)
+                    y_hat_valid = self.model(x)
                     loss_valid = self.loss(y_hat_valid, y)
                     score_valid = self.score(y_hat_valid, y)
                     
@@ -127,7 +124,7 @@ class Trainer(BaseEstimator):
         with torch.no_grad():
             for batch in loader:
                 x = batch[0].cuda()
-                output, _ = self.model(x)
+                output = self.model(x)
                 output = output.cpu().numpy()
 
                 if self.cfg['regression']:
@@ -254,46 +251,6 @@ class Trainer(BaseEstimator):
             loss = torch.nn.CrossEntropyLoss()
 
         return loss
-
-
-
-
-class NonLinearRegLoss(torch.nn.Module):
-
-    def __init__(self, module_config) -> None:
-        super().__init__()
-
-        self.regression = module_config['regression']
-        self.categorical_indicator = module_config['categorical_indicator']
-        self.feature_representation_list = module_config['feature_representation_list']
-
-
-    def forward(self, x_q_pred, x_original):
-
-        batch_size = x_original.shape[0]
-        x_ori_num = x_original[:, self.categorical_indicator == False]
-        total_loss = 0
-
-        for i, feature_representation in enumerate(self.feature_representation_list):
-
-            bounds = torch.from_numpy(feature_representation.get_bounds()).float().cuda()
-            x_pred = x_q_pred[i]
-
-            lowerbound = x_ori_num[:, i, None] > bounds[None, :]
-    
-            zeropad = torch.zeros((batch_size, 1), device=x_original.device).bool()
-            onespad = torch.ones((batch_size, 1), device=x_original.device).bool()
-            padded = torch.cat((onespad, lowerbound, zeropad), dim=1)
-
-            onehot = padded[:, 1:] ^ padded[:, :-1]
-            _, labels = onehot.max(dim=1)
-
-            total_loss += torch.nn.CrossEntropyLoss()(x_pred, labels)
-
-        loss = total_loss / len(self.feature_representation_list)
-
-        return loss
-
 
 
 def extract_module_config(model_config, input_shape_config):
