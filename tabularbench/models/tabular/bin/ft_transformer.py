@@ -82,27 +82,30 @@ class Tokenizer(nn.Module):
 
 class MultiheadAttention(nn.Module):
     def __init__(
-        self, d: int, n_heads: int, dropout: float, initialization: str
+        self, d: int, n_heads: int, n_tokens: int, dropout: float, initialization: str
     ) -> None:
         if n_heads > 1:
             assert d % n_heads == 0
         assert initialization in ['xavier', 'kaiming']
 
+        self.n_tokens = n_tokens
+
         super().__init__()
-        self.W_q = nn.Linear(d, d)
-        self.W_k = nn.Linear(d, d)
-        self.W_v = nn.Linear(d, d)
-        self.W_out = nn.Linear(d, d) if n_heads > 1 else None
+        self.W_q = nn.ModuleList(nn.Linear(d, d) for _ in range(n_tokens))
+        self.W_k = nn.ModuleList(nn.Linear(d, d) for _ in range(n_tokens))
+        self.W_v = nn.ModuleList(nn.Linear(d, d) for _ in range(n_tokens))
+        self.W_out = nn.ModuleList(nn.Linear(d, d) for _ in range(n_tokens)) if n_heads > 1 else None
         self.n_heads = n_heads
         self.dropout = nn.Dropout(dropout) if dropout else None
 
-        for m in [self.W_q, self.W_k, self.W_v]:
+        for m in [*self.W_q, *self.W_k, *self.W_v]:
             if initialization == 'xavier' and (n_heads > 1 or m is not self.W_v):
                 # gain is needed since W_qkv is represented with 3 separate layers
                 nn_init.xavier_uniform_(m.weight, gain=1 / math.sqrt(2))
             nn_init.zeros_(m.bias)
         if self.W_out is not None:
-            nn_init.zeros_(self.W_out.bias)
+            for m in self.W_out:
+                nn_init.zeros_(m.bias)
 
     def _reshape(self, x: Tensor) -> Tensor:
         batch_size, n_tokens, d = x.shape
@@ -119,7 +122,12 @@ class MultiheadAttention(nn.Module):
         key_compression: ty.Optional[nn.Linear],
         value_compression: ty.Optional[nn.Linear],
     ) -> Tensor:
-        q, k, v = self.W_q(x_qkv), self.W_k(x_qkv), self.W_v(x_qkv)
+        
+        x_qkv_split = torch.split(x_qkv, 1, dim=1)
+        q = torch.cat([self.W_q[i](x_qkv_split[i]) for i in range(self.n_tokens)], dim=1)
+        k = torch.cat([self.W_k[i](x_qkv_split[i]) for i in range(self.n_tokens)], dim=1)
+        v = torch.cat([self.W_v[i](x_qkv_split[i]) for i in range(self.n_tokens)], dim=1)
+
         for tensor in [q, k, v]:
             assert tensor.shape[-1] % self.n_heads == 0
         if key_compression is not None:
@@ -149,8 +157,10 @@ class MultiheadAttention(nn.Module):
             .transpose(1, 2)
             .reshape(batch_size, n_q_tokens, self.n_heads * d_head_value)
         )
+
         if self.W_out is not None:
-            x = self.W_out(x)
+            x_split = torch.split(x, 1, dim=1)
+            x = torch.cat([self.W_out[i](x_split[i]) for i in range(self.n_tokens)], dim=1)
         return x
 
 
@@ -232,7 +242,7 @@ class Transformer(nn.Module):
             layer = nn.ModuleDict(
                 {
                     'attention': MultiheadAttention(
-                        d_token, n_heads, attention_dropout, initialization
+                        d_token, n_heads, n_tokens, attention_dropout, initialization
                     ),
                     'linear0': nn.Linear(
                         d_token, d_hidden * (2 if activation.endswith('glu') else 1)
