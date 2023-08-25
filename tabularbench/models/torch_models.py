@@ -12,6 +12,7 @@ from tabularbench.models.tabular.bin.mlp_pwl import MLP_PWL, InputShapeSetterMLP
 from tabularbench.models.tabular.bin.ft_transformer import Transformer, InputShapeSetterTransformer
 
 from tabularbench.core.trainer import Trainer
+from tabularbench.core.trainer_pfn import TrainerPFN
 
 from skorch.callbacks import Callback
 import numpy as np
@@ -45,5 +46,16 @@ def create_ft_transformer_torch(model_config, id, use_checkpoints=True):
         InputShapeSetter=InputShapeSetterTransformer,
         model_config=model_config,
     )
+
+    return trainer
+
+
+def create_tab_pfn_torch(model_config, id):
+
+    model_config = {**model_config}
+    
+    modify_config(model_config, id)
+
+    trainer = TrainerPFN(model_config=model_config)
 
     return trainer

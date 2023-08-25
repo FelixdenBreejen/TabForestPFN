@@ -87,6 +87,7 @@ def launch_sweeps(cfg) -> None:
     path = cfg.output_dir
 
     time_seed = int(time.time()) * cfg.continue_last_output
+    mp.set_start_method('spawn')
 
     processes = []
     for seed, gpu in enumerate(gpus):
