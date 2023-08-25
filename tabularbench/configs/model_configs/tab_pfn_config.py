@@ -9,8 +9,17 @@ config_random = {
     "model__optimizer__weight_decay": {
         "value": 0.
     },
+    "model__batch_size": {
+        "value": 1024
+    },
+    "model__n_ensembles": {
+        "value": 100
+    },
     "model__lr_scheduler": {
         "values": [True, False]
+    },
+    "model__finetune": {
+        "value": True
     }
 }
 
@@ -21,39 +30,52 @@ config_default = {
     "model__optimizer__weight_decay": {
         "value": 0.
     },
+    "model__batch_size": {
+        "value": 1024
+    },
+    "model__n_ensembles": {
+        "value": 100
+    },
     "model__lr_scheduler": {
+        "value": True
+    },
+    "model__finetune": {
         "value": True
     }
 }
 
-config_regression = dict(config_random,
-                                        **torch_config,
-                                        **{
-                                            "model_name": {
-                                                "value": "tab_pfn_regressor"
-                                            },
-                                        })
+config_model_name_regressor = {
+    "model_name": {
+        "value": "tab_pfn_regressor"
+    },
+}
 
-config_regression_default = dict(config_default,
-                                        **torch_config_default,
-                                        **{
-                                            "model_name": {
-                                                "value": "tab_pfn_regressor"
-                                            },
-                                        })
+config_model_name_classif = {
+    "model_name": {
+        "value": "tab_pfn"
+    },
+}
 
-config_classif = dict(config_random,
-                                     **torch_config,
-                                     **{
-                                         "model_name": {
-                                             "value": "tab_pfn"
-                                         },
-                                     })
+config_regression = {
+    **torch_config,
+    **config_model_name_regressor,
+    **config_random,
+}
 
-config_classif_default = dict(config_default,
-                                     **torch_config_default,
-                                     **{
-                                         "model_name": {
-                                             "value": "tab_pfn"
-                                         },
-                                     })
+config_regression_default = {
+    **torch_config_default,
+    **config_model_name_regressor,
+    **config_default,
+}
+
+config_classif = {
+    **torch_config,
+    **config_model_name_classif,
+    **config_random,
+}
+
+config_classif_default = {
+    **torch_config_default,
+    **config_model_name_classif,
+    **config_default,
+}

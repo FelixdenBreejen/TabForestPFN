@@ -32,20 +32,6 @@ class TrainerPFN(BaseEstimator):
         self.model, pretrain_config = load_pretrained_model()
         self.model.to('cuda')
 
-        input_shape_setter = self.InputShapeSetterClass(
-            categorical_indicator = self.cfg['categorical_indicator'],
-            regression = self.cfg['regression'],
-            batch_size = self.cfg['batch_size'],
-            categories = self.cfg['categories'],
-        )
-
-        input_shape_config = input_shape_setter.on_train_begin(None, x_train, y_train)
-
-        module_config = extract_module_config(self.cfg, input_shape_config)
-
-        self.model = self.ModelClass(**module_config).cuda()
-        self.loss = self.select_loss().cuda()
-
         self.optimizer = self.select_optimizer()
         self.scheduler = self.select_scheduler()
 
@@ -252,18 +238,3 @@ class TrainerPFN(BaseEstimator):
             loss = torch.nn.CrossEntropyLoss()
 
         return loss
-
-
-def extract_module_config(model_config, input_shape_config):
-
-    module_config = {}
-    total_config = {**model_config, **input_shape_config}
-
-    for key in total_config.keys():
-        if key.startswith("module__"):
-            module_config[key[len("module__"):]] = total_config[key]
-
-    module_config['regression'] = total_config['regression']
-    module_config['categorical_indicator'] = total_config['categorical_indicator']
-
-    return module_config
