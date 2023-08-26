@@ -42,12 +42,12 @@ class TabPFNDataset(torch.utils.data.Dataset):
         # self.x_train = self.x_train[:, permute]
         # self.x_test = self.x_test[:, permute]
 
-        
-
         self.x_tests = self.split_in_chunks(self.x_test, batch_size)
 
-        # this single eval pos is necessary for the tab pfn forward pass
-        self.single_eval_pos = self.batch_size
+        # This single eval pos is necessary for the tab pfn forward pass
+        # It's a marker for when the training data ends and the test data starts
+        # We push the whole training data through the model, unless it's bigger than the batch size
+        self.single_eval_pos = min(self.n_train_observations, self.batch_size)
         
         if y_test is not None:
             self.y_tests = self.split_in_chunks(self.y_test, batch_size)
@@ -58,8 +58,7 @@ class TabPFNDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
 
-        # We push the whole training data through the model, unless bigger than the batch size
-        train_size = min(self.n_train_observations, self.batch_size)
+        train_size = self.single_eval_pos
 
         train_indices = np.random.choice(
             self.n_train_observations, 

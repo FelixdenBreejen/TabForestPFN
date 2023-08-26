@@ -10,10 +10,10 @@ config_random = {
         "value": 0.
     },
     "model__batch_size": {
-        "value": 1024
+        "value": 10000
     },
     "model__n_ensembles": {
-        "value": 10
+        "value": 1
     },
     "model__lr_scheduler": {
         "values": [True, False]
@@ -34,10 +34,10 @@ config_default = {
         "value": 0.
     },
     "model__batch_size": {
-        "value": 1024
+        "value": 10000
     },
     "model__n_ensembles": {
-        "value": 10
+        "value": 1
     },
     "model__lr_scheduler": {
         "value": True
