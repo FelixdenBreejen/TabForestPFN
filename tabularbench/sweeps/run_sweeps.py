@@ -45,6 +45,8 @@ def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
         if sweep_config.random_search:
             search_sweep(sweep_config, seed=seed, device=device, is_random=True)
 
+    end_log_to_file()
+
 
 def log_to_file(output_dir: str):
 
@@ -55,6 +57,12 @@ def log_to_file(output_dir: str):
 
     sys.stdout = open(log_dir / log_file_name_stdout, "a", 1)
     sys.stderr = open(log_dir / log_file_name_stderr, "a", 1)
+
+
+def end_log_to_file():
+    
+    sys.stdout.close()
+    sys.stderr.close()
 
 
 def search_sweep(sweep: SweepConfig, seed: int, device: str, is_random: bool):

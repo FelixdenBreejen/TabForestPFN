@@ -5,6 +5,7 @@ import subprocess
 import time
 
 import pandas as pd
+import numpy as np
 
 from tabularbench.configs.all_model_configs import total_config
 from tabularbench.sweeps.sweep_config import SweepConfig, sweep_config_maker
@@ -30,10 +31,13 @@ def monitor_and_make_plots(output_dir: str, delay_in_seconds: int = 10):
             time.sleep(delay_in_seconds)
 
         while True:
+                
             make_results_csv_modified_for_plotting(sweep)
-            make_hyperparam_plots(sweep)
             make_random_sweep_plots(sweep)
 
+            if sweep.random_search:
+                make_hyperparam_plots(sweep)
+            
             if sweep_random_finished(sweep) or not sweep.random_search:
                 break
 
@@ -101,6 +105,11 @@ def make_results_csv_modified_for_plotting(sweep: SweepConfig):
     df['data__openmlid'] = df['data__keyword']
     df['data__keyword'] = df['data__openmlid'].map(dict(zip(sweep.task_ids, sweep.dataset_names)))
     df['model_name'] = sweep.plot_name
+
+    if not sweep.random_search:
+        # for default sweep, we want a straight line, so we fake the results by duplicating them
+        df = pd.concat([df]*1000)
+
 
     df.to_csv(sweep.path / RESULTS_MODIFIED_FILE_NAME, mode='w', index=False, header=True)
 
