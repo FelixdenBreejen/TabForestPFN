@@ -9,6 +9,8 @@ from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatisti
 from tabularbench.models.tabPFN.load_model import load_pretrained_model
 from tabularbench.models.tabPFN.dataset import TabPFNDataset
 
+from tabpfn import TabPFNClassifier
+
 
 class TrainerPFN(BaseEstimator):
 
@@ -107,7 +109,6 @@ class TrainerPFN(BaseEstimator):
 
         self.model.eval()
 
-
         y_hat_list = []
 
         dataset = TabPFNDataset(self.x_train, self.y_train, x, batch_size=self.cfg['batch_size'])
@@ -118,18 +119,22 @@ class TrainerPFN(BaseEstimator):
                 y_hat_pieces = []
 
                 for input in loader:
-                    
-                    input = tuple(x.to(self.cfg['device']) for x in input)
 
-                    output = self.model(input, single_eval_pos=dataset.single_eval_pos)
-                    output = output.cpu().numpy()
+                    classif = TabPFNClassifier(device=self.cfg['device'], N_ensemble_configurations=3)
+                    classif.fit(input[0], input[1])
+                    output = classif.predict_proba(input[2])
+                    
+                    # input = tuple(x.to(self.cfg['device']) for x in input)
+
+                    # output = self.model(input, single_eval_pos=dataset.single_eval_pos)
+                    # output = output.cpu().numpy()
 
                     y_hat_pieces.append(output)
 
                 y_hat_list.append(np.concatenate(y_hat_pieces))
 
         y_hat = sum(y_hat_list) / len(y_hat_list)
-        
+
         if self.cfg['regression']:
             return y_hat
         else:

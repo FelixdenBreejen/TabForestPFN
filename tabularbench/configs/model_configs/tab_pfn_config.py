@@ -13,7 +13,7 @@ config_random = {
         "value": 1024
     },
     "model__n_ensembles": {
-        "value": 100
+        "value": 10
     },
     "model__lr_scheduler": {
         "values": [True, False]
@@ -37,7 +37,7 @@ config_default = {
         "value": 1024
     },
     "model__n_ensembles": {
-        "value": 100
+        "value": 10
     },
     "model__lr_scheduler": {
         "value": True
