@@ -29,19 +29,21 @@ def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
     print("seed: ", seed)
 
     log_to_file(output_dir)
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu)
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    
+    device = 'cuda:'+str(gpu) if torch.cuda.is_available() else 'cpu'
+
 
     sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
     sweep_configs = sweep_config_maker(sweep_csv, output_dir)
 
     for sweep_config in sweep_configs:
         
-        search_sweep(sweep_config, seed=seed, is_random=False)
+        search_sweep(sweep_config, seed=seed, device=device, is_random=False)
         if sweep_config.random_search:
-            search_sweep(sweep_config, seed=seed, is_random=True)
+            search_sweep(sweep_config, seed=seed, device=device, is_random=True)
 
 
 def log_to_file(output_dir: str):
@@ -51,11 +53,11 @@ def log_to_file(output_dir: str):
     log_file_name_stdout = str(os.getpid()) + ".out"
     log_file_name_stderr = str(os.getpid()) + "_error.out"
 
-    sys.stdout = open(log_dir / log_file_name_stdout, "a")
-    sys.stderr = open(log_dir / log_file_name_stderr, "a")
+    sys.stdout = open(log_dir / log_file_name_stdout, "a", 1)
+    sys.stderr = open(log_dir / log_file_name_stderr, "a", 1)
 
 
-def search_sweep(sweep: SweepConfig, seed: int, is_random: bool):
+def search_sweep(sweep: SweepConfig, seed: int, device: str, is_random: bool):
     """Perform one sweep: one row of the sweep.csv file."""
     
     config = total_config[sweep.model][sweep.task]
@@ -70,7 +72,7 @@ def search_sweep(sweep: SweepConfig, seed: int, is_random: bool):
         if len(datasets_unfinished) == 0:
             break
         
-        config_run = create_run_config(sweep, datasets_unfinished, search_object, seed, is_random)
+        config_run = create_run_config(sweep, datasets_unfinished, search_object, seed, device, is_random)
         results = train_model_on_config(config_run)
 
         if results == -1:
@@ -91,6 +93,7 @@ def create_run_config(
     datasets_unfinished: list[int], 
     search_object: WandbSearchObject,  
     seed: int,
+    device: str,
     is_random: bool
 ) -> dict:
 
@@ -98,7 +101,8 @@ def create_run_config(
     config_dataset = draw_dataset_config(datasets_unfinished)
     config_hyperparams = search_object.draw_config(type='random' if is_random else 'default')
     config_hp = {'hp': 'random' if is_random else 'default', 'seed': seed}
-    config_run = {**config_base, **config_dataset, **config_hyperparams, **config_hp}
+    config_device = {'model__device': device}
+    config_run = {**config_base, **config_dataset, **config_hyperparams, **config_hp, **config_device}
 
     return config_run
 

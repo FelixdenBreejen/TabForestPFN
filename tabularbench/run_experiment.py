@@ -164,8 +164,10 @@ def train_model_config(config) -> dict:
     if "model__device" in config.keys():
         if config["model__device"] == "cpu":
             processor = platform.processor()
-        elif config["model__device"] == "cuda":
+        elif config["model__device"].startswith("cuda"):
             processor = torch.cuda.get_device_name(torch.cuda.current_device())
+        else:
+            raise ValueError("Unknown device")
     else:
         processor = platform.processor()
 

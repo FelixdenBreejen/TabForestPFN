@@ -7,6 +7,7 @@ import numpy as np
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.models.tabPFN.load_model import load_pretrained_model
+from tabularbench.models.tabPFN.dataset import TabPFNDataset
 
 
 class TrainerPFN(BaseEstimator):
@@ -30,16 +31,19 @@ class TrainerPFN(BaseEstimator):
     def fit(self, x_train: np.ndarray, y_train: np.ndarray):
 
         self.model, pretrain_config = load_pretrained_model()
-        self.model.to('cuda')
+        self.model.to(self.cfg['device'])
 
         self.optimizer = self.select_optimizer()
         self.scheduler = self.select_scheduler()
 
-        dataset_train, dataset_valid = self.make_dataset(x_train=x_train, y_train=y_train)
-        loader_train = self.make_loader(dataset_train, training=True)
-        loader_valid = self.make_loader(dataset_valid, training=False)
+        self.x_train = x_train
+        self.y_train = y_train
 
-        self.train(loader_train, loader_valid)
+        a = self.make_dataset_split(x_train=x_train, y_train=y_train)
+        self.x_train_train, self.x_train_valid, self.y_train_train, self.y_train_valid = a
+
+
+        # self.train(loader_train, loader_valid)
 
         return self
 
@@ -55,8 +59,8 @@ class TrainerPFN(BaseEstimator):
             for batch in loader_train:
 
                 x, y = batch
-                x = x.cuda()
-                y = y.cuda()
+                x = x.to(self.cfg['device'])
+                y = y.to(self.cfg['device'])
                 y_hat_train = self.model(x)
                 loss = self.loss(y_hat_train, y)
                 score = self.score(y_hat_train, y)
@@ -77,8 +81,8 @@ class TrainerPFN(BaseEstimator):
 
                 for batch in loader_valid:
                     x, y = batch
-                    x = x.cuda()
-                    y = y.cuda()
+                    x = x.to(self.cfg['device'])
+                    y = y.to(self.cfg['device'])
                     y_hat_valid = self.model(x)
                     loss_valid = self.loss(y_hat_valid, y)
                     score_valid = self.score(y_hat_valid, y)
@@ -103,23 +107,33 @@ class TrainerPFN(BaseEstimator):
 
         self.model.eval()
 
-        dataset = torch.utils.data.TensorDataset(torch.Tensor(x))
+
+        y_hat_list = []
+
+        dataset = TabPFNDataset(self.x_train, self.y_train, x, batch_size=self.cfg['batch_size'])
         loader = self.make_loader(dataset, training=False)
-
-        y_hat = []
-
+        
         with torch.no_grad():
-            for batch in loader:
-                x = batch[0].cuda()
-                output = self.model(x)
-                output = output.cpu().numpy()
+            for _ in range(self.cfg['n_ensembles']):
+                y_hat_pieces = []
 
-                if self.cfg['regression']:
-                    y_hat.append(output)
-                else:
-                    y_hat.append(output.argmax(axis=1))
+                for input in loader:
+                    
+                    input = tuple(x.to(self.cfg['device']) for x in input)
 
-        return np.concatenate(y_hat)    
+                    output = self.model(input, single_eval_pos=dataset.single_eval_pos)
+                    output = output.cpu().numpy()
+
+                    y_hat_pieces.append(output)
+
+                y_hat_list.append(np.concatenate(y_hat_pieces))
+
+        y_hat = sum(y_hat_list) / len(y_hat_list)
+        
+        if self.cfg['regression']:
+            return y_hat
+        else:
+            return y_hat.argmax(axis=1)
 
 
     def score(self, y_hat, y):
@@ -183,7 +197,7 @@ class TrainerPFN(BaseEstimator):
         return scheduler
     
 
-    def make_dataset(self, x_train, y_train):
+    def make_dataset_split(self, x_train, y_train):
 
         if self.cfg['regression']:
             x_t_train, x_t_valid, y_t_train, y_t_valid = train_test_split(
@@ -195,38 +209,18 @@ class TrainerPFN(BaseEstimator):
             x_t_train, x_t_valid = x_train[indices[0]], x_train[indices[1]]
             y_t_train, y_t_valid = y_train[indices[0]], y_train[indices[1]]
 
-
-        if self.cfg['regression']:
-            return (
-                torch.utils.data.TensorDataset(
-                    torch.FloatTensor(x_t_train),
-                    torch.FloatTensor(y_t_train)
-                ), 
-                torch.utils.data.TensorDataset(
-                    torch.FloatTensor(x_t_valid),
-                    torch.FloatTensor(y_t_valid)
-                )
-            )
-        else:
-            return (
-                torch.utils.data.TensorDataset(
-                    torch.FloatTensor(x_t_train),
-                    torch.LongTensor(y_t_train)
-                ), 
-                torch.utils.data.TensorDataset(
-                    torch.FloatTensor(x_t_valid),
-                    torch.LongTensor(y_t_valid)
-                )
-            )
+        return x_t_train, x_t_valid, y_t_train, y_t_valid
         
 
     def make_loader(self, dataset, training):
 
+        # dataloader should not make a batch
         return torch.utils.data.DataLoader(
             dataset,
-            batch_size=self.cfg['batch_size'],
+            batch_size=1,
             shuffle=training,
             pin_memory=True,
+            collate_fn=lambda x: x[0]
         )
 
     

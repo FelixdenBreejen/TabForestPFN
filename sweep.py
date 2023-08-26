@@ -9,7 +9,7 @@ import argparse
 import pandas as pd
 import subprocess
 from pathlib import Path
-import multiprocessing as mp
+import torch.multiprocessing as mp
 
 from tabularbench.launch_benchmarks.launch_benchmarks import benchmarks
 from tabularbench.sweeps.monitor_and_make_plots import monitor_and_make_plots

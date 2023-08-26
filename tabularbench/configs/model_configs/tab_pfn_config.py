@@ -20,12 +20,15 @@ config_random = {
     },
     "model__finetune": {
         "value": True
+    },
+    "model__use_checkpoints": {
+        "value": True
     }
 }
 
 config_default = {
     "model__lr": {
-        "value": 5e-5
+        "value": 0.
     },
     "model__optimizer__weight_decay": {
         "value": 0.
@@ -40,7 +43,10 @@ config_default = {
         "value": True
     },
     "model__finetune": {
-        "value": True
+        "value": False
+    },
+    "model__use_checkpoints": {
+        "value": False
     }
 }
 

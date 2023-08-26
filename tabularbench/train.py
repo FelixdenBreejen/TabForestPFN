@@ -92,9 +92,6 @@ def torch_evaluation(model, x_train, x_val, x_test, y_train, y_val, y_test, conf
     Evaluate the model
     """
     y_hat_train = model.predict(x_train)
-    if x_val is not None:
-        y_hat_val = model.predict(x_val)
-    y_hat_test = model.predict(x_test)
 
     # Compute the best train score achieved
     if "regression" in config.keys() and config["regression"]:
@@ -125,7 +122,6 @@ def torch_evaluation(model, x_train, x_val, x_test, y_train, y_val, y_test, conf
             print("Outputting NaN")
             return np.nan, np.nan, np.nan
 
-    y_hat_train = model.predict(x_train)
     if x_val is not None:
         y_hat_val = model.predict(x_val)
     y_hat_test = model.predict(x_test)
