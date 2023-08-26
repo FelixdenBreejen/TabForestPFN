@@ -28,8 +28,12 @@ class TabPFNDataset(torch.utils.data.Dataset):
         self.max_features = max_features
         self.n_train_observations = x_train.shape[0]
 
-        # self.x_train = self.extend_features(x_train, max_features=max_features)
-        # self.x_test = self.extend_features(x_test, max_features=max_features)
+        self.x_train = self.extend_features(x_train, max_features=max_features)
+        self.x_test = self.extend_features(x_test, max_features=max_features)
+        
+        # permute = np.random.permutation(max_features)
+        # self.x_train = self.x_train[:, permute]
+        # self.x_test = self.x_test[:, permute]
 
         self.x_tests = self.split_in_chunks(self.x_test, batch_size)
 
@@ -61,10 +65,8 @@ class TabPFNDataset(torch.utils.data.Dataset):
 
         
         input = (
-            torch.FloatTensor(x_train),
-            # torch.FloatTensor(x_full),
+            torch.FloatTensor(x_full),
             torch.FloatTensor(y_train),
-            torch.FloatTensor(self.x_tests[idx])
         )
 
         if self.y_test is None:
