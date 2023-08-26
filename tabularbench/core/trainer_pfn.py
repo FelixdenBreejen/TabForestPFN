@@ -113,21 +113,32 @@ class TrainerPFN(BaseEstimator):
 
         dataset = TabPFNDataset(self.x_train, self.y_train, x, batch_size=self.cfg['batch_size'])
         loader = self.make_loader(dataset, training=False)
-        
+
         with torch.no_grad():
             for _ in range(self.cfg['n_ensembles']):
                 y_hat_pieces = []
 
                 for input in loader:
 
-                    # classif = TabPFNClassifier(device=self.cfg['device'], N_ensemble_configurations=3)
-                    # classif.fit(input[0], input[1])
-                    # output = classif.predict_proba(input[2])
+                    # classif = TabPFNClassifier(
+                    #     device=self.cfg['device'], 
+                    #     N_ensemble_configurations=1,
+                    #     no_preprocess_mode=True,
+                    #     multiclass_decoder=False,
+                    #     feature_shift_decoder=False,
+                    # )
+                    # classif.fit(input[0][0:dataset.single_eval_pos], input[1])
+                    # output = classif.predict_proba(input[0][dataset.single_eval_pos:])
                     
                     input = tuple(x.to(self.cfg['device']) for x in input)
-
                     output = self.model(input, single_eval_pos=dataset.single_eval_pos)
                     output = output.cpu().numpy()
+
+                    # input = tuple(x.to(self.cfg['device']) for x in input)
+                    # classif.model[2].to(self.cfg['device'])
+
+                    # output = classif.model[2](input, single_eval_pos=dataset.single_eval_pos)
+                    # output = output.cpu().numpy()
 
                     y_hat_pieces.append(output)
 

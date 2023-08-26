@@ -28,12 +28,21 @@ class TabPFNDataset(torch.utils.data.Dataset):
         self.max_features = max_features
         self.n_train_observations = x_train.shape[0]
 
-        self.x_train = self.extend_features(x_train, max_features=max_features)
-        self.x_test = self.extend_features(x_test, max_features=max_features)
+        mean, std = self.calc_mean_std(x_train)
+        self.x_train = self.normalize_by_mean_std(self.x_train, mean, std)
+        self.x_test = self.normalize_by_mean_std(self.x_test, mean, std)
+
+        self.x_train = self.normalize_by_feature_count(self.x_train, max_features)
+        self.x_test = self.normalize_by_feature_count(self.x_test, max_features)
+
+        self.x_train = self.extend_features(self.x_train, max_features=max_features)
+        self.x_test = self.extend_features(self.x_test, max_features=max_features)
         
         # permute = np.random.permutation(max_features)
         # self.x_train = self.x_train[:, permute]
         # self.x_test = self.x_test[:, permute]
+
+        
 
         self.x_tests = self.split_in_chunks(self.x_test, batch_size)
 
@@ -78,7 +87,34 @@ class TabPFNDataset(torch.utils.data.Dataset):
             )
         
 
-    def extend_features(self, x: np.ndarray, max_features: int = 100) -> np.ndarray:
+    def calc_mean_std(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Calculates the mean and std of the training data
+        """
+        mean = x.mean(axis=0)
+        std = x.std(axis=0)
+        return mean, std
+    
+
+    def normalize_by_mean_std(self, x: np.ndarray, mean: np.ndarray, std: np.ndarray) -> np.ndarray:
+        """
+        Normalizes the data by the mean and std
+        """
+        x = (x - mean) / std
+        return x
+
+
+    def normalize_by_feature_count(self, x: np.ndarray, max_features) -> np.ndarray:
+        """
+        An interesting way of normalization by the tabPFN paper
+        """
+
+        x = x * max_features / x.shape[1]
+        return x
+
+
+
+    def extend_features(self, x: np.ndarray, max_features) -> np.ndarray:
         """
         Increases the number of features to the number of features the tab pfn model has been trained on
         """
