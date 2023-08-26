@@ -108,7 +108,9 @@ def make_results_csv_modified_for_plotting(sweep: SweepConfig):
 
     if not sweep.random_search:
         # for default sweep, we want a straight line, so we fake the results by duplicating them
-        df = pd.concat([df]*1000)
+        df_random_fake = df.copy()
+        df_random_fake['hp'] = 'random'
+        df = pd.concat([df] + [df_random_fake]*999)
 
 
     df.to_csv(sweep.path / RESULTS_MODIFIED_FILE_NAME, mode='w', index=False, header=True)

@@ -119,26 +119,10 @@ class TrainerPFN(BaseEstimator):
                 y_hat_pieces = []
 
                 for input in loader:
-
-                    # classif = TabPFNClassifier(
-                    #     device=self.cfg['device'], 
-                    #     N_ensemble_configurations=1,
-                    #     no_preprocess_mode=True,
-                    #     multiclass_decoder=False,
-                    #     feature_shift_decoder=False,
-                    # )
-                    # classif.fit(input[0][0:dataset.single_eval_pos], input[1])
-                    # output = classif.predict_proba(input[0][dataset.single_eval_pos:])
                     
                     input = tuple(x.to(self.cfg['device']) for x in input)
                     output = self.model(input, single_eval_pos=dataset.single_eval_pos)
                     output = output.cpu().numpy()
-
-                    # input = tuple(x.to(self.cfg['device']) for x in input)
-                    # classif.model[2].to(self.cfg['device'])
-
-                    # output = classif.model[2](input, single_eval_pos=dataset.single_eval_pos)
-                    # output = output.cpu().numpy()
 
                     y_hat_pieces.append(output)
 
