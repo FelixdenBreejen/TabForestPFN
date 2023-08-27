@@ -12,10 +12,10 @@ config_random = {
         "max": 1e-3
     },
     "model__batch_size": {
-        "value": 1000
+        "value": 10000
     },
     "model__n_ensembles": {
-        "value": 10
+        "value": 1
     },
     "model__lr_scheduler": {
         "values": [True, False]
@@ -30,16 +30,16 @@ config_random = {
 
 config_default = {
     "model__lr": {
-        "value": 8.e-6
+        "value": 1.e-5
     },
     "model__optimizer__weight_decay": {
         "value": 0.
     },
     "model__batch_size": {
-        "value": 1000
+        "value": 10000
     },
     "model__n_ensembles": {
-        "value": 10
+        "value": 1
     },
     "model__lr_scheduler": {
         "value": False

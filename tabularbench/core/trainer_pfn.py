@@ -4,6 +4,7 @@ import torch
 from torch.optim import AdamW, Adam, SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 import numpy as np
+from sklearn.preprocessing import OneHotEncoder
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.models.tabPFN.load_model import load_pretrained_model
@@ -26,7 +27,9 @@ class TrainerPFN(BaseEstimator):
         self.checkpoint = Checkpoint("temp_weights", self.cfg['id'])
         
         if self.cfg['categorical_indicator'] is not None:
-            self.categorical_indicator = torch.BoolTensor(self.cfg['categorical_indicator'])
+            self.categorical_indicator = self.cfg['categorical_indicator']
+
+        self.onehot_encoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
 
 
 
@@ -40,6 +43,9 @@ class TrainerPFN(BaseEstimator):
 
         self.x_train = x_train
         self.y_train = y_train
+
+        self.onehot_encoder.fit(self.x_train[:, self.categorical_indicator])
+        # self.x_train = self.onehot_encode(self.x_train, max_features=100)
 
         a = self.make_dataset_split(x_train=x_train, y_train=y_train)
         self.x_train_train, self.x_train_valid, self.y_train_train, self.y_train_valid = a
@@ -133,6 +139,8 @@ class TrainerPFN(BaseEstimator):
 
         self.model.eval()
 
+        # x = self.onehot_encode(x, max_features=100)
+
         y_hat_list = []
 
         dataset = TabPFNDataset(self.x_train, self.y_train, x, batch_size=self.cfg['batch_size'])
@@ -171,6 +179,20 @@ class TrainerPFN(BaseEstimator):
 
     def load_params(self, path):
         self.model.load_state_dict(torch.load(path))
+
+    
+    def onehot_encode(self, x: np.ndarray, max_features: int):
+
+        x_categorical = self.onehot_encoder.transform(x[:, self.categorical_indicator])
+        x_numerical = x[:, ~self.categorical_indicator]
+
+        x_new = np.concatenate([x_numerical, x_categorical], axis=1)
+
+        if x_new.shape[1] < max_features:
+            return x_new
+        else:
+            print("Warning: onehot-encoded features exceed max_features. Returning original features.")
+            return x
 
 
     def select_optimizer(self):
