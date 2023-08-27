@@ -44,8 +44,9 @@ class TrainerPFN(BaseEstimator):
         self.x_train = x_train
         self.y_train = y_train
 
-        self.onehot_encoder.fit(self.x_train[:, self.categorical_indicator])
-        # self.x_train = self.onehot_encode(self.x_train, max_features=100)
+        # if sum(self.cfg['categorical_indicator']) > 0:
+            # self.onehot_encoder.fit(self.x_train[:, self.categorical_indicator])
+            # self.x_train = self.onehot_encode(self.x_train, max_features=100)
 
         a = self.make_dataset_split(x_train=x_train, y_train=y_train)
         self.x_train_train, self.x_train_valid, self.y_train_train, self.y_train_valid = a
@@ -92,6 +93,7 @@ class TrainerPFN(BaseEstimator):
                 y_test = y_test.to(self.cfg['device'])
 
                 y_hat_train = self.model(input, single_eval_pos=dataset_train.single_eval_pos)
+                y_hat_train = y_hat_train[:, :2]
                 loss = self.loss(y_hat_train, y_test)
                 score = self.score(y_hat_train, y_test)
 
@@ -116,6 +118,7 @@ class TrainerPFN(BaseEstimator):
                     y_test = y_test.to(self.cfg['device'])
                     
                     y_hat_valid = self.model(input, single_eval_pos=dataset_valid.single_eval_pos)
+                    y_hat_valid = y_hat_valid[:, :2]
                     loss_valid = self.loss(y_hat_valid, y_test)
                     score_valid = self.score(y_hat_valid, y_test)
                     
@@ -139,7 +142,8 @@ class TrainerPFN(BaseEstimator):
 
         self.model.eval()
 
-        # x = self.onehot_encode(x, max_features=100)
+        # if sum(self.cfg['categorical_indicator']) > 0:
+            # x = self.onehot_encode(x, max_features=100)
 
         y_hat_list = []
 
@@ -154,6 +158,8 @@ class TrainerPFN(BaseEstimator):
                     
                     input = tuple(x.to(self.cfg['device']) for x in input)
                     output = self.model(input, single_eval_pos=dataset.single_eval_pos)
+                    output = output[:, :2]
+                    # output = torch.nn.functional.softmax(output, dim=1)
                     output = output.cpu().numpy()
 
                     y_hat_pieces.append(output)

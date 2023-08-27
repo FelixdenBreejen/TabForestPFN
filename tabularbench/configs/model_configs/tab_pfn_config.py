@@ -4,12 +4,12 @@ config_random = {
     "model__lr": {
         "distribution": "log_uniform_values",
         "min": 1e-7,
-        "max": 1e-3
+        "max": 5e-4
     },
     "model__optimizer__weight_decay": {
         "distribution": "log_uniform_values",
         "min": 1e-7,
-        "max": 1e-3
+        "max": 1e-1
     },
     "model__batch_size": {
         "value": 10000
@@ -30,7 +30,7 @@ config_random = {
 
 config_default = {
     "model__lr": {
-        "value": 1.e-5
+        "value": 2.e-5
     },
     "model__optimizer__weight_decay": {
         "value": 0.
@@ -42,7 +42,7 @@ config_default = {
         "value": 1
     },
     "model__lr_scheduler": {
-        "value": False
+        "value": True
     },
     "model__finetune": {
         "value": True

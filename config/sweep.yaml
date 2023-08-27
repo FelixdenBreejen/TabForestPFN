@@ -6,9 +6,9 @@ hydra:
 continue_last_output: False
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [0, 1]
+devices: [0, 1, 2, 3, 6, 7]
 runs_per_device: 1
-runs_per_dataset: 1000                   # suggested: 500, only for random search
+runs_per_dataset: 1000                  # suggested: 500, only for random search
 monitor_interval_in_seconds: 10       # plot the results every x seconds
 
 models:
@@ -21,5 +21,5 @@ benchmarks:
   # - categorical_regression
   # - numerical_regression
 random_search:
-  # - True
-  - False
+  - True
+  # - False
