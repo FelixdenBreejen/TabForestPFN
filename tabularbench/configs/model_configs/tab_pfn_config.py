@@ -3,17 +3,19 @@ from tabularbench.configs.model_configs.torch_config import torch_config, torch_
 config_random = {
     "model__lr": {
         "distribution": "log_uniform_values",
-        "min": 1e-6,
+        "min": 1e-7,
         "max": 1e-3
     },
     "model__optimizer__weight_decay": {
-        "value": 0.
+        "distribution": "log_uniform_values",
+        "min": 1e-7,
+        "max": 1e-3
     },
     "model__batch_size": {
-        "value": 10000
+        "value": 1000
     },
     "model__n_ensembles": {
-        "value": 1
+        "value": 10
     },
     "model__lr_scheduler": {
         "values": [True, False]
@@ -28,25 +30,25 @@ config_random = {
 
 config_default = {
     "model__lr": {
-        "value": 0.
+        "value": 8.e-6
     },
     "model__optimizer__weight_decay": {
         "value": 0.
     },
     "model__batch_size": {
-        "value": 10000
+        "value": 1000
     },
     "model__n_ensembles": {
-        "value": 1
+        "value": 10
     },
     "model__lr_scheduler": {
-        "value": True
+        "value": False
     },
     "model__finetune": {
-        "value": False
+        "value": True
     },
     "model__use_checkpoints": {
-        "value": False
+        "value": True
     }
 }
 

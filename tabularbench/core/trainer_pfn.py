@@ -7,7 +7,7 @@ import numpy as np
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.models.tabPFN.load_model import load_pretrained_model
-from tabularbench.models.tabPFN.dataset import TabPFNDataset
+from tabularbench.models.tabPFN.dataset import TabPFNDataset, TabPFNDatasetGenerator
 
 from tabpfn import TabPFNClassifier
 
@@ -44,15 +44,36 @@ class TrainerPFN(BaseEstimator):
         a = self.make_dataset_split(x_train=x_train, y_train=y_train)
         self.x_train_train, self.x_train_valid, self.y_train_train, self.y_train_valid = a
 
+        dataset_train_generator = TabPFNDatasetGenerator(
+            self.x_train_train,
+            self.y_train_train,
+            batch_size=self.cfg['batch_size'],
+        )
 
-        # self.train(loader_train, loader_valid)
+        dataset_valid = TabPFNDataset(
+            self.x_train_train, 
+            self.y_train_train, 
+            self.x_train_valid, 
+            self.y_train_valid,
+            batch_size=self.cfg['batch_size']
+        )
+
+        loader_valid = self.make_loader(dataset_valid, training=False)
+
+        self.loss = self.select_loss()
+        self.optimizer = self.select_optimizer()
+
+        self.train(dataset_train_generator, dataset_valid, loader_valid)
 
         return self
 
 
-    def train(self, loader_train, loader_valid):
+    def train(self, dataset_train_generator, dataset_valid, loader_valid):
 
         for epoch in range(self.cfg['max_epochs']):
+
+            dataset_train = next(dataset_train_generator)            
+            loader_train = self.make_loader(dataset_train, training=True)
             
             self.model.train()
         
@@ -60,18 +81,19 @@ class TrainerPFN(BaseEstimator):
 
             for batch in loader_train:
 
-                x, y = batch
-                x = x.to(self.cfg['device'])
-                y = y.to(self.cfg['device'])
-                y_hat_train = self.model(x)
-                loss = self.loss(y_hat_train, y)
-                score = self.score(y_hat_train, y)
+                input, y_test = batch
+                input = tuple(x.to(self.cfg['device']) for x in input)
+                y_test = y_test.to(self.cfg['device'])
+
+                y_hat_train = self.model(input, single_eval_pos=dataset_train.single_eval_pos)
+                loss = self.loss(y_hat_train, y_test)
+                score = self.score(y_hat_train, y_test)
 
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
 
-                epoch_statistics_train.update(loss.item(), score, x.shape[0])
+                epoch_statistics_train.update(loss.item(), score, len(y_test))
 
             loss_train, score_train = epoch_statistics_train.get()
 
@@ -82,14 +104,16 @@ class TrainerPFN(BaseEstimator):
             with torch.no_grad():
 
                 for batch in loader_valid:
-                    x, y = batch
-                    x = x.to(self.cfg['device'])
-                    y = y.to(self.cfg['device'])
-                    y_hat_valid = self.model(x)
-                    loss_valid = self.loss(y_hat_valid, y)
-                    score_valid = self.score(y_hat_valid, y)
+
+                    input, y_test = batch
+                    input = tuple(x.to(self.cfg['device']) for x in input)
+                    y_test = y_test.to(self.cfg['device'])
                     
-                    epoch_statistics_valid.update(loss_valid.item(), score_valid, x.shape[0])
+                    y_hat_valid = self.model(input, single_eval_pos=dataset_valid.single_eval_pos)
+                    loss_valid = self.loss(y_hat_valid, y_test)
+                    score_valid = self.score(y_hat_valid, y_test)
+                    
+                    epoch_statistics_valid.update(loss_valid.item(), score_valid, len(y_test))
 
             loss_valid, score_valid = epoch_statistics_valid.get()
 
@@ -151,30 +175,12 @@ class TrainerPFN(BaseEstimator):
 
     def select_optimizer(self):
 
-        optimizer_name = self.cfg['optimizer']
-
-        if optimizer_name == "adam":
-            optimizer = Adam(
-                self.model.parameters(), 
-                lr=self.cfg['lr'],
-                betas=(0.9, 0.999),
-                weight_decay=self.cfg['optimizer__weight_decay']
-            )
-        elif optimizer_name == "adamw":
-            optimizer = AdamW(
-                self.model.parameters(), 
-                lr=self.cfg['lr'],
-                betas=(0.9, 0.999),
-                weight_decay=self.cfg['optimizer__weight_decay']
-            )
-        elif optimizer_name == "sgd":
-            optimizer = SGD(
-                self.model.parameters(),
-                lr=self.cfg['lr'],
-                weight_decay=self.cfg['optimizer__weight_decay']
-            )
-        else:
-            raise ValueError("Optimizer not recognized")
+        optimizer = AdamW(
+            self.model.parameters(), 
+            lr=self.cfg['lr'],
+            betas=(0.9, 0.999),
+            weight_decay=self.cfg['optimizer__weight_decay']
+        )
         
         return optimizer
         
@@ -184,8 +190,7 @@ class TrainerPFN(BaseEstimator):
         if self.cfg['lr_scheduler']:                
             scheduler = ReduceLROnPlateau(
                 self.optimizer, 
-                patience=self.cfg['lr_patience'], 
-                min_lr=2e-5, 
+                patience=self.cfg['lr_patience'],
                 factor=0.2
             )
         else:
@@ -214,14 +219,22 @@ class TrainerPFN(BaseEstimator):
 
     def make_loader(self, dataset, training):
 
-        # dataloader should not make a batch
-        return torch.utils.data.DataLoader(
-            dataset,
-            batch_size=1,
-            shuffle=training,
-            pin_memory=True,
-            collate_fn=lambda x: x[0]
-        )
+        if isinstance(dataset, torch.utils.data.IterableDataset):
+            return torch.utils.data.DataLoader(
+                dataset,
+                batch_size=1,
+                pin_memory=True,
+                collate_fn=lambda x: x[0]
+            )
+        else:
+            # dataloader should not make a batch
+            return torch.utils.data.DataLoader(
+                dataset,
+                batch_size=1,
+                shuffle=training,
+                pin_memory=True,
+                collate_fn=lambda x: x[0]
+            )
 
     
     def select_loss(self):

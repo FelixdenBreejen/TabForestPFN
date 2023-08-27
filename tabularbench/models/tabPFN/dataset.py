@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from sklearn.preprocessing import PowerTransformer
+from sklearn.model_selection import train_test_split
 
 
 class TabPFNDataset(torch.utils.data.Dataset):
@@ -37,10 +37,6 @@ class TabPFNDataset(torch.utils.data.Dataset):
 
         self.x_train = self.extend_features(self.x_train, max_features=max_features)
         self.x_test = self.extend_features(self.x_test, max_features=max_features)
-        
-        # permute = np.random.permutation(max_features)
-        # self.x_train = self.x_train[:, permute]
-        # self.x_test = self.x_test[:, permute]
 
         self.x_tests = self.split_in_chunks(self.x_test, batch_size)
 
@@ -82,7 +78,7 @@ class TabPFNDataset(torch.utils.data.Dataset):
         else:
             return (
                 input,
-                torch.FloatTensor(self.y_tests[idx])
+                torch.LongTensor(self.y_tests[idx])
             )
         
 
@@ -133,3 +129,37 @@ class TabPFNDataset(torch.utils.data.Dataset):
             x_chunks.append(x[i * batch_size: (i + 1) * batch_size])
 
         return x_chunks
+    
+
+
+
+
+
+def TabPFNDatasetGenerator(
+    x: np.ndarray, 
+    y: np.ndarray, 
+    batch_size: int = 1024,
+    max_features: int = 100,
+    split: float = 0.8,
+):
+        
+    while True:
+
+        x_train, x_test, y_train, y_test = train_test_split(
+            x, 
+            y, 
+            train_size=split, 
+            shuffle=True,
+            stratify=y
+        )
+
+        static_dataset = TabPFNDataset(
+            x_train=x_train,
+            y_train=y_train,
+            x_test=x_test,
+            y_test=y_test,
+            batch_size=batch_size,
+            max_features=max_features
+        )
+
+        yield static_dataset
