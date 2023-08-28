@@ -8,7 +8,7 @@ from tabularbench.models.tabPFN.transformer import TransformerModel
 
 
 
-def load_pretrained_model():
+def load_model(use_pretrained_weights = True):
     """
     Loads a saved model from the specified position. This function only restores inference capabilities and
     cannot be used for further training.
@@ -42,8 +42,10 @@ def load_pretrained_model():
     # print(f"Using a Transformer with {sum(p.numel() for p in model.parameters()) / 1000 / 1000:.{2}f} M parameters")
 
     model.criterion = loss
-    module_prefix = 'module.'
-    model_state = {k.replace(module_prefix, ''): v for k, v in model_state.items()}
-    model.load_state_dict(model_state)
+
+    if use_pretrained_weights:
+        module_prefix = 'module.'
+        model_state = {k.replace(module_prefix, ''): v for k, v in model_state.items()}
+        model.load_state_dict(model_state)
 
     return model, config_sample # no loss measured

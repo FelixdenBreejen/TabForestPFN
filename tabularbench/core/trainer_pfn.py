@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.preprocessing import OneHotEncoder
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
-from tabularbench.models.tabPFN.load_model import load_pretrained_model
+from tabularbench.models.tabPFN.load_model import load_model
 from tabularbench.models.tabPFN.dataset import TabPFNDataset, TabPFNDatasetGenerator
 
 from tabpfn import TabPFNClassifier
@@ -35,7 +35,7 @@ class TrainerPFN(BaseEstimator):
 
     def fit(self, x_train: np.ndarray, y_train: np.ndarray):
 
-        self.model, pretrain_config = load_pretrained_model()
+        self.model, pretrain_config = load_model(use_pretrained_weights=self.cfg['use_pretrained_weights'])
         self.model.to(self.cfg['device'])
 
         self.optimizer = self.select_optimizer()

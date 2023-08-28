@@ -4,7 +4,7 @@ config_random = {
     "model__lr": {
         "distribution": "log_uniform_values",
         "min": 1e-7,
-        "max": 5e-4
+        "max": 1e-3
     },
     "model__optimizer__weight_decay": {
         "distribution": "log_uniform_values",
@@ -25,12 +25,15 @@ config_random = {
     },
     "model__use_checkpoints": {
         "value": True
-    }
+    },
+    "model__use_pretrained_weights": {
+        "value": False
+    },
 }
 
 config_default = {
     "model__lr": {
-        "value": 2.e-5
+        "value": 1.e-5
     },
     "model__optimizer__weight_decay": {
         "value": 0.
@@ -49,7 +52,10 @@ config_default = {
     },
     "model__use_checkpoints": {
         "value": True
-    }
+    },
+    "model__use_pretrained_weights": {
+        "value": False
+    },
 }
 
 config_model_name_regressor = {
