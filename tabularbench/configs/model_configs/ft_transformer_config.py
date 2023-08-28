@@ -2,6 +2,9 @@ from tabularbench.configs.model_configs.skorch_config import skorch_config, skor
 from tabularbench.configs.model_configs.torch_config import torch_config, torch_config_default
 
 config_random = {
+    "model__batch_size": {
+        "value": 10000
+    },
     "model__module__activation": {
         "value": "reglu"
     },
@@ -72,6 +75,9 @@ config_random = {
 }
 
 config_default = {
+    "model__batch_size": {
+        "value": 10000
+    },
     "model__lr_scheduler": {
         "value": False
     },
@@ -125,34 +131,38 @@ config_default = {
     }
 }
 
-config_regression = dict(config_random,
-                                        **torch_config,
-                                        **{
-                                            "model_name": {
-                                                "value": "ft_transformer_regressor"
-                                            },
-                                        })
+config_model_name_regressor = {
+    "model_name": {
+        "value": "ft_transformer_regressor"
+    },
+}
 
-config_regression_default = dict(config_default,
-                                        **torch_config_default,
-                                        **{
-                                            "model_name": {
-                                                "value": "ft_transformer_regressor"
-                                            },
-                                        })
+config_model_name_classif = {
+    "model_name": {
+        "value": "ft_transformer"
+    },
+}
 
-config_classif = dict(config_random,
-                                     **torch_config_default,
-                                     **{
-                                         "model_name": {
-                                             "value": "ft_transformer"
-                                         },
-                                     })
+config_regression = {
+    **torch_config,
+    **config_model_name_regressor,
+    **config_random,
+}
 
-config_classif_default = dict(config_default,
-                                     **torch_config,
-                                     **{
-                                         "model_name": {
-                                             "value": "ft_transformer"
-                                         },
-                                     })
+config_regression_default = {
+    **torch_config_default,
+    **config_model_name_regressor,
+    **config_default,
+}
+
+config_classif = {
+    **torch_config,
+    **config_model_name_classif,
+    **config_random,
+}
+
+config_classif_default = {
+    **torch_config_default,
+    **config_model_name_classif,
+    **config_default,
+}

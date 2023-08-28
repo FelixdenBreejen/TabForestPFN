@@ -68,6 +68,8 @@ def end_log_to_file():
 def search_sweep(sweep: SweepConfig, seed: int, device: str, is_random: bool):
     """Perform one sweep: one row of the sweep.csv file."""
     
+    assert sweep.model in total_config.keys(), f"Model {sweep.model} not found in total_config"
+
     config = total_config[sweep.model][sweep.task]
     search_object = WandbSearchObject(config)
     results_path = sweep.path / RESULTS_FILE_NAME
