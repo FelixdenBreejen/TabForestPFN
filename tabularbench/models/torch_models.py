@@ -11,7 +11,7 @@ from tabularbench.models.tabular.bin.mlp import MLP, InputShapeSetterMLP
 from tabularbench.models.tabular.bin.mlp_pwl import MLP_PWL, InputShapeSetterMLP_PWL
 from tabularbench.models.tabular.bin.ft_transformer import Transformer, InputShapeSetterTransformer
 
-from tabularbench.core.trainer_retrieval import Trainer
+from tabularbench.core.trainer import Trainer
 from tabularbench.core.trainer_pfn import TrainerPFN
 
 from skorch.callbacks import Callback
