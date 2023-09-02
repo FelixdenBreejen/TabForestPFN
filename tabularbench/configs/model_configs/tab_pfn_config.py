@@ -27,7 +27,7 @@ config_random = {
         "value": True
     },
     "model__use_pretrained_weights": {
-        "value": False
+        "value": True
     },
 }
 
@@ -54,7 +54,7 @@ config_default = {
         "value": True
     },
     "model__use_pretrained_weights": {
-        "value": False
+        "value": True
     },
 }
 
