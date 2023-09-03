@@ -177,6 +177,9 @@ class TrainerMaskedSaint(BaseEstimator):
                 num_warmup_steps=steps_total * 0.01,
                 num_training_steps=steps_total
             )
+        else:
+            # Identity scheduler
+            scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lambda _: 1)
 
         return scheduler
     
