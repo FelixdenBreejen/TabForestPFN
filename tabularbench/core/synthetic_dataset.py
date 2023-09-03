@@ -45,6 +45,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
 
             y = self.randomize_classes(y)
             y, y_label_mask = self.randomly_mask_labels(y)
+            x = self.normalize_features(x, y_label_mask)
             x, x_size_mask, y, y_size_mask, y_label_mask = self.expand_dimension_to_max_samples_and_features(x, y, y_label_mask)
 
             yield x, x_size_mask, y, y_size_mask, y_label_mask
@@ -73,6 +74,18 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         y_label_mask[indices_masked] = 1
 
         return y, y_label_mask
+    
+
+    def normalize_features(self, x, y_label_mask):
+
+        x_not_masked = x[~y_label_mask]
+
+        x_mean = x_not_masked.mean(dim=0)
+        x_std = x_not_masked.std(dim=0)
+
+        x = (x - x_mean[None, :]) / x_std[None, :]
+
+        return x
     
 
     def expand_dimension_to_max_samples_and_features(self, x_tight, y_tight, y_label_mask_tight):
