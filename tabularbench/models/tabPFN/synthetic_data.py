@@ -78,7 +78,6 @@ def synthetic_dataset_generator(
     config['normalize_ignore_label_too'] = False
 
     config['differentiable_hps_as_style'] = False
-    config['max_eval_pos'] = 1000
 
     config['random_feature_rotation'] = True
     config['rotate_normalized_labels'] = True
@@ -90,26 +89,41 @@ def synthetic_dataset_generator(
     config['bptt'] = max_samples
     config['canonical_y_encoder'] = False
 
-        
-    config['aggregate_k_gradients'] = 8
-    config['batch_size'] = 8*config['aggregate_k_gradients']
-    config['num_steps'] = 1024//config['aggregate_k_gradients']
+    config['aggregate_k_gradients'] = 1
+    config['batch_size'] = 1
+    config['num_steps'] = 2**63
     config['epochs'] = 400
     config['total_available_time_in_s'] = None #60*60*22 # 22 hours for some safety...
 
     config['train_mixed_precision'] = True
     config['efficient_eval_masking'] = True
 
+    config['normalize_by_used_features'] = False
+
+    config['min_eval_pos'] = max_samples // 2
+    config['max_eval_pos'] = max_samples // 2 + 1
+
+
     config_sample = evaluate_hypers(config)
 
-    config_sample['batch_size'] = 4
-    model = get_model(config_sample, 'cpu', should_train=False, verbose=0) # , state_dict=model[2].state_dict()
+    config_sample['batch_size'] = 1
+
+    print("IGNORE THE TRANSFORMER PARAMETER TEXT BELOW, ITS FROM LOADING TABPFN DATA GENERATOR")
+    model = get_model(config_sample, 'cpu', should_train=False, verbose=0)
+    print("IGNORE THE TRANSFORMER PARAMETER TEXT ABOVE, ITS FROM LOADING TABPFN DATA GENERATOR")
+
     data_iter = iter(model[3])
 
     for (_, data, _), targets, _ in data_iter:
      
         x = data[:, 0, :]
         y = targets
+
+        if torch.all(y == -100):
+            # in case of too many classes, the synthetic generator is not able to split the dataset
+            # in a way that the training and validation set have the same number of classes
+            # the generator returns -100 as a label for all observations in this case
+            continue
 
         # remove all zero columns
         x = x[:, x.sum(dim=0) != 0]

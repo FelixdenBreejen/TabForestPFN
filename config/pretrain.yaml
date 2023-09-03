@@ -1,0 +1,35 @@
+hydra:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+
+output_dir: ${hydra:run.dir}
+seed: 0
+device: 6
+
+
+max_epochs: 300
+steps_per_epoch: 100
+batch_size: 1
+lr: 5.e-5
+weight_decay: 0.1
+beta1: 0.9
+beta2: 0.99
+
+lr_scheduler: True    # ReduceOnPlateau
+lr_patience: 10     
+
+model:
+  dim: 64
+  n_layers: 8
+  heads: 4
+  attn_dropout: 0.1
+  ff_dropout: 0.1
+
+data:
+  min_samples: 100
+  max_samples: 1000
+  min_features: 3
+  max_features: 50
+  max_classes: 2
+  mask_proportion: 0.2
