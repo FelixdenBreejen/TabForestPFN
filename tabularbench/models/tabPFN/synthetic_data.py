@@ -25,7 +25,13 @@ from tabpfn.scripts import tabular_metrics
 from tabpfn.notebook_utils import *
 
 
-def synthetic_dataset_generator(n_samples, max_features):
+def synthetic_dataset_generator(
+        min_samples: int,
+        max_samples: int,
+        min_features: int,
+        max_features: int,
+        max_classes: int
+    ):
 
     config = get_prior_config_causal(max_features=max_features)
 
@@ -33,11 +39,13 @@ def synthetic_dataset_generator(n_samples, max_features):
     config['differentiable'] = True
     config['flexible'] = True
 
-    config['num_classes'] = uniform_int_sampler_f(2, config['max_num_classes'])
+    config['num_classes'] = uniform_int_sampler_f(2, max_classes)
     config['balanced'] = False
 
     config['bptt_extra_samples'] = None
-
+    config['num_features_used'] = {
+        'uniform_int_sampler_f(3, max_features)': uniform_int_sampler_f(min_features, max_features)
+    }
     # diff
     config['output_multiclass_ordered_p'] = 0.
     del config['differentiable_hyperparameters']['output_multiclass_ordered_p']
@@ -79,7 +87,7 @@ def synthetic_dataset_generator(n_samples, max_features):
 
     config['emsize'] = 512
     config['nhead'] = config['emsize'] // 128
-    config['bptt'] = n_samples
+    config['bptt'] = max_samples
     config['canonical_y_encoder'] = False
 
         
@@ -101,11 +109,14 @@ def synthetic_dataset_generator(n_samples, max_features):
     for (_, data, _), targets, _ in data_iter:
      
         x = data[:, 0, :]
+        y = targets
 
         # remove all zero columns
         x = x[:, x.sum(dim=0) != 0]
 
-        y = targets
+        curr_samples = uniform_int_sampler_f(min_samples, max_samples)()
+        x = x[:curr_samples, :]
+        y = y[:curr_samples, :]
 
         yield x, y
 
@@ -113,6 +124,12 @@ def synthetic_dataset_generator(n_samples, max_features):
 
 if __name__  == '__main__':
 
-    gen = synthetic_dataset_generator(n_samples=2121, max_features=133)
+    gen = synthetic_dataset_generator(
+        min_samples = 100,
+        max_samples = 10000,
+        min_features = 3,
+        max_features = 133,
+        max_classes = 10
+    )
     x, y = next(gen)
     pass
