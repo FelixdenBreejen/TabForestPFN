@@ -42,11 +42,14 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
             x, y = next(self.generator)
 
             assert torch.all(y >= 0)
+            assert torch.all(torch.isfinite(x))
 
             y = self.randomize_classes(y)
             y, y_label_mask = self.randomly_mask_labels(y)
             x = self.normalize_features(x, y_label_mask)
             x, x_size_mask, y, y_size_mask, y_label_mask = self.expand_dimension_to_max_samples_and_features(x, y, y_label_mask)
+            
+            assert torch.all(torch.isfinite(x))
 
             yield x, x_size_mask, y, y_size_mask, y_label_mask
 
@@ -84,6 +87,9 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         x_std = x_not_masked.std(dim=0)
 
         x = (x - x_mean[None, :]) / x_std[None, :]
+
+        # for singular values, set it to zero instead of removing them
+        x[:, x_std == 0] = 0
 
         return x
     
