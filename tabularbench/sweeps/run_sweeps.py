@@ -35,7 +35,6 @@ def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
     
     device = 'cuda:'+str(gpu) if torch.cuda.is_available() else 'cpu'
 
-
     sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
     sweep_configs = sweep_config_maker(sweep_csv, output_dir)
 
@@ -130,7 +129,7 @@ def make_base_config(sweep: SweepConfig) -> dict:
         max_train_samples = sweep.dataset_size
 
     return {
-        "data__categorical": sweep.task == 'classif',
+        "data__categorical": sweep.categorical,
         "data__method_name": "openml_no_transform",
         "data__regression": sweep.task == 'regression',
         "regression": sweep.task == 'regression',

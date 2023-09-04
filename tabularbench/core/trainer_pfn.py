@@ -93,7 +93,12 @@ class TrainerPFN(BaseEstimator):
                 y_test = y_test.to(self.cfg['device'])
 
                 y_hat_train = self.model(input, single_eval_pos=dataset_train.single_eval_pos)
-                y_hat_train = y_hat_train[:, :2]
+
+                if self.cfg['regression']:
+                    y_hat_train = y_hat_train[:, 0]
+                else:
+                    y_hat_train = y_hat_train[:, :2]
+                
                 loss = self.loss(y_hat_train, y_test)
                 score = self.score(y_hat_train, y_test)
 

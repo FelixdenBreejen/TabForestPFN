@@ -12,6 +12,7 @@ class SweepConfig():
         self.model = sweep_config['model']
         self.plot_name = sweep_config['plot_name']
         self.task = sweep_config['task']
+        self.categorical = sweep_config['categorical']
         self.benchmark = sweep_config['benchmark']
         self.random_search = sweep_config['random_search']
         self.runs_per_dataset = sweep_config['runs_per_dataset']
