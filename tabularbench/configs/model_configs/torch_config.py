@@ -22,7 +22,7 @@ torch_config = {
         "values": [256, 512, 1024]
     },
     "model__max_epochs": {
-        "value": 1
+        "value": 300
     },
     "transform__0__method_name": {
         "value": "gaussienize"
