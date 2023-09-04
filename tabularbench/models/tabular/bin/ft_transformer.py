@@ -338,9 +338,12 @@ class InputShapeSetterTransformer(skorch.callbacks.Callback):
                 categories = list((X[:, self.categorical_indicator].max(0) + 1).astype(int))
             else:
                 categories = self.categories
-
-        net.set_params(module__d_numerical=d_numerical,
-        module__categories=categories, #FIXME #lib.get_categories(X_cat),
-        module__d_out=2 if self.regression == False else 1) #FIXME#D.info['n_classes'] if D.is_multiclass else 1,
+                
         print("Numerical features: {}".format(d_numerical))
         print("Categories {}".format(categories))
+
+        return {
+            'module__d_numerical': d_numerical,
+            'module__categories': categories,
+            'module__d_out': 2 if self.regression == False else 1
+        }

@@ -17,9 +17,10 @@ class Trainer(BaseEstimator):
             model_config: dict
         ) -> None:
 
-        self.InputShapeSetterClass = InputShapeSetter
-        self.ModelClass = Model
+        self.InputShapeSetter = InputShapeSetter
+        self.Model = Model
         self.cfg = model_config
+        self.model_config = model_config
 
         self.early_stopping = EarlyStopping(patience=self.cfg['es_patience'])
         self.checkpoint = Checkpoint("temp_weights", self.cfg['id'])
@@ -31,7 +32,7 @@ class Trainer(BaseEstimator):
 
     def fit(self, x_train: np.ndarray, y_train: np.ndarray):
 
-        input_shape_setter = self.InputShapeSetterClass(
+        input_shape_setter = self.InputShapeSetter(
             categorical_indicator = self.cfg['categorical_indicator'],
             regression = self.cfg['regression'],
             batch_size = self.cfg['batch_size'],
@@ -42,7 +43,7 @@ class Trainer(BaseEstimator):
 
         module_config = extract_module_config(self.cfg, input_shape_config)
 
-        self.model = self.ModelClass(**module_config).cuda()
+        self.model = self.Model(**module_config).cuda()
         self.loss = self.select_loss().cuda()
 
         self.optimizer = self.select_optimizer()

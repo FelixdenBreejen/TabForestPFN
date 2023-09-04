@@ -37,6 +37,10 @@ class TrainerPFN(BaseEstimator):
     def fit(self, x_train: np.ndarray, y_train: np.ndarray):
 
         self.model, pretrain_config = load_model(use_pretrained_weights=self.cfg['use_pretrained_weights'])
+
+        if self.cfg['regression']:  
+            self.model.decoder[2].reset_parameters()
+        
         self.model.to(self.cfg['device'])
 
         self.optimizer = self.select_optimizer()
@@ -158,7 +162,13 @@ class TrainerPFN(BaseEstimator):
 
         y_hat_list = []
 
-        dataset = TabPFNDataset(self.x_train, self.y_train, x, batch_size=self.cfg['batch_size'])
+        dataset = TabPFNDataset(
+            self.x_train, 
+            self.y_train, 
+            x, 
+            regression=self.cfg['regression'],
+            batch_size=self.cfg['batch_size']
+        )
         loader = self.make_loader(dataset, training=False)
 
         with torch.no_grad():
