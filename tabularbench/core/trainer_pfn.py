@@ -21,6 +21,7 @@ class TrainerPFN(BaseEstimator):
         ) -> None:
 
         
+        self.model_config = model_config
         self.cfg = model_config
 
         self.early_stopping = EarlyStopping(patience=self.cfg['es_patience'])
@@ -54,6 +55,7 @@ class TrainerPFN(BaseEstimator):
         dataset_train_generator = TabPFNDatasetGenerator(
             self.x_train_train,
             self.y_train_train,
+            regression = self.cfg['regression'],
             batch_size=self.cfg['batch_size'],
         )
 
@@ -62,6 +64,7 @@ class TrainerPFN(BaseEstimator):
             self.y_train_train, 
             self.x_train_valid, 
             self.y_train_valid,
+            regression = self.cfg['regression'],
             batch_size=self.cfg['batch_size']
         )
 
@@ -88,11 +91,10 @@ class TrainerPFN(BaseEstimator):
 
             for batch in loader_train:
 
-                input, y_test = batch
-                input = tuple(x.to(self.cfg['device']) for x in input)
-                y_test = y_test.to(self.cfg['device'])
+                batch = tuple(x.to(self.cfg['device']) for x in batch)
+                x_full, y_train, y_test = batch
 
-                y_hat_train = self.model(input, single_eval_pos=dataset_train.single_eval_pos)
+                y_hat_train = self.model((x_full, y_train), single_eval_pos=dataset_train.single_eval_pos)
 
                 if self.cfg['regression']:
                     y_hat_train = y_hat_train[:, 0]
@@ -118,12 +120,16 @@ class TrainerPFN(BaseEstimator):
 
                 for batch in loader_valid:
 
-                    input, y_test = batch
-                    input = tuple(x.to(self.cfg['device']) for x in input)
-                    y_test = y_test.to(self.cfg['device'])
+                    batch = tuple(x.to(self.cfg['device']) for x in batch)
+                    x_full, y_train, y_test = batch
                     
-                    y_hat_valid = self.model(input, single_eval_pos=dataset_valid.single_eval_pos)
-                    y_hat_valid = y_hat_valid[:, :2]
+                    y_hat_valid = self.model((x_full, y_train), single_eval_pos=dataset_valid.single_eval_pos)
+
+                    if self.cfg['regression']:
+                        y_hat_valid = y_hat_valid[:, 0]
+                    else:
+                        y_hat_valid = y_hat_valid[:, :2]
+
                     loss_valid = self.loss(y_hat_valid, y_test)
                     score_valid = self.score(y_hat_valid, y_test)
                     
@@ -159,11 +165,17 @@ class TrainerPFN(BaseEstimator):
             for _ in range(self.cfg['n_ensembles']):
                 y_hat_pieces = []
 
-                for input in loader:
+                for batch in loader:
                     
-                    input = tuple(x.to(self.cfg['device']) for x in input)
-                    output = self.model(input, single_eval_pos=dataset.single_eval_pos)
-                    output = output[:, :2]
+                    batch = tuple(x.to(self.cfg['device']) for x in batch)
+                    x_full, y_train, _ = batch
+
+                    output = self.model((x_full, y_train), single_eval_pos=dataset.single_eval_pos)
+
+                    if self.cfg['regression']:
+                        output = output[:, 0]
+                    else:
+                        output = output[:, :2]
                     # output = torch.nn.functional.softmax(output, dim=1)
                     output = output.cpu().numpy()
 
@@ -182,10 +194,17 @@ class TrainerPFN(BaseEstimator):
     def score(self, y_hat, y):
 
         with torch.no_grad():
+            y_hat = y_hat.cpu().numpy()
+            y = y.cpu().numpy()
+
             if self.cfg['regression']:  
-                return np.sqrt(np.mean((y_hat.cpu().numpy() - y.cpu().numpy())**2))
+                # R2 formula
+                ss_res = np.sum((y - y_hat) ** 2, axis=0)
+                ss_tot = np.sum((y - np.mean(y, axis=0)) ** 2, axis=0)
+                r2 = 1 - ss_res / (ss_tot + 1e-8)
+                return r2
             else:
-                return np.mean((y_hat.cpu().numpy().argmax(axis=1) == y.cpu().numpy()))
+                return np.mean((y_hat.argmax(axis=1) == y))
             
 
     def load_params(self, path):

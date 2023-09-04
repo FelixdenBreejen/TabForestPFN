@@ -11,6 +11,7 @@ class TabPFNDataset(torch.utils.data.Dataset):
         y_train: np.ndarray, 
         x_test: np.ndarray, 
         y_test: np.ndarray = None,
+        regression: bool = False,
         batch_size: int = 1024,
         max_features: int = 100,
     ):
@@ -23,6 +24,10 @@ class TabPFNDataset(torch.utils.data.Dataset):
         self.y_train = y_train
         self.x_test = x_test        
         self.y_test = y_test
+        self.regression = regression
+
+        if self.y_test is None:
+            self.y_test = np.zeros((self.x_test.shape[0],)) - 1
 
         self.batch_size = batch_size
         self.max_features = max_features
@@ -39,14 +44,12 @@ class TabPFNDataset(torch.utils.data.Dataset):
         self.x_test = self.extend_features(self.x_test, max_features=max_features)
 
         self.x_tests = self.split_in_chunks(self.x_test, batch_size)
+        self.y_tests = self.split_in_chunks(self.y_test, batch_size)
 
         # This single eval pos is necessary for the tab pfn forward pass
         # It's a marker for when the training data ends and the test data starts
         # We push the whole training data through the model, unless it's bigger than the batch size
         self.single_eval_pos = min(self.n_train_observations, self.batch_size)
-        
-        if y_test is not None:
-            self.y_tests = self.split_in_chunks(self.y_test, batch_size)
 
 
     def __len__(self):
@@ -66,20 +69,16 @@ class TabPFNDataset(torch.utils.data.Dataset):
         y_train = self.y_train[train_indices]
 
         x_full = np.concatenate([x_train, self.x_tests[idx]], axis=0)
+        x_full = torch.FloatTensor(x_full)
 
-        
-        input = (
-            torch.FloatTensor(x_full),
-            torch.FloatTensor(y_train),
-        )
-
-        if self.y_test is None:
-            return input
+        if self.regression:
+            y_train = torch.FloatTensor(y_train)
+            y_test = torch.FloatTensor(self.y_tests[idx])
         else:
-            return (
-                input,
-                torch.LongTensor(self.y_tests[idx])
-            )
+            y_train = torch.LongTensor(y_train)
+            y_test = torch.LongTensor(self.y_tests[idx])
+
+        return x_full, y_train, y_test
         
 
     def calc_mean_std(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -138,10 +137,16 @@ class TabPFNDataset(torch.utils.data.Dataset):
 def TabPFNDatasetGenerator(
     x: np.ndarray, 
     y: np.ndarray, 
+    regression: bool,
     batch_size: int = 1024,
     max_features: int = 100,
     split: float = 0.8,
 ):
+    
+    if regression:
+        stratify = None
+    else:
+        stratify = y
         
     while True:
 
@@ -150,7 +155,7 @@ def TabPFNDatasetGenerator(
             y, 
             train_size=split, 
             shuffle=True,
-            stratify=y
+            stratify=stratify
         )
 
         static_dataset = TabPFNDataset(
@@ -158,6 +163,7 @@ def TabPFNDatasetGenerator(
             y_train=y_train,
             x_test=x_test,
             y_test=y_test,
+            regression=regression,
             batch_size=batch_size,
             max_features=max_features
         )
