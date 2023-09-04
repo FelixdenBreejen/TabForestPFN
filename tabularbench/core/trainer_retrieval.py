@@ -6,7 +6,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 import numpy as np
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
-from tabularbench.core.dataset import RetrievalDataset, RetrievalDatasetGenerator
+from tabularbench.core.dataset_tap_pfn import RetrievalDataset, RetrievalDatasetGenerator
 
 
 class Trainer(BaseEstimator):

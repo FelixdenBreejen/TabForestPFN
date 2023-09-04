@@ -7,7 +7,7 @@ from xgboost import XGBClassifier, XGBRegressor
 from tabularbench.models.skorch_models import create_resnet_skorch, create_ft_transformer_skorch, create_rtdl_mlp_skorch, create_rtdl_mlp_pwl_skorch
 from tabularbench.models.skorch_models_regression import create_resnet_regressor_skorch, create_ft_transformer_regressor_skorch, create_rtdl_mlp_regressor_skorch, \
                                             create_rtdl_mlp_pwl_regressor_skorch
-from tabularbench.models.torch_models import create_ft_transformer_torch, create_tab_pfn_torch
+from tabularbench.models.torch_models import create_ft_transformer_torch, create_tab_pfn_torch, create_masked_saint_torch
 from tabularbench.models.TabSurvey.models.saint import SAINT
 
 
@@ -163,6 +163,19 @@ total_config[keyword] = {
 
 model_keyword_dic[config_regression["model_name"]["value"]] = create_tab_pfn_torch
 model_keyword_dic[config_classif["model_name"]["value"]] = create_tab_pfn_torch
+
+
+from tabularbench.configs.model_configs.masked_saint import config_classif, config_regression, config_classif_default, config_regression_default
+keyword = "masked_saint"
+total_config[keyword] = {
+        "classif": {"random": config_classif,
+                    "default": config_classif_default},
+        "regression": {"random": config_regression,
+                            "default": config_regression_default},
+}
+
+model_keyword_dic[config_regression["model_name"]["value"]] = create_masked_saint_torch
+model_keyword_dic[config_classif["model_name"]["value"]] = create_masked_saint_torch
 
 
 if __name__ == "__main__":

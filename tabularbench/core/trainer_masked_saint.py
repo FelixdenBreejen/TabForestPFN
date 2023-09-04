@@ -1,8 +1,11 @@
 from pathlib import Path
 
 from sklearn.base import BaseEstimator
+from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.preprocessing import OneHotEncoder
 import torch
 from torch.optim import AdamW
+from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 import numpy as np
 from transformers.optimization import get_cosine_schedule_with_warmup
 
@@ -51,8 +54,6 @@ class TrainerMaskedSaint(BaseEstimator):
         print(f"Training transformer: {num_params/1_000_000:.2f}M parameters")
 
         self.train()
-
-        return self
 
 
     def train(self):
@@ -199,3 +200,8 @@ class TrainerMaskedSaint(BaseEstimator):
         loss = torch.nn.CrossEntropyLoss()
 
         return loss
+    
+
+
+
+

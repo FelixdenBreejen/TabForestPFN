@@ -3,9 +3,8 @@ from skorch.callbacks import Checkpoint, EarlyStopping, LRScheduler
 from skorch import NeuralNetClassifier
 from skorch.callbacks import EpochScoring
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch.optim import AdamW, Adam, SGD
-import sys
-sys.path.append("")
+from torch.optim import AdamW, Adam, sgd
+
 from tabularbench.models.tabular.bin.resnet import ResNet, InputShapeSetterResnet
 from tabularbench.models.tabular.bin.mlp import MLP, InputShapeSetterMLP
 from tabularbench.models.tabular.bin.mlp_pwl import MLP_PWL, InputShapeSetterMLP_PWL
@@ -13,6 +12,7 @@ from tabularbench.models.tabular.bin.ft_transformer import Transformer, InputSha
 
 from tabularbench.core.trainer import Trainer
 from tabularbench.core.trainer_pfn import TrainerPFN
+from tabularbench.core.trainer_masked_saint_finetune import TrainerMaskedSaintFinetune
 
 from skorch.callbacks import Callback
 import numpy as np
@@ -57,5 +57,16 @@ def create_tab_pfn_torch(model_config, id):
     modify_config(model_config, id)
 
     trainer = TrainerPFN(model_config=model_config)
+
+    return trainer
+
+
+def create_masked_saint_torch(model_config, id):
+    
+    model_config = {**model_config}
+    
+    modify_config(model_config, id)
+
+    trainer = TrainerMaskedSaintFinetune(model_config=model_config)
 
     return trainer
