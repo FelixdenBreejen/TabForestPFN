@@ -72,6 +72,9 @@ def make_default_results(sweep: SweepConfig):
     df_all = pd.read_csv(PATH_TO_ALL_BENCH_CSV)
 
     benchmark_plot_names = df_all['model_name'].unique().tolist()
+    # Not all benchmarks have this model, and also it's not a very important model.
+    benchmark_plot_names.remove('HistGradientBoostingTree')
+
     assert sweep.plot_name not in benchmark_plot_names, f"Don't use plot name {sweep.plot_name}, the benchmark already has a model with that name"
 
     index = benchmark_plot_names + [sweep.plot_name]
@@ -79,7 +82,7 @@ def make_default_results(sweep: SweepConfig):
 
     df_new.loc[sweep.plot_name] = df[df['hp'] == 'default']['mean_test_score'].to_list()
 
-    for model_name in df_all['model_name'].unique():
+    for model_name in benchmark_plot_names:
 
         correct_model = df_all['model_name'] == model_name
         correct_task = df_all['hp'] == 'default'

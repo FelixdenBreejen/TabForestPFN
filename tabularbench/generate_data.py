@@ -31,7 +31,7 @@ def balance_data(x, y):
 
 def import_openml_data_no_transform(keyword, regression=False, categorical=False, rng=None):
     # keyword should be the openml task id
-    task = openml.tasks.get_task(keyword, download_data=True, download_splits=True, download_qualities=False, download_features_meta_data=False)
+    task = openml.tasks.get_task(keyword, download_data=True, download_splits=False, download_qualities=False, download_features_meta_data=False)
     with warnings.catch_warnings():
         warnings.simplefilter("once")
         dataset = task.get_dataset()

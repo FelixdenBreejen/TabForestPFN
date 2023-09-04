@@ -149,7 +149,7 @@ def train_model_config(config) -> dict:
             r2_val_scores.append(r2_val)
             r2_test_scores.append(r2_test)
         train_score, val_score, test_score = evaluate_model(model, x_train, y_train, x_val, y_val, x_test,
-                                                            y_test, config, model_id)
+                                                            y_test, config, model_id,  return_r2=True,)
 
         end_time = time.time()
         print("Train score:", train_score)

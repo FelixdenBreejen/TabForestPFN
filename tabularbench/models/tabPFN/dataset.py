@@ -32,8 +32,12 @@ class TabPFNDataset(torch.utils.data.Dataset):
         self.batch_size = batch_size
         self.max_features = max_features
         self.n_train_observations = x_train.shape[0]
+        self.n_train_features = x_train.shape[1]
 
-        mean, std = self.calc_mean_std(x_train)
+        self.x_train = self.cutoff_excess_features(self.x_train, max_features)
+        self.x_test = self.cutoff_excess_features(self.x_test, max_features)
+
+        mean, std = self.calc_mean_std(self.x_train)
         self.x_train = self.normalize_by_mean_std(self.x_train, mean, std)
         self.x_test = self.normalize_by_mean_std(self.x_test, mean, std)
 
@@ -70,16 +74,25 @@ class TabPFNDataset(torch.utils.data.Dataset):
 
         x_full = np.concatenate([x_train, self.x_tests[idx]], axis=0)
         x_full = torch.FloatTensor(x_full)
+        y_train = torch.FloatTensor(y_train)
 
         if self.regression:
-            y_train = torch.FloatTensor(y_train)
             y_test = torch.FloatTensor(self.y_tests[idx])
         else:
-            y_train = torch.LongTensor(y_train)
             y_test = torch.LongTensor(self.y_tests[idx])
 
         return x_full, y_train, y_test
         
+
+    def cutoff_excess_features(self, x: np.ndarray, max_features: int) -> np.ndarray:
+
+        if x.shape[1] > max_features:
+            print(f"TabPFN allows {max_features} features, but the dataset has {x.shape[1]} features. Excess features are cut off.")
+            x = x[:, :max_features]
+
+        return x
+
+
 
     def calc_mean_std(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """

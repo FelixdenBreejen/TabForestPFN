@@ -39,7 +39,7 @@ config_default = {
         "value": 0.
     },
     "model__batch_size": {
-        "value": 10000
+        "value": 5000
     },
     "model__n_ensembles": {
         "value": 1
