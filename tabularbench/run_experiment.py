@@ -111,7 +111,7 @@ def train_model_config(config) -> dict:
         rng = np.random.RandomState(i)
         print(rng.randn(1))
         t = time.time()
-        x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator = generate_dataset(config, rng)
+        x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator = generate_dataset(config, rng, i)
         data_generation_time = time.time() - t
         print("Data generation time:", data_generation_time)
         # print(y_train)

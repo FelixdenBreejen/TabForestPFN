@@ -43,8 +43,8 @@ class Trainer(BaseEstimator):
 
         module_config = extract_module_config(self.cfg, input_shape_config)
 
-        self.model = self.Model(**module_config).cuda()
-        self.loss = self.select_loss().cuda()
+        self.model = self.Model(**module_config).to(self.cfg['device'])
+        self.loss = self.select_loss()
 
         self.optimizer = self.select_optimizer()
         self.scheduler = self.select_scheduler()
@@ -69,8 +69,8 @@ class Trainer(BaseEstimator):
             for batch in loader_train:
 
                 x, y = batch
-                x = x.cuda()
-                y = y.cuda()
+                x = x.to(self.cfg['device'])
+                y = y.to(self.cfg['device'])
                 y_hat_train = self.model(x)
                 loss = self.loss(y_hat_train, y)
                 score = self.score(y_hat_train, y)
@@ -91,8 +91,8 @@ class Trainer(BaseEstimator):
 
                 for batch in loader_valid:
                     x, y = batch
-                    x = x.cuda()
-                    y = y.cuda()
+                    x = x.to(self.cfg['device'])
+                    y = y.to(self.cfg['device'])
                     y_hat_valid = self.model(x)
                     loss_valid = self.loss(y_hat_valid, y)
                     score_valid = self.score(y_hat_valid, y)
@@ -124,7 +124,7 @@ class Trainer(BaseEstimator):
 
         with torch.no_grad():
             for batch in loader:
-                x = batch[0].cuda()
+                x = batch[0].to(self.cfg['device'])
                 output = self.model(x)
                 output = output.cpu().numpy()
 

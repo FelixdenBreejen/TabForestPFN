@@ -18,6 +18,8 @@ from tabularbench.sweeps.paths_and_filenames import (
 
 def monitor_and_make_plots(output_dir: str, delay_in_seconds: int = 10):
 
+    return 
+
     sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
     sweeps = sweep_config_maker(sweep_csv, output_dir)
 
