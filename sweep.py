@@ -5,16 +5,17 @@ import time
 import hydra
 from datetime import datetime
 from omegaconf import DictConfig, OmegaConf
-import argparse
+import itertools
 import pandas as pd
 import subprocess
 from pathlib import Path
 import torch.multiprocessing as mp
 
-from tabularbench.launch_benchmarks.launch_benchmarks import benchmarks
+from tabularbench.data.benchmarks import benchmarks, benchmark_names
 from tabularbench.sweeps.monitor_and_make_plots import monitor_and_make_plots
 from tabularbench.sweeps.run_sweeps import run_sweeps
-from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, PATH_TO_ALL_BENCH_CSV
+from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, PATH_TO_ALL_BENCH_CSV, CONFIG_DUPLICATE
+from tabularbench.sweeps.sweep_config import SweepConfig, save_sweep_config_list_to_file
 
 
 @hydra.main(version_base=None, config_path="config", config_name="sweep")
@@ -24,8 +25,9 @@ def main(cfg: DictConfig):
         delete_current_output_dir(cfg)
         set_config_dir_to_last_output(cfg)
 
-    check_for_benchmark_results_csv()
+    check_existence_of_benchmark_results_csv()
     create_sweep_csv(cfg)
+    save_config(cfg)
     launch_sweeps(cfg)
 
 
@@ -54,31 +56,49 @@ def delete_current_output_dir(cfg: DictConfig) -> None:
 
 def create_sweep_csv(cfg: dict) -> None:
 
-    sweep_dicts = []
+    sweep_configs = []
 
-    for i_model, model in enumerate(cfg.models):
-        for task in cfg.random_search:
-            for benchmark in benchmarks:
+    assert len(cfg.models) == len(cfg.model_plot_names), f"Please provide a plot name for each model. Got {len(cfg.models)} models and {len(cfg.model_plot_names)} plot names."
 
-                if benchmark['name'] not in cfg.benchmarks:
-                    continue
-                
-                sweep_dict = {
-                    'model': model,
-                    'plot_name': cfg.model_plot_names[i_model], 
-                    'benchmark': benchmark['name'],
-                    'random_search': task,
-                    'task': benchmark['task'],
-                    'dataset_size': benchmark['dataset_size'],
-                    'categorical': benchmark['categorical'],
-                    'suite_id': benchmark['suite_id'],
-                    'runs_per_dataset': 1 if task == 'default' else cfg.runs_per_dataset
-                }
+    models_with_plot_name = zip(cfg.models, cfg.model_plot_names)
+    sweep_details = itertools.product(models_with_plot_name, cfg.search_type, cfg.benchmarks)
 
-                sweep_dicts.append(sweep_dict)
+    for (model, model_plot_name), search_type, benchmark_name in sweep_details:
 
-    sweep_csv_path = os.path.join(cfg.output_dir, SWEEP_FILE_NAME)
-    pd.DataFrame(sweep_dicts).to_csv(sweep_csv_path, index=False)
+        benchmark = benchmarks[benchmark_name]
+
+        if search_type == 'default':
+            runs_per_dataset = 1
+        else:
+            runs_per_dataset = cfg.runs_per_dataset
+
+        if benchmark['categorical']:
+            feature_type = 'mixed'
+        else:
+            feature_type = 'numerical'
+            
+
+        sweep_config = SweepConfig(
+            model=model,
+            plot_name=model_plot_name,
+            benchmark_name=benchmark['name'],
+            search_type=search_type,
+            task=benchmark['task'],
+            dataset_size=benchmark['dataset_size'],
+            feature_type=feature_type,
+            suite_id=benchmark['suite_id'],
+            runs_per_dataset=runs_per_dataset
+        )
+
+        sweep_configs.append(sweep_config)
+
+    save_sweep_config_list_to_file(sweep_configs, Path(cfg.output_dir) / SWEEP_FILE_NAME)
+
+
+def save_config(cfg: DictConfig) -> None:
+    
+    config_path = Path(cfg.output_dir) / CONFIG_DUPLICATE
+    OmegaConf.save(cfg, config_path)
 
 
 def launch_sweeps(cfg) -> None:
@@ -106,11 +126,12 @@ def launch_sweeps(cfg) -> None:
 
 
 
-def check_for_benchmark_results_csv() -> None:
+def check_existence_of_benchmark_results_csv() -> None:
 
     results_csv = Path(PATH_TO_ALL_BENCH_CSV)
     if not results_csv.exists():
         raise FileNotFoundError(f"Could not find {results_csv}. Please download it from the link in the README.")
+
 
 if __name__ == "__main__":
     main()

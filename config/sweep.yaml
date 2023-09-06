@@ -3,6 +3,8 @@ hydra:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
 
+
+
 continue_last_output: False
 output_dir: ${hydra:run.dir}
 seed: 0
@@ -16,14 +18,14 @@ models:
 model_plot_names:
   - TabPFN_finetune
 benchmarks:
-  # - categorical_classification
+  - categorical_classification
   # - numerical_classification
   # - categorical_regression
   # - numerical_regression
-  - categorical_classification_large
+  # - categorical_classification_large
   # - numerical_classification_large
   # - categorical_regression_large
   # - numerical_regression_large
-random_search:
-  # - True
-  - False
+search_type:
+  - random
+  - default

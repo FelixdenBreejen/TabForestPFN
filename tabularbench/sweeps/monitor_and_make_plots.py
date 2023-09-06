@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 
 from tabularbench.configs.all_model_configs import total_config
-from tabularbench.sweeps.sweep_config import SweepConfig, sweep_config_maker
+from tabularbench.sweeps.sweep_config import SweepConfig, load_sweep_configs_from_file
 from tabularbench.sweeps.datasets import get_unfinished_task_ids
 from tabularbench.sweeps.paths_and_filenames import (
     SWEEP_FILE_NAME, RESULTS_FILE_NAME, RESULTS_MODIFIED_FILE_NAME, 
@@ -18,10 +18,8 @@ from tabularbench.sweeps.paths_and_filenames import (
 
 def monitor_and_make_plots(output_dir: str, delay_in_seconds: int = 10):
 
-    return 
-
     sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
-    sweeps = sweep_config_maker(sweep_csv, output_dir)
+    sweeps = load_sweep_configs_from_file(Path(output_dir) / SWEEP_FILE_NAME)
 
     for sweep in sweeps:
 

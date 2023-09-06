@@ -1,51 +1,89 @@
-from __future__ import annotations
 from pathlib import Path
-import openml
+from dataclasses import dataclass
 
 import pandas as pd
 
+from tabularbench.data.benchmarks import benchmark_names
 
+
+@dataclass
 class SweepConfig():
-
-    def __init__(self, sweep_config: dict):
-
-        self.model = sweep_config['model']
-        self.plot_name = sweep_config['plot_name']
-        self.task = sweep_config['task']
-        self.categorical = sweep_config['categorical']
-        self.benchmark = sweep_config['benchmark']
-        self.random_search = sweep_config['random_search']
-        self.runs_per_dataset = sweep_config['runs_per_dataset']
-        self.dataset_size = sweep_config['dataset_size']
-        self.path: Path = sweep_config['path']
-        
-        self.suite_id = sweep_config['suite_id']
-        self.task_ids = openml.study.get_suite(self.suite_id).tasks
-        self.dataset_ids = [openml.tasks.get_task(id, download_data=False, download_splits=False, download_qualities=False, download_features_meta_data=False).dataset_id for id in self.task_ids]
-        self.dataset_names = [openml.datasets.get_dataset(id, download_data=False, download_qualities=False, download_features_meta_data=False).name for id in self.dataset_ids]
-
-        assert self.task in ['regression', 'classif']
+    model: str
+    plot_name: str
+    task: str
+    feature_type: str     # what the paper calls 'categorical', we call 'mixed'
+    benchmark_name: str
+    search_type: str
+    runs_per_dataset: int
+    dataset_size: str
 
 
-def sweep_config_maker(sweep_csv: pd.DataFrame, output_dir) -> list[SweepConfig]:
-    """
-    From the sweep_csv file, create a list of SweepConfig objects.
-    """
+    def __post_init__(self):
 
-    sweeps = []
+        # TODO: validate model name
+        assert self.benchmark_name in benchmark_names, f"{self.benchmark_name} is not a valid benchmark. Please choose from {benchmark_names}"
+        assert self.dataset_size in [10000, 50000]
+        assert self.search_type in ['default', 'random'], f"{self.search_type} is not a valid search type. Please choose from ['default', 'random']"
+        assert self.task in ['regression', 'classification'], f"{self.task} is not a valid task. Please choose from ['regression', 'classif']"
+        assert self.feature_type in ['numerical', 'categorical', 'mixed'], f"{self.feature_type} is not a valid feature type. Please choose from ['numerical', 'categorical', 'mixed']"
 
-    for _, row in sweep_csv.iterrows():
+        self.folder_name = f'{self.benchmark_name}_{self.search_type}_{self.model}'
 
-        if row['random_search']:
-            random_search_str = 'random'
-        else:
-            random_search_str = 'default'
 
-        benchmark_path = Path(output_dir) / f"{row['benchmark']}_{random_search_str}_{row['model']}"
 
-        sweep_config = row.to_dict()
-        sweep_config['path'] = benchmark_path
+    @classmethod
+    def from_dict(cls, sweep_dict: dict) -> SweepConfig:
 
-        sweeps.append(SweepConfig(sweep_config))
+        return cls(
+            model=sweep_dict['model'],
+            plot_name=sweep_dict['plot_name'],
+            task=sweep_dict['task'],
+            feature_type=sweep_dict['feature_type'],
+            benchmark_name=sweep_dict['benchmark_name'],
+            search_type=sweep_dict['search_type'],
+            runs_per_dataset=sweep_dict['runs_per_dataset'],
+            dataset_size=sweep_dict['dataset_size'],
+        )
+    
 
-    return sweeps
+    def to_dict(self) -> dict:
+
+        return {
+            'model': self.model,
+            'plot_name': self.plot_name,
+            'task': self.task,
+            'feature_type': self.feature_type,
+            'benchmark_name': self.benchmark_name,
+            'search_type': self.search_type,
+            'runs_per_dataset': self.runs_per_dataset,
+            'dataset_size': self.dataset_size,
+        }
+    
+
+    def to_dict_all_params(self) -> dict:
+
+        return {
+            'model': self.model,
+            'plot_name': self.plot_name,
+            'task': self.task,
+            'feature_type': self.feature_type,
+            'benchmark_name': self.benchmark_name,
+            'search_type': self.search_type,
+            'runs_per_dataset': self.runs_per_dataset,
+            'dataset_size': self.dataset_size,
+            'folder_name': self.folder_name,
+        }
+    
+
+def save_sweep_config_list_to_file(sweep_configs: list[SweepConfig], path: Path) -> None:
+
+    sweep_dicts = [sweep_config.to_dict() for sweep_config in sweep_configs]
+    pd.DataFrame(sweep_dicts).to_csv(path, index=False)
+
+
+def load_sweep_configs_from_file(path: Path) -> list[SweepConfig]:
+
+    sweep_dicts = pd.read_csv(path).to_dict('records')
+    sweep_configs = [SweepConfig.from_dict(sweep_dict) for sweep_dict in sweep_dicts]
+
+    return sweep_configs

@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 import os
 import sys
-import fcntl
+import yaml
 
 import pandas as pd
 import random
@@ -13,9 +13,10 @@ import torch
 from tabularbench.configs.all_model_configs import total_config
 from tabularbench.run_experiment import train_model_on_config
 from tabularbench.sweeps.random_search_object import WandbSearchObject
-from tabularbench.sweeps.sweep_config import SweepConfig, sweep_config_maker
+from tabularbench.sweeps.sweep_config import SweepConfig, load_sweep_configs_from_file
 from tabularbench.sweeps.datasets import get_unfinished_task_ids
-from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, RESULTS_FILE_NAME
+from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, RESULTS_FILE_NAME, CONFIG_DUPLICATE
+from tabularbench.sweeps.run_config import RunConfig
 
 
 
@@ -33,16 +34,19 @@ def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
     np.random.seed(seed)
     torch.manual_seed(seed)
     
-    device = 'cuda:'+str(gpu) if torch.cuda.is_available() else 'cpu'
+    with open(Path(output_dir) / CONFIG_DUPLICATE, 'r') as f:
+        cfg = yaml.load(f, Loader=yaml.FullLoader)
+        cfg.device = 'cuda:'+str(gpu) if torch.cuda.is_available() else 'cpu'
+        cfg.seed = seed
 
     sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
-    sweep_configs = sweep_config_maker(sweep_csv, output_dir)
+    sweep_configs = load_sweep_configs_from_file(sweep_csv, output_dir)
 
-    for sweep_config in sweep_configs:
-        
-        search_sweep(sweep_config, seed=seed, device=device, is_random=False)
-        if sweep_config.random_search:
-            search_sweep(sweep_config, seed=seed, device=device, is_random=True)
+    for sweep_config in sweep_configs:  
+              
+        search_sweep(cfg, sweep_config, is_random=False)
+        if sweep_config.search_type == 'random':
+            search_sweep(cfg, sweep_config, is_random=True)
 
     end_log_to_file()
 
@@ -64,9 +68,10 @@ def end_log_to_file():
     sys.stderr.close()
 
 
-def search_sweep(sweep: SweepConfig, seed: int, device: str, is_random: bool):
+def search_sweep(cfg: dict, sweep: SweepConfig, is_random: bool):
     """Perform one sweep: one row of the sweep.csv file."""
     
+
     assert sweep.model in total_config.keys(), f"Model {sweep.model} not found in total_config"
 
     config = total_config[sweep.model][sweep.task]
@@ -76,12 +81,14 @@ def search_sweep(sweep: SweepConfig, seed: int, device: str, is_random: bool):
     
     while True:
 
+        run_config = RunConfig.from_cfg_and_sweep_cfg(cfg, sweep, is_random)
+
         datasets_unfinished = get_unfinished_task_ids(sweep.task_ids, results_path, runs_per_dataset)
 
         if len(datasets_unfinished) == 0:
             break
         
-        config_run = create_run_config(sweep, datasets_unfinished, search_object, seed, device, is_random)
+        config_run = create_run_config(cfg, sweep, datasets_unfinished, search_object, is_random)
         results = train_model_on_config(config_run)
 
         if results == -1:
@@ -96,54 +103,6 @@ def search_sweep(sweep: SweepConfig, seed: int, device: str, is_random: bool):
 
         save_results(results, results_path)
 
-
-def create_run_config(
-    sweep: SweepConfig, 
-    datasets_unfinished: list[int], 
-    search_object: WandbSearchObject,  
-    seed: int,
-    device: str,
-    is_random: bool
-) -> dict:
-
-    config_base = make_base_config(sweep)
-    config_dataset = draw_dataset_config(datasets_unfinished)
-    config_hyperparams = search_object.draw_config(type='random' if is_random else 'default')
-    config_hp = {'hp': 'random' if is_random else 'default', 'seed': seed}
-    config_device = {'model__device': device}
-    config_run = {**config_base, **config_dataset, **config_hyperparams, **config_hp, **config_device}
-
-    return config_run
-
-
-def make_base_config(sweep: SweepConfig) -> dict:
-
-    if sweep.dataset_size == "small":
-        max_train_samples = 1000
-    elif sweep.dataset_size == "medium":
-        max_train_samples = 10000
-    elif sweep.dataset_size == "large":
-        max_train_samples = 50000
-    else:
-        assert type(sweep.dataset_size) == int
-        max_train_samples = sweep.dataset_size
-
-    return {
-        "data__categorical": sweep.categorical,
-        "data__method_name": "openml_no_transform",
-        "data__regression": sweep.task == 'regression',
-        "regression": sweep.task == 'regression',
-        "n_iter": 'auto',
-        "max_train_samples": max_train_samples
-    }
-
-
-def draw_dataset_config(datasets_unfinished: list[int]) -> dict:
-
-    dataset_id = random.choice(datasets_unfinished)
-    return {
-        "data__keyword": dataset_id
-    }
     
 
 def save_results(results: dict, results_path: Path):
