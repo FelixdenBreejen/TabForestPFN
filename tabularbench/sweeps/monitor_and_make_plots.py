@@ -16,7 +16,7 @@ from tabularbench.sweeps.paths_and_filenames import (
 )
 
 
-def monitor_and_make_plots(process_id: int, output_dir: str, delay_in_seconds: int = 10):
+def monitor_and_make_plots(output_dir: str, delay_in_seconds: int = 10):
 
     sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
     sweeps = load_sweep_configs_from_file(Path(output_dir) / SWEEP_FILE_NAME)

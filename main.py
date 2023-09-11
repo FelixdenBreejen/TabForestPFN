@@ -15,6 +15,7 @@ from tabularbench.sweeps.monitor_and_make_plots import monitor_and_make_plots
 from tabularbench.sweeps.run_sweeps import run_sweeps
 from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, PATH_TO_ALL_BENCH_CSV, CONFIG_DUPLICATE
 from tabularbench.sweeps.sweep_config import SweepConfig, save_sweep_config_list_to_file
+from tabularbench.sweeps.writer import writer
 
 import logging
 
@@ -30,16 +31,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-writer_queue = mp.Queue()
-
 
 @hydra.main(version_base=None, config_path="config", config_name="sweep")
 def main(cfg: DictConfig):
 
+
     if cfg.continue_last_output:
         delete_current_output_dir(cfg)
         set_config_dir_to_last_output(cfg)
-        logging.info(f"Continuing last output in directory {cfg.output_dir}")
+        logger.info(f"Continuing last output in directory {cfg.output_dir}")
 
     check_existence_of_benchmark_results_csv()
     save_config(cfg)
@@ -122,11 +122,8 @@ def save_config(cfg: DictConfig) -> None:
     del config_to_save.runs_per_device
     del config_to_save.seed
 
-    d = OmegaConf.to_container(config_to_save, resolve=True)
-    with open(config_path, 'w') as f:
-        yaml.dump(d, f)
-    
-    logging.info(f"Saved config to {config_path}")
+    OmegaConf.save(config_to_save, config_path, resolve=True)    
+    logger.info(f"Saved config to {config_path}")
 
 
 def launch_sweeps(cfg) -> None:
@@ -136,16 +133,21 @@ def launch_sweeps(cfg) -> None:
 
     time_seed = int(time.time()) * cfg.continue_last_output
 
-    mp.spawn(writer, args=(writer_queue,), nprocs=1, join=False)
+    mp.set_start_method('spawn')
+    writer_queue = mp.Queue()
+
+    mp.Process(target=writer, args=(writer_queue,)).start()
+    logger.info(f"Launched writer")
 
     for seed, gpu in enumerate(gpus):
-        mp.spawn(run_sweeps, args=(path, writer_queue, gpu, seed), nprocs=1, join=False)
-        logging.info(f"Launched agent {seed} on device {gpu}")
+        mp.Process(target=run_sweeps, args=(path, writer_queue, gpu, seed)).start()
+        logger.info(f"Launched agent {seed} on device {gpu}")
         seed += time_seed
 
-    mp.spawn(monitor_and_make_plots, args=(path, cfg.monitor_interval_in_seconds), nprocs=1, join=False)
-    logging.info(f"Launched monitor and plotter")
-
+    process = mp.Process(target=monitor_and_make_plots, args=(path, cfg.monitor_interval_in_seconds))
+    process.start()
+    logger.info(f"Launched monitor and plotter")
+    process.join()
 
 
 def check_existence_of_benchmark_results_csv() -> None:
@@ -154,15 +156,7 @@ def check_existence_of_benchmark_results_csv() -> None:
     if not results_csv.exists():
         raise FileNotFoundError(f"Could not find {results_csv}. Please download it from the link in the README.")
     
-    logging.debug(f"Found {results_csv}")
-
-
-def writer(process_id: int, queue: mp.Queue) -> None:
-
-    while True:
-        path, txt = queue.get()
-        with open(path, 'a') as f:
-            f.write(txt)
+    logger.debug(f"Found {results_csv}")
 
 
 if __name__ == "__main__":

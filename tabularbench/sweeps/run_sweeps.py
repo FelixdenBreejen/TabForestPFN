@@ -1,9 +1,10 @@
 from __future__ import annotations
 import argparse
 from pathlib import Path
-import os
 import sys
 import yaml
+from omegaconf import OmegaConf, DictConfig
+import logging
 
 import pandas as pd
 import random
@@ -21,7 +22,7 @@ from tabularbench.sweeps.run_config import RunConfig
 
 
 
-def run_sweeps(process_id: int, output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0):
+def run_sweeps(output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0):
     """
     Run all sweeps as specified in the config file.
 
@@ -33,18 +34,12 @@ def run_sweeps(process_id: int, output_dir: str, writer_queue: mp.Queue, gpu: in
     """
 
     cfg = get_config(output_dir)
+    logger = get_logger(cfg, gpu, seed)
+    set_seed(seed)
+    add_device_to_cfg(cfg, gpu)
 
-    print("seed: ", seed)
+    logger.info(f"Process {process_id} started: device {cfg['device']}, seed {seed}")
 
-    log_to_file(output_dir)
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    
-    with open(Path(output_dir) / CONFIG_DUPLICATE, 'r') as f:
-        cfg = yaml.load(f, Loader=yaml.FullLoader)
-        cfg.device = 'cuda:'+str(gpu) if torch.cuda.is_available() else 'cpu'
-        cfg.seed = seed
 
     sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
     sweep_configs = load_sweep_configs_from_file(sweep_csv, output_dir)
@@ -55,24 +50,36 @@ def run_sweeps(process_id: int, output_dir: str, writer_queue: mp.Queue, gpu: in
         if sweep_config.search_type == 'random':
             search_sweep(cfg, sweep_config, is_random=True)
 
-    end_log_to_file()
 
-
-def log_to_file(output_dir: str):
-
-    log_dir = Path(output_dir) / 'logs'
-    log_dir.mkdir(parents=True, exist_ok=True)
-    log_file_name_stdout = str(os.getpid()) + ".out"
-    log_file_name_stderr = str(os.getpid()) + "_error.out"
-
-    sys.stdout = open(log_dir / log_file_name_stdout, "a", 1)
-    sys.stderr = open(log_dir / log_file_name_stderr, "a", 1)
-
-
-def end_log_to_file():
+def get_config(output_dir: str) -> DictConfig:
     
-    sys.stdout.close()
-    sys.stderr.close()
+    return OmegaConf.load(Path(output_dir) / CONFIG_DUPLICATE)
+    
+
+def get_logger(cfg: OmegaConf, gpu: int, seed: int) -> logging.Logger:
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s :: %(levelname)-8s :: %(funcName)-12s :: %(message)s')
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+    filename = f"gpu_{gpu}_seed_{seed}.log"
+    log_dir = Path(cfg['output_dir']) / 'logs'
+    log_dir.mkdir(parents=True, exist_ok=True)
+    file_handler = logging.FileHandler(log_dir / filename)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    
+
+def set_seed(seed: int) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+
+def add_device_to_cfg(cfg: dict, gpu: int) -> None:
+    cfg.device = f'cuda:{gpu}' if torch.cuda.is_available() else 'cpu'
 
 
 def search_sweep(cfg: dict, sweep: SweepConfig, is_random: bool):
