@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import os
 import time
 import hydra
+import yaml
 from datetime import datetime
 from omegaconf import DictConfig, OmegaConf
 import itertools
-import pandas as pd
 import subprocess
 from pathlib import Path
 import torch.multiprocessing as mp
@@ -17,6 +16,22 @@ from tabularbench.sweeps.run_sweeps import run_sweeps
 from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, PATH_TO_ALL_BENCH_CSV, CONFIG_DUPLICATE
 from tabularbench.sweeps.sweep_config import SweepConfig, save_sweep_config_list_to_file
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("sweep.log", mode='w'),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+
+writer_queue = mp.Queue()
+
 
 @hydra.main(version_base=None, config_path="config", config_name="sweep")
 def main(cfg: DictConfig):
@@ -24,9 +39,9 @@ def main(cfg: DictConfig):
     if cfg.continue_last_output:
         delete_current_output_dir(cfg)
         set_config_dir_to_last_output(cfg)
+        logging.info(f"Continuing last output in directory {cfg.output_dir}")
 
     check_existence_of_benchmark_results_csv()
-    create_sweep_csv(cfg)
     save_config(cfg)
     launch_sweeps(cfg)
 
@@ -98,7 +113,20 @@ def create_sweep_csv(cfg: dict) -> None:
 def save_config(cfg: DictConfig) -> None:
     
     config_path = Path(cfg.output_dir) / CONFIG_DUPLICATE
-    OmegaConf.save(cfg, config_path)
+
+    config_to_save = cfg.copy()
+
+    del config_to_save.devices
+    del config_to_save.continue_last_output
+    del config_to_save.monitor_interval_in_seconds
+    del config_to_save.runs_per_device
+    del config_to_save.seed
+
+    d = OmegaConf.to_container(config_to_save, resolve=True)
+    with open(config_path, 'w') as f:
+        yaml.dump(d, f)
+    
+    logging.info(f"Saved config to {config_path}")
 
 
 def launch_sweeps(cfg) -> None:
@@ -107,22 +135,16 @@ def launch_sweeps(cfg) -> None:
     path = cfg.output_dir
 
     time_seed = int(time.time()) * cfg.continue_last_output
-    mp.set_start_method('spawn')
 
-    processes = []
+    mp.spawn(writer, args=(writer_queue,), nprocs=1, join=False)
+
     for seed, gpu in enumerate(gpus):
-        
+        mp.spawn(run_sweeps, args=(path, writer_queue, gpu, seed), nprocs=1, join=False)
+        logging.info(f"Launched agent {seed} on device {gpu}")
         seed += time_seed
-        process = mp.Process(target=run_sweeps, args=(path, gpu, seed), )
-        process.start()
-        processes.append(process)
 
-    print(f"Launched {len(gpus)} agents on {len(set(gpus))} devices")
-
-    monitor_and_make_plots(path, cfg.monitor_interval_in_seconds)
-
-    for process in processes:
-        process.join()
+    mp.spawn(monitor_and_make_plots, args=(path, cfg.monitor_interval_in_seconds), nprocs=1, join=False)
+    logging.info(f"Launched monitor and plotter")
 
 
 
@@ -131,6 +153,16 @@ def check_existence_of_benchmark_results_csv() -> None:
     results_csv = Path(PATH_TO_ALL_BENCH_CSV)
     if not results_csv.exists():
         raise FileNotFoundError(f"Could not find {results_csv}. Please download it from the link in the README.")
+    
+    logging.debug(f"Found {results_csv}")
+
+
+def writer(process_id: int, queue: mp.Queue) -> None:
+
+    while True:
+        path, txt = queue.get()
+        with open(path, 'a') as f:
+            f.write(txt)
 
 
 if __name__ == "__main__":

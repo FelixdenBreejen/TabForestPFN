@@ -9,6 +9,7 @@ import pandas as pd
 import random
 import numpy as np
 import torch
+import torch.multiprocessing as mp
 
 from tabularbench.configs.all_model_configs import total_config
 from tabularbench.run_experiment import train_model_on_config
@@ -20,12 +21,18 @@ from tabularbench.sweeps.run_config import RunConfig
 
 
 
-def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
+def run_sweeps(process_id: int, output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0):
     """
-    Run all sweeps in the sweep.csv file in the output_dir.
-    If main_process is True, then this process will also make the graphs.
-    If main_process is False, then this process will only run the sweeps.
+    Run all sweeps as specified in the config file.
+
+    Args:
+        output_dir: Path to the output directory
+        writer_queue: Queue for writing to files to prevent race conditions
+        gpu: GPU number
+        seed: Seed
     """
+
+    cfg = get_config(output_dir)
 
     print("seed: ", seed)
 

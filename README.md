@@ -35,7 +35,7 @@ To dowload the random search results used for the figures, run:
 
 ```
 mkdir analyses/results
-curl -L -o analyses/results/benchmark_total.csv https://figshare.com/ndownloader/files/40081681
+curl -L -o data/benchmark_total.csv https://figshare.com/ndownloader/files/40081681
 ```
 
 
