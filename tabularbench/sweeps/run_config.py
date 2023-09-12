@@ -26,7 +26,7 @@ class RunConfig():
 
 
     @classmethod
-    def from_cfg_and_sweep_cfg(cls, cfg: dict, sweep_cfg: SweepConfig, is_random: bool) -> RunConfig:
+    def from_sweep_config(cls, cfg: dict, sweep_cfg: SweepConfig, is_random: bool) -> RunConfig:
 
         return cls(
             model=sweep_cfg['model'],

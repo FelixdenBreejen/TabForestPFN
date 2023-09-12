@@ -8,40 +8,63 @@ import pandas as pd
 import numpy as np
 
 from tabularbench.configs.all_model_configs import total_config
-from tabularbench.sweeps.sweep_config import SweepConfig, load_sweep_configs_from_file
+from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
 from tabularbench.sweeps.datasets import get_unfinished_task_ids
 from tabularbench.sweeps.paths_and_filenames import (
     SWEEP_FILE_NAME, RESULTS_FILE_NAME, RESULTS_MODIFIED_FILE_NAME, 
     PATH_TO_ALL_BENCH_CSV, DEFAULT_RESULTS_FILE_NAME
 )
+from tabularbench.sweeps.sweep_start import get_config, get_logger, set_seed
+from tabularbench.sweeps.writer import Writer
 
 
-def monitor_and_make_plots(output_dir: str, delay_in_seconds: int = 10):
+def monitor_and_make_plots(output_dir: str, writer: Writer, delay_in_seconds: int = 10):
 
-    sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
-    sweeps = load_sweep_configs_from_file(Path(output_dir) / SWEEP_FILE_NAME)
+    cfg = get_config(output_dir)
+    logger = get_logger(cfg, 'monitor_and_make_plots.log')
 
-    for sweep in sweeps:
+    import time
+    time.sleep(1e6)
+
+    sweep_configs = create_sweep_config_list_from_main_config(output_dir, writer, logger)
+    
+    logger.info(f"Found {len(sweep_configs)} sweeps to monitor")
+    logger.info(f"Start monitoring all sweeps")
+
+    for sweep in sweep_configs:
+
+        logger.info(f"Start monitoring sweep {str(sweep)}")
 
         while True:
             if sweep_default_finished(sweep):
+                logger.info(f"Start making default results for sweep {str(sweep)}")
                 make_default_results(sweep)
+                logger.info(f"Finished making default results for sweep {str(sweep)}")
                 break
             
             time.sleep(delay_in_seconds)
 
+        
         while True:
-                
+            
+            logger.info(f"Start making result plots for sweep {str(sweep)}")
             make_results_csv_modified_for_plotting(sweep)
             make_random_sweep_plots(sweep)
+            logger.info(f"Finished making result plots for sweep {str(sweep)}")
 
             if sweep.random_search:
+                logger.info(f"Start making hyperparam plots for sweep {str(sweep)}")
                 make_hyperparam_plots(sweep)
+                logger.info(f"Finished making hyperparam plots for sweep {str(sweep)}")
             
             if sweep_random_finished(sweep) or not sweep.random_search:
                 break
 
             time.sleep(delay_in_seconds)
+
+        logger.info(f"Finished monitoring sweep {str(sweep)}")
+
+    logger.info(f"Finished monitoring all sweeps")
 
 
 def sweep_default_finished(sweep: SweepConfig) -> bool:

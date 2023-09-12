@@ -7,19 +7,17 @@ from omegaconf import OmegaConf, DictConfig
 import logging
 
 import pandas as pd
-import random
-import numpy as np
-import torch
 import torch.multiprocessing as mp
 
 from tabularbench.configs.all_model_configs import total_config
 from tabularbench.run_experiment import train_model_on_config
 from tabularbench.sweeps.random_search_object import WandbSearchObject
-from tabularbench.sweeps.sweep_config import SweepConfig, load_sweep_configs_from_file
+from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
 from tabularbench.sweeps.datasets import get_unfinished_task_ids
 from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, RESULTS_FILE_NAME, CONFIG_DUPLICATE
 from tabularbench.sweeps.run_config import RunConfig
-
+from tabularbench.sweeps.sweep_start import get_config, get_logger, set_seed, add_device_to_cfg
+from tabularbench.sweeps.writer import Writer
 
 
 def run_sweeps(output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0):
@@ -34,68 +32,44 @@ def run_sweeps(output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0)
     """
 
     cfg = get_config(output_dir)
-    logger = get_logger(cfg, gpu, seed)
+
+    logger = get_logger(cfg, log_file_name="gpu_{gpu}_seed_{seed}.log")
+    writer = Writer(writer_queue)
+
     set_seed(seed)
     add_device_to_cfg(cfg, gpu)
 
-    logger.info(f"Process {process_id} started: device {cfg['device']}, seed {seed}")
+    logger.info(f"Run sweeps started: device {cfg['device']}, seed {seed}")
 
+    sweep_configs = create_sweep_config_list_from_main_config(cfg, writer, logger)
 
-    sweep_csv = pd.read_csv(Path(output_dir) / SWEEP_FILE_NAME)
-    sweep_configs = load_sweep_configs_from_file(sweep_csv, output_dir)
+    logger.info(f"Found {len(sweep_configs)} sweeps to execute")
 
-    for sweep_config in sweep_configs:  
+    for sweep_config in sweep_configs: 
+        
+        logger.info("Sweep config: benchmark {sweep_config.benchmark_name}, model {sweep_config.model}, search type {sweep_config.search_type}") 
               
-        search_sweep(cfg, sweep_config, is_random=False)
+        search_sweep(sweep_config, is_random=False)
         if sweep_config.search_type == 'random':
-            search_sweep(cfg, sweep_config, is_random=True)
+            search_sweep(sweep_config, is_random=True)
 
 
-def get_config(output_dir: str) -> DictConfig:
-    
-    return OmegaConf.load(Path(output_dir) / CONFIG_DUPLICATE)
-    
-
-def get_logger(cfg: OmegaConf, gpu: int, seed: int) -> logging.Logger:
-
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s :: %(levelname)-8s :: %(funcName)-12s :: %(message)s')
-    stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
-    filename = f"gpu_{gpu}_seed_{seed}.log"
-    log_dir = Path(cfg['output_dir']) / 'logs'
-    log_dir.mkdir(parents=True, exist_ok=True)
-    file_handler = logging.FileHandler(log_dir / filename)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
-    
-
-def set_seed(seed: int) -> None:
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
 
 
-def add_device_to_cfg(cfg: dict, gpu: int) -> None:
-    cfg.device = f'cuda:{gpu}' if torch.cuda.is_available() else 'cpu'
-
-
-def search_sweep(cfg: dict, sweep: SweepConfig, is_random: bool):
+def search_sweep(sweep: SweepConfig, is_random: bool):
     """Perform one sweep: one row of the sweep.csv file."""
+
+    sweep.logger.info(f"Start {sweep.search_type} search for {sweep.model} on {sweep.task}, search type {'random' if is_random else 'default'}")
     
 
-    assert sweep.model in total_config.keys(), f"Model {sweep.model} not found in total_config"
 
-    config = total_config[sweep.model][sweep.task]
-    search_object = WandbSearchObject(config)
+    search_object = HyperparamDrawer(config)
     results_path = sweep.path / RESULTS_FILE_NAME
     runs_per_dataset = sweep.runs_per_dataset if is_random else 1
     
     while True:
 
-        run_config = RunConfig.from_cfg_and_sweep_cfg(cfg, sweep, is_random)
+        run_config = RunConfig.from_sweep_cfg(sweep, is_random)
 
         datasets_unfinished = get_unfinished_task_ids(sweep.task_ids, results_path, runs_per_dataset)
 

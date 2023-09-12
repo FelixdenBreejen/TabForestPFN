@@ -2,20 +2,16 @@ from __future__ import annotations
 
 import time
 import hydra
-import yaml
 from datetime import datetime
 from omegaconf import DictConfig, OmegaConf
-import itertools
 import subprocess
 from pathlib import Path
 import torch.multiprocessing as mp
 
-from tabularbench.data.benchmarks import benchmarks, benchmark_names
 from tabularbench.sweeps.monitor_and_make_plots import monitor_and_make_plots
 from tabularbench.sweeps.run_sweeps import run_sweeps
-from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, PATH_TO_ALL_BENCH_CSV, CONFIG_DUPLICATE
-from tabularbench.sweeps.sweep_config import SweepConfig, save_sweep_config_list_to_file
-from tabularbench.sweeps.writer import writer
+from tabularbench.sweeps.paths_and_filenames import PATH_TO_ALL_BENCH_CSV, CONFIG_DUPLICATE
+from tabularbench.sweeps.writer import file_writer
 
 import logging
 
@@ -32,9 +28,8 @@ logger = logging.getLogger(__name__)
 
 
 
-@hydra.main(version_base=None, config_path="config", config_name="sweep")
+@hydra.main(version_base=None, config_path="config", config_name="main")
 def main(cfg: DictConfig):
-
 
     if cfg.continue_last_output:
         delete_current_output_dir(cfg)
@@ -69,46 +64,6 @@ def delete_current_output_dir(cfg: DictConfig) -> None:
         subprocess.run(['rm', '-rf', output_dir])
 
 
-def create_sweep_csv(cfg: dict) -> None:
-
-    sweep_configs = []
-
-    assert len(cfg.models) == len(cfg.model_plot_names), f"Please provide a plot name for each model. Got {len(cfg.models)} models and {len(cfg.model_plot_names)} plot names."
-
-    models_with_plot_name = zip(cfg.models, cfg.model_plot_names)
-    sweep_details = itertools.product(models_with_plot_name, cfg.search_type, cfg.benchmarks)
-
-    for (model, model_plot_name), search_type, benchmark_name in sweep_details:
-
-        benchmark = benchmarks[benchmark_name]
-
-        if search_type == 'default':
-            runs_per_dataset = 1
-        else:
-            runs_per_dataset = cfg.runs_per_dataset
-
-        if benchmark['categorical']:
-            feature_type = 'mixed'
-        else:
-            feature_type = 'numerical'
-            
-
-        sweep_config = SweepConfig(
-            model=model,
-            plot_name=model_plot_name,
-            benchmark_name=benchmark['name'],
-            search_type=search_type,
-            task=benchmark['task'],
-            dataset_size=benchmark['dataset_size'],
-            feature_type=feature_type,
-            suite_id=benchmark['suite_id'],
-            runs_per_dataset=runs_per_dataset
-        )
-
-        sweep_configs.append(sweep_config)
-
-    save_sweep_config_list_to_file(sweep_configs, Path(cfg.output_dir) / SWEEP_FILE_NAME)
-
 
 def save_config(cfg: DictConfig) -> None:
     
@@ -136,7 +91,7 @@ def launch_sweeps(cfg) -> None:
     mp.set_start_method('spawn')
     writer_queue = mp.Queue()
 
-    mp.Process(target=writer, args=(writer_queue,)).start()
+    mp.Process(target=file_writer, args=(writer_queue,)).start()
     logger.info(f"Launched writer")
 
     for seed, gpu in enumerate(gpus):
@@ -144,7 +99,7 @@ def launch_sweeps(cfg) -> None:
         logger.info(f"Launched agent {seed} on device {gpu}")
         seed += time_seed
 
-    process = mp.Process(target=monitor_and_make_plots, args=(path, cfg.monitor_interval_in_seconds))
+    process = mp.Process(target=monitor_and_make_plots, args=(path, writer_queue, cfg.monitor_interval_in_seconds))
     process.start()
     logger.info(f"Launched monitor and plotter")
     process.join()

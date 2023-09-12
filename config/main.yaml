@@ -3,6 +3,13 @@ hydra:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
 
+defaults:
+  - hyperparams/ft_transformer: ft_transformer
+  - _self_
+
+
+
+
 continue_last_output: False
 output_dir: ${hydra:run.dir}
 seed: 0
@@ -12,9 +19,9 @@ runs_per_dataset: 1000                  # suggested: 500, only for random search
 monitor_interval_in_seconds: 10       # plot the results every x seconds
 
 models:
-  - tab_pfn
+  - ft_transformer
 model_plot_names:
-  - TabPFN_finetune
+  - FTTrans
 benchmarks:
   - categorical_classification
   # - numerical_classification
