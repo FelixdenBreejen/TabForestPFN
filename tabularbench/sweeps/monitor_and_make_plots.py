@@ -9,7 +9,7 @@ import numpy as np
 
 from tabularbench.configs.all_model_configs import total_config
 from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
-from tabularbench.sweeps.datasets import get_unfinished_task_ids
+from tabularbench.sweeps.datasets import get_unfinished_dataset_ids
 from tabularbench.sweeps.paths_and_filenames import (
     SWEEP_FILE_NAME, RESULTS_FILE_NAME, RESULTS_MODIFIED_FILE_NAME, 
     PATH_TO_ALL_BENCH_CSV, DEFAULT_RESULTS_FILE_NAME

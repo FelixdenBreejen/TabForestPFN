@@ -2,13 +2,12 @@ import numpy as np
 import random
 
 
-class WandbSearchObject:
+class HyperparameterDrawer:
     """Random or default search in WandB sweep config format"""
 
     def __init__(self, cfg: dict):
         
-        self.random_search_objects = [RandomSearchObject(name, cfg) for name, cfg in cfg['random'].items()]
-        self.default_search_objects = [RandomSearchObject(name, cfg) for name, cfg in cfg['default'].items()]
+        self.search_objects = [RandomSearchObject(name, cfg) for name, cfg in cfg.items()]
 
     
     def draw_random_config(self):
@@ -21,17 +20,16 @@ class WandbSearchObject:
     
     def draw_config(self, type: str):
 
-        if type == 'random':
-            objects = self.random_search_objects
-        elif type == 'default':
-            objects = self.default_search_objects
-        else:
-            raise ValueError(f'Invalid type: {type}')
+        assert type in ['random', 'default']
         
         config = {}
 
-        for search_object in objects:
-            config[search_object.name] = search_object.draw()
+        for search_object in self.search_objects:
+
+            if type == 'default':
+                config[search_object.name] = search_object.draw_default()
+            else:
+                config[search_object.name] = search_object.draw_random()
 
         return config
 
@@ -45,7 +43,17 @@ class RandomSearchObject:
         self.cfg = cfg
 
 
-    def draw(self):
+    def draw_default(self):
+
+        assert 'default' in self.cfg or 'value' in self.cfg, f"There is no default value for this hyperparameter: {self.name}"
+
+        if 'default' in self.cfg:
+            return self.cfg['default']
+        else:
+            return self.cfg['value']
+
+
+    def draw_random(self):
 
         if 'value' in self.cfg:
             return self.cfg['value']

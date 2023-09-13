@@ -5,6 +5,7 @@ from omegaconf import DictConfig
 import itertools
 import logging
 
+import openml
 import pandas as pd
 
 from tabularbench.data.benchmarks import benchmarks, benchmark_names
@@ -15,16 +16,21 @@ from tabularbench.sweeps.writer import Writer
 class SweepConfig():
     logger: logging.Logger
     writer: Writer
+    output_dir: Path
+    seed: int
     model: str
-    plot_name: str
+    model_plot_name: str
     task: str
     feature_type: str     # what the paper calls 'categorical', we call 'mixed'
     benchmark_name: str
     search_type: str
-    suite_id: int
+    openml_suite_id: int
+    openml_task_ids: list[int]
+    openml_dataset_ids: list[int]
+    openml_dataset_names: list[str]
     runs_per_dataset: int
     dataset_size: int
-    model_kwargs: DictConfig      # hyperparameters for the model
+    model_hyperparameters: DictConfig      # hyperparameters for the model
 
     def __post_init__(self):
 
@@ -134,20 +140,30 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
             raise ValueError(f"dataset_size_str must be one of ['small', 'medium', 'large']. Got {benchmark['dataset_size']}")
         
         assert model in cfg.hyperparams, f"Model {model} not found in main configuration's hyperparams"
-            
+
+        openml_suite = openml.study.get_suite(benchmark['suite_id'])
+        openml_task_ids = openml_suite.tasks
+        openml_dataset_ids = openml_suite.data
+        openml_dataset_names = [openml.datasets.get_dataset(dataset_id).name for dataset_id in openml_dataset_ids]
+        
         sweep_config = SweepConfig(
             logger=logger,
             writer=writer,
+            output_dir=Path(cfg.output_dir),
+            seed=cfg.seed,
             model=model,
-            plot_name=model_plot_name,
+            model_plot_name=model_plot_name,
             benchmark_name=benchmark['name'],
             search_type=search_type,
             task=task,
             dataset_size=dataset_size,
             feature_type=feature_type,
-            suite_id=benchmark['suite_id'],
+            openml_suite_id=benchmark['suite_id'],
+            openml_task_ids=openml_task_ids,
+            openml_dataset_ids=openml_dataset_ids,
+            openml_dataset_names=openml_dataset_names,
             runs_per_dataset=runs_per_dataset,
-            model_kwargs=cfg.hyperparams[model]
+            model_hyperparameters=cfg.hyperparams[model]
         )
 
         sweep_configs.append(sweep_config)

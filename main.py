@@ -75,7 +75,6 @@ def save_config(cfg: DictConfig) -> None:
     del config_to_save.continue_last_output
     del config_to_save.monitor_interval_in_seconds
     del config_to_save.runs_per_device
-    del config_to_save.seed
 
     OmegaConf.save(config_to_save, config_path, resolve=True)    
     logger.info(f"Saved config to {config_path}")

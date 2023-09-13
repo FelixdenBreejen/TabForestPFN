@@ -17,9 +17,10 @@ def get_config(output_dir: str) -> DictConfig:
 
 def get_logger(cfg: OmegaConf, log_file_name) -> logging.Logger:
 
+    logging.setLogRecordFactory(CustomLogRecord)
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s :: %(levelname)-8s :: %(funcName)-12s :: %(message)s')
+    formatter = logging.Formatter('[%(asctime)s :: %(levelname)-8s :: %(funcNameMaxWidth)-18s]   %(message)s')
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
@@ -30,6 +31,12 @@ def get_logger(cfg: OmegaConf, log_file_name) -> logging.Logger:
     logger.addHandler(file_handler)
 
     return logger
+
+
+class CustomLogRecord(logging.LogRecord):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.funcNameMaxWidth = self.funcName[:15] + '...' if len(self.funcName) > 18 else self.funcName
 
     
 def set_seed(seed: int) -> None:

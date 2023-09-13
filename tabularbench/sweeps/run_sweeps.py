@@ -11,9 +11,9 @@ import torch.multiprocessing as mp
 
 from tabularbench.configs.all_model_configs import total_config
 from tabularbench.run_experiment import train_model_on_config
-from tabularbench.sweeps.random_search_object import WandbSearchObject
+from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
 from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
-from tabularbench.sweeps.datasets import get_unfinished_task_ids
+from tabularbench.sweeps.datasets import get_unfinished_dataset_ids
 from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, RESULTS_FILE_NAME, CONFIG_DUPLICATE
 from tabularbench.sweeps.run_config import RunConfig
 from tabularbench.sweeps.sweep_start import get_config, get_logger, set_seed, add_device_to_cfg
@@ -36,7 +36,6 @@ def run_sweeps(output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0)
     logger = get_logger(cfg, log_file_name="gpu_{gpu}_seed_{seed}.log")
     writer = Writer(writer_queue)
 
-    set_seed(seed)
     add_device_to_cfg(cfg, gpu)
 
     logger.info(f"Run sweeps started: device {cfg['device']}, seed {seed}")
@@ -60,30 +59,34 @@ def search_sweep(sweep: SweepConfig, is_random: bool):
     """Perform one sweep: one row of the sweep.csv file."""
 
     sweep.logger.info(f"Start {sweep.search_type} search for {sweep.model} on {sweep.task}, search type {'random' if is_random else 'default'}")
+    set_seed(sweep.seed)
     
 
 
-    search_object = HyperparamDrawer(config)
-    results_path = sweep.path / RESULTS_FILE_NAME
+    hyperparam_drawer = HyperparameterDrawer(sweep.model_hyperparameters)
+    results_path = sweep.output_dir / RESULTS_FILE_NAME
     runs_per_dataset = sweep.runs_per_dataset if is_random else 1
     
     while True:
 
-        run_config = RunConfig.from_sweep_cfg(sweep, is_random)
-
-        datasets_unfinished = get_unfinished_task_ids(sweep.task_ids, results_path, runs_per_dataset)
+        datasets_unfinished = get_unfinished_dataset_ids(sweep.openml_dataset_ids, results_path, runs_per_dataset)
 
         if len(datasets_unfinished) == 0:
             break
-        
-        config_run = create_run_config(cfg, sweep, datasets_unfinished, search_object, is_random)
+
+        if is_random:
+            hyperparams = hyperparam_drawer.draw_random_config()
+        else:
+            hyperparams = hyperparam_drawer.draw_default_config()
+
+        config_run = RunConfig.create(sweep, datasets_unfinished, hyperparams)
         results = train_model_on_config(config_run)
 
         if results == -1:
             # This is the error code in case the run crashes
             continue
 
-        if config_run['data__keyword'] not in get_unfinished_task_ids(sweep.task_ids, results_path, runs_per_dataset):
+        if config_run['data__keyword'] not in get_unfinished_dataset_ids(sweep.task_ids, results_path, runs_per_dataset):
             # This is the case where another process finished the dataset while this process was running
             # It is important to check this because otherwise the results default runs will be saved multiple times,
             # which is problematic for computing random search statistics.

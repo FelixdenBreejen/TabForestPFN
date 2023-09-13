@@ -4,20 +4,21 @@ from pathlib import Path
 import pandas as pd
 
 
-def get_unfinished_task_ids(task_ids_all: list[int], results_path: Path, runs_per_dataset: int) -> list[int]:
+def get_unfinished_dataset_ids(dataset_ids_all: list[int], results_path: Path, runs_per_dataset: int) -> list[int]:
     """Return a list of dataset ids that have not been run the required number of times."""
 
     if not results_path.exists():
-        return task_ids_all
+        return dataset_ids_all
     
     results_df = pd.read_csv(results_path)
-    tasks_run_count = results_df.groupby('data__keyword').count()['data__categorical'].to_dict()
+    #TODO: update column name
+    datasets_run_count = results_df.groupby('openml_task_id').count()['data__categorical'].to_dict()
 
-    tasks_unfinished = []
-    for task_id in task_ids_all:
-        if task_id not in tasks_run_count:
-            tasks_unfinished.append(task_id)
-        elif tasks_run_count[task_id] < runs_per_dataset:
-            tasks_unfinished.append(task_id)
+    datasets_unfinished = []
+    for dataset_id in dataset_ids_all:
+        if dataset_id not in datasets_run_count:
+            datasets_unfinished.append(dataset_id)
+        elif datasets_run_count[dataset_id] < runs_per_dataset:
+            datasets_unfinished.append(dataset_id)
 
-    return tasks_unfinished
+    return datasets_unfinished

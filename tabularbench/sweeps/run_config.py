@@ -2,15 +2,19 @@ from __future__ import annotations
 from pathlib import Path
 import openml
 from dataclasses import dataclass
+import logging
 
 import pandas as pd
 
 from tabularbench.data.benchmarks import benchmark_names
 from tabularbench.sweeps.sweep_config import SweepConfig
+from tabularbench.sweeps.writer import Writer
 
 
 @dataclass
 class RunConfig():
+    logger: logging.Logger
+    writer: Writer
     model: str
     seed: int
     hp: str
@@ -26,7 +30,7 @@ class RunConfig():
 
 
     @classmethod
-    def from_sweep_config(cls, cfg: dict, sweep_cfg: SweepConfig, is_random: bool) -> RunConfig:
+    def create(cls, sweep_cfg: SweepConfig, is_random: bool) -> RunConfig:
 
         return cls(
             model=sweep_cfg['model'],
