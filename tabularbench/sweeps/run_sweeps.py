@@ -94,6 +94,7 @@ def search_sweep(sweep: SweepConfig, seed: int, device: str, is_random: bool):
             # which is problematic for computing random search statistics.
             continue
 
+        return 
         save_results(results, results_path)
 
 

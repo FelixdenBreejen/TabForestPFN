@@ -12,18 +12,18 @@ runs_per_dataset: 1000                  # suggested: 500, only for random search
 monitor_interval_in_seconds: 10       # plot the results every x seconds
 
 models:
-  - tab_pfn
+  - ft_transformer
 model_plot_names:
-  - TabPFN_finetune
+  - FTTrans
 benchmarks:
-  # - categorical_classification
-  # - numerical_classification
-  # - categorical_regression
-  # - numerical_regression
+  - categorical_classification
+  - numerical_classification
+  - categorical_regression
+  - numerical_regression
   - categorical_classification_large
-  # - numerical_classification_large
-  # - categorical_regression_large
-  # - numerical_regression_large
+  - numerical_classification_large
+  - categorical_regression_large
+  - numerical_regression_large
 random_search:
   # - True
   - False

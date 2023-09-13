@@ -1,10 +1,11 @@
 import os
 import numpy as np
+import openml
 from tabularbench.utils.keyword_to_function_conversion import convert_keyword_to_function
 from sklearn.model_selection import train_test_split
 
 from pathlib import Path
-import pickle
+import yaml
 
 #There are three steps to generate a dataset:
 # 1) Generate x
@@ -118,34 +119,33 @@ def generate_dataset(config, rng, split_iter=None):
     x_train, x_val, x_test, y_train, y_val, y_test, i_train, i_val, i_test = data_to_train_test(x, y, config, rng=rng)
 
     if split_iter is not None:
-        indices_path = Path(f"data/train_val_test_indices.pkl")
-        if not indices_path.exists():
-            indices_path.parent.mkdir(parents=True, exist_ok=True)
-            indices_path.touch()
-            with open(indices_path, "wb") as f:
-                pickle.dump({}, f)
-        
-        with open(indices_path, "rb") as f:
-            indices_saved = pickle.load(f)
+        print(f"start saving indices for {config['data__keyword']} with size {config['max_train_samples']} and split_iter {split_iter} ")
 
-        openml_id = config['data__keyword']
+        openml_task_id = config['data__keyword']
+        openml_dataset_id = openml.tasks.get_task(openml_task_id).dataset_id
         size = config['max_train_samples']
 
-        if openml_id not in indices_saved.keys():
-            indices_saved[openml_id] = {}
-        if size not in indices_saved[openml_id].keys():
-            indices_saved[openml_id][size] = []
+        indices_path = Path(f"data/train_val_test_indices/") / f"{openml_dataset_id}_{size}.npy"
+        
+        matrix = np.zeros(shape=(x.shape[0], split_iter + 1), dtype=np.int8)
 
-        if split_iter == 0:
-            indices_saved[openml_id][size] = []
+        if split_iter > 0:
+            matrix_pre = np.load(indices_path)
+            matrix[:, :split_iter] = matrix_pre
 
-        assert len(indices_saved[openml_id][size]) == split_iter
+        for i in i_train:
+            matrix[i, split_iter] = 1
+        for i in i_val:
+            matrix[i, split_iter] = 2
+        for i in i_test:
+            matrix[i, split_iter] = 3
 
-        indices_saved[openml_id][size].append((i_train, i_val, i_test))
+        if not indices_path.parent.exists():
+            indices_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(indices_path, "wb") as f:
-            pickle.dump(indices_saved, f)
+        np.save(indices_path, matrix)
 
+        print(f"saved indices for {openml_dataset_id} with size {size} and split_iter {split_iter}")
 
     x_train, x_val, x_test, y_train, y_val, y_test = transform_data(x_train, x_val, x_test, y_train, y_val, y_test, config, rng,
                                                                     categorical_indicator=categorical_indicator)

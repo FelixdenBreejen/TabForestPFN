@@ -10,6 +10,7 @@ import pandas as pd
 import subprocess
 from pathlib import Path
 import torch.multiprocessing as mp
+import yaml
 
 from tabularbench.launch_benchmarks.launch_benchmarks import benchmarks
 from tabularbench.sweeps.monitor_and_make_plots import monitor_and_make_plots
