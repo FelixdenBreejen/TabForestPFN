@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import logging
 from omegaconf import DictConfig
 
+import torch
 import pandas as pd
 
 from tabularbench.data.benchmarks import benchmark_names
@@ -16,6 +17,7 @@ from tabularbench.sweeps.writer import Writer
 class RunConfig():
     logger: logging.Logger
     writer: Writer
+    device: torch.device
     model: str
     seed: int
     task: str
@@ -28,7 +30,10 @@ class RunConfig():
 
 
     def __post_init__(self):
-        pass
+
+        assert self.dataset_size in [10000, 50000]
+        assert self.task in ['regression', 'classification'], f"{self.task} is not a valid task. Please choose from ['regression', 'classification']"
+        assert self.feature_type in ['numerical', 'categorical', 'mixed'], f"{self.feature_type} is not a valid feature type. Please choose from ['numerical', 'categorical', 'mixed']"
 
 
 
@@ -43,6 +48,7 @@ class RunConfig():
             logger=sweep_cfg.logger,
             writer=sweep_cfg.writer,
             model=sweep_cfg.model,
+            device=sweep_cfg.device,
             seed=sweep_cfg.seed,
             task=sweep_cfg.task,
             feature_type=sweep_cfg.feature_type,
@@ -52,58 +58,3 @@ class RunConfig():
             openml_dataset_name=dataset_name,
             model_hyperparameters=hyperparams
         )
-
-
-
-
-
-
-def create_run_config(
-    cfg: dict,
-    sweep: SweepConfig, 
-    datasets_unfinished: list[int], 
-    search_object: WandbSearchObject,  
-    seed: int,
-    device: str,
-    is_random: bool
-) -> dict:
-
-
-    config_base = make_base_config(sweep)
-    config_dataset = draw_dataset_config(datasets_unfinished)
-    config_hyperparams = search_object.draw_config(type='random' if is_random else 'default')
-    config_hp = {'hp': 'random' if is_random else 'default', 'seed': seed}
-    config_device = {'model__device': device}
-    config_run = {**config_base, **config_dataset, **config_hyperparams, **config_hp, **config_device}
-
-    return config_run
-
-
-def make_base_config(sweep: SweepConfig) -> dict:
-
-    if sweep.dataset_size == "small":
-        max_train_samples = 1000
-    elif sweep.dataset_size == "medium":
-        max_train_samples = 10000
-    elif sweep.dataset_size == "large":
-        max_train_samples = 50000
-    else:
-        assert type(sweep.dataset_size) == int
-        max_train_samples = sweep.dataset_size
-
-    return {
-        "data__categorical": sweep.categorical,
-        "data__method_name": "openml_no_transform",
-        "data__regression": sweep.task == 'regression',
-        "regression": sweep.task == 'regression',
-        "n_iter": 'auto',
-        "max_train_samples": max_train_samples
-    }
-
-
-def draw_dataset_config(datasets_unfinished: list[int]) -> dict:
-
-    dataset_id = random.choice(datasets_unfinished)
-    return {
-        "data__keyword": dataset_id
-    }

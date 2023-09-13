@@ -19,6 +19,7 @@ from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, RESULTS_FIL
 from tabularbench.sweeps.run_config import RunConfig
 from tabularbench.sweeps.sweep_start import get_config, get_logger, set_seed, add_device_to_cfg
 from tabularbench.sweeps.writer import Writer
+from tabularbench.sweeps.run_experiment import run_experiment
 
 
 def run_sweeps(output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0):
@@ -81,23 +82,23 @@ def search_sweep(sweep: SweepConfig, is_random: bool):
         dataset_id = random.choice(datasets_unfinished)
 
         config_run = RunConfig.create(sweep, dataset_id, hyperparams)
-        results = train_model_on_config(config_run)
+        results = run_experiment(config_run)
 
         if results == -1:
             # This is the error code in case the run crashes
             continue
 
-        if config_run['data__keyword'] not in get_unfinished_dataset_ids(sweep.task_ids, results_path, runs_per_dataset):
+        if config_run.openml_dataset_id not in get_unfinished_dataset_ids(sweep.openml_dataset_ids, results_path, runs_per_dataset):
             # This is the case where another process finished the dataset while this process was running
             # It is important to check this because otherwise the results default runs will be saved multiple times,
             # which is problematic for computing random search statistics.
             continue
 
-        save_results(results, results_path)
+        save_results(config_run, results, results_path)
 
     
 
-def save_results(results: dict, results_path: Path):
+def save_results(config_run: RunConfig, results: dict, results_path: Path):
 
     df_new = pd.Series(results).to_frame().T
 

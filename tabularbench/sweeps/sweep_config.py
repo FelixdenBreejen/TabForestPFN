@@ -5,6 +5,7 @@ from omegaconf import DictConfig
 import itertools
 import logging
 
+import torch
 import openml
 import pandas as pd
 
@@ -18,6 +19,7 @@ class SweepConfig():
     writer: Writer
     output_dir: Path
     seed: int
+    device: torch.device
     model: str
     model_plot_name: str
     task: str
@@ -151,6 +153,7 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
             writer=writer,
             output_dir=Path(cfg.output_dir),
             seed=cfg.seed,
+            device=torch.device(cfg.device),
             model=model,
             model_plot_name=model_plot_name,
             benchmark_name=benchmark['name'],

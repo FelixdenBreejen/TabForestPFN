@@ -20,7 +20,7 @@ def get_logger(cfg: OmegaConf, log_file_name) -> logging.Logger:
     logging.setLogRecordFactory(CustomLogRecord)
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    formatter = logging.Formatter('[%(asctime)s :: %(levelname)-8s :: %(funcNameMaxWidth)-18s]   %(message)s')
+    formatter = logging.Formatter('%(asctime)s :: %(levelname)-8s :: %(funcNameMaxWidth)-18s ::   %(message)s')
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
