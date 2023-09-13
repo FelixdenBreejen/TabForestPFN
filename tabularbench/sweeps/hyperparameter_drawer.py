@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from omegaconf import DictConfig
 
 
 class HyperparameterDrawer:
@@ -18,7 +19,7 @@ class HyperparameterDrawer:
         return self.draw_config('default')
     
     
-    def draw_config(self, type: str):
+    def draw_config(self, type: str) -> DictConfig:
 
         assert type in ['random', 'default']
         
@@ -31,7 +32,8 @@ class HyperparameterDrawer:
             else:
                 config[search_object.name] = search_object.draw_random()
 
-        return config
+        dict_config = DictConfig(config)
+        return dict_config
 
 
 

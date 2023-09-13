@@ -3,6 +3,7 @@ from pathlib import Path
 import openml
 from dataclasses import dataclass
 import logging
+from omegaconf import DictConfig
 
 import pandas as pd
 
@@ -17,11 +18,13 @@ class RunConfig():
     writer: Writer
     model: str
     seed: int
-    hp: str
-    openml_id: int
-
-    
-
+    task: str
+    feature_type: str
+    dataset_size: int
+    openml_task_id: int
+    openml_dataset_id: int
+    openml_dataset_name: str
+    model_hyperparameters: DictConfig
 
 
     def __post_init__(self):
@@ -30,13 +33,24 @@ class RunConfig():
 
 
     @classmethod
-    def create(cls, sweep_cfg: SweepConfig, is_random: bool) -> RunConfig:
+    def create(cls, sweep_cfg: SweepConfig, dataset_id: int, hyperparams: DictConfig) -> RunConfig:
+
+        openml_index = sweep_cfg.openml_dataset_ids.index(dataset_id)
+        task_id = sweep_cfg.openml_task_ids[openml_index]
+        dataset_name = sweep_cfg.openml_dataset_names[openml_index]
 
         return cls(
-            model=sweep_cfg['model'],
-            seed=cfg.seed,
-            hp=sweep_cfg['hp'],
-            openml_id=sweep_cfg['data__keyword']
+            logger=sweep_cfg.logger,
+            writer=sweep_cfg.writer,
+            model=sweep_cfg.model,
+            seed=sweep_cfg.seed,
+            task=sweep_cfg.task,
+            feature_type=sweep_cfg.feature_type,
+            dataset_size=sweep_cfg.dataset_size,
+            openml_task_id=task_id,
+            openml_dataset_id=dataset_id,
+            openml_dataset_name=dataset_name,
+            model_hyperparameters=hyperparams
         )
 
 

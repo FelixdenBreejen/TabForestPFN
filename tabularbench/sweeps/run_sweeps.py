@@ -1,6 +1,7 @@
 from __future__ import annotations
 import argparse
 from pathlib import Path
+import random
 import sys
 import yaml
 from omegaconf import OmegaConf, DictConfig
@@ -60,8 +61,6 @@ def search_sweep(sweep: SweepConfig, is_random: bool):
 
     sweep.logger.info(f"Start {sweep.search_type} search for {sweep.model} on {sweep.task}, search type {'random' if is_random else 'default'}")
     set_seed(sweep.seed)
-    
-
 
     hyperparam_drawer = HyperparameterDrawer(sweep.model_hyperparameters)
     results_path = sweep.output_dir / RESULTS_FILE_NAME
@@ -78,8 +77,10 @@ def search_sweep(sweep: SweepConfig, is_random: bool):
             hyperparams = hyperparam_drawer.draw_random_config()
         else:
             hyperparams = hyperparam_drawer.draw_default_config()
+        
+        dataset_id = random.choice(datasets_unfinished)
 
-        config_run = RunConfig.create(sweep, datasets_unfinished, hyperparams)
+        config_run = RunConfig.create(sweep, dataset_id, hyperparams)
         results = train_model_on_config(config_run)
 
         if results == -1:
