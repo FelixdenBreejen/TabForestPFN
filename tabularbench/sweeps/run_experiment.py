@@ -64,7 +64,7 @@ def debugger_is_active() -> bool:
     return hasattr(sys, 'gettrace') and sys.gettrace() is not None
 
 
-def run_experiment_(cfg: RunConfig) -> dict:
+def run_experiment_(cfg: RunConfig) -> list[dict]:
 
     
     dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size)
@@ -81,5 +81,11 @@ def run_experiment_(cfg: RunConfig) -> dict:
         score_val = trainer.test(x_val, y_val)
         score_test = trainer.test(x_test, y_test)
 
-        pass
+        scores.append({
+            "train": score_train,
+            "val": score_val,
+            "test": score_test
+        })
+
+    return scores
 

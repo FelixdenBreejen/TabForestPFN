@@ -30,95 +30,105 @@ class Trainer(BaseEstimator):
         self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
 
 
-    def train(self, x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y_val: np.ndarray):
+    def train(self, x_train: np.ndarray, x_val: np.ndarray, y_train: np.ndarray, y_val: np.ndarray):
 
+        dataset_train = self.make_dataset(x_train, y_train)
+        dataset_valid = self.make_dataset(x_val, y_val)
 
+        dataloader_train = self.make_loader(dataset_train, training=True)
+        dataloader_valid = self.make_loader(dataset_valid, training=False)
 
+        for epoch in range(self.cfg.hyperparams.max_epochs):
+            loss_train, score_train = self.run_epoch(dataloader_train, training=True)
+            loss_valid, score_valid = self.run_epoch(dataloader_valid, training=False)
 
-
-        for epoch in range(self.cfg['max_epochs']):
-            
-            self.model.train()
-        
-            epoch_statistics_train = EpochStatistics()
-
-            for batch in loader_train:
-
-                x, y = batch
-                x = x.to(self.cfg['device'])
-                y = y.to(self.cfg['device'])
-                y_hat_train = self.model(x)
-                loss = self.loss(y_hat_train, y)
-                score = self.score(y_hat_train, y)
-
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
-
-                epoch_statistics_train.update(loss.item(), score, x.shape[0])
-
-            loss_train, score_train = epoch_statistics_train.get()
-
-            self.model.eval()
-
-            epoch_statistics_valid = EpochStatistics()
-            
-            with torch.no_grad():
-
-                for batch in loader_valid:
-                    x, y = batch
-                    x = x.to(self.cfg['device'])
-                    y = y.to(self.cfg['device'])
-                    y_hat_valid = self.model(x)
-                    loss_valid = self.loss(y_hat_valid, y)
-                    score_valid = self.score(y_hat_valid, y)
-                    
-                    epoch_statistics_valid.update(loss_valid.item(), score_valid, x.shape[0])
-
-            loss_valid, score_valid = epoch_statistics_valid.get()
-
-            print(f"Epoch {epoch} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Valid loss: {loss_valid:.4f} | Valid score: {score_valid:.4f}")
+            self.cfg.logger.info(f"Epoch {epoch} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Valid loss: {loss_valid:.4f} | Valid score: {score_valid:.4f}")
 
             self.checkpoint(self.model, loss_valid)
             
             self.early_stopping(loss_valid)
             if self.early_stopping.we_should_stop():
-                print("Early stopping")
+                self.cfg.logger.info("Early stopping")
                 break
 
             self.scheduler.step(loss_valid)
 
 
-    def predict(self, x: np.ndarray):
+    def test(self, x_test: np.ndarray, y_test: np.ndarray):
+
+        dataset_test = self.make_dataset(x_test, y_test)
+        dataloader_test = self.make_loader(dataset_test, training=False)
+
+        _, score_test = self.run_epoch(dataloader_test, training=False)
+
+        return score_test
+
+    
+    def run_epoch(self, dataloader: torch.utils.data.DataLoader, training: bool):
+
+        if training:
+            self.model.train()
+        else:
+            self.model.eval()
+        
+        epoch_statistics = EpochStatistics()
+
+        with torch.set_grad_enabled(training):
+
+            for batch in dataloader:
+                x, y = batch
+                x = x.to(self.cfg.device)
+                y = y.to(self.cfg.device)
+                y_hat = self.model(x)
+                loss = self.loss(y_hat, y)
+                score = self.score(y_hat, y)
+
+                if training:
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    self.optimizer.step()
+
+                epoch_statistics.update(loss.item(), score, x.shape[0])
+
+        loss, score = epoch_statistics.get()
+        return loss, score
+
+
+    def predict(self, x: np.ndarray) -> np.ndarray:
+
+        dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x))
+        dataloader = self.make_loader(dataset, training=False)
 
         self.model.eval()
 
-        dataset = torch.utils.data.TensorDataset(torch.Tensor(x))
-        loader = self.make_loader(dataset, training=False)
-
-        y_hat = []
+        y_hats = []
 
         with torch.no_grad():
-            for batch in loader:
-                x = batch[0].to(self.cfg['device'])
-                output = self.model(x)
-                output = output.cpu().numpy()
 
-                if self.cfg['regression']:
-                    y_hat.append(output)
-                else:
-                    y_hat.append(output.argmax(axis=1))
+            for batch in dataloader:
+                x = batch[0]
+                x = x.to(self.cfg.device)
+                y_hat = self.model(x)
+                y_hats.append(y_hat.cpu().numpy())
 
-        return np.concatenate(y_hat)    
+        y_hats = np.concatenate(y_hats, axis=0)
+        return y_hats
 
 
     def score(self, y_hat, y):
 
         with torch.no_grad():
-            if self.cfg['regression']:  
-                return np.sqrt(np.mean((y_hat.cpu().numpy() - y.cpu().numpy())**2))
-            else:
-                return np.mean((y_hat.cpu().numpy().argmax(axis=1) == y.cpu().numpy()))
+            y_hat = y_hat.cpu().numpy()
+            y = y.cpu().numpy()
+
+            match self.cfg.task:
+                case Task.REGRESSION:                
+                    ss_res = np.sum((y - y_hat) ** 2, axis=0)
+                    ss_tot = np.sum((y - np.mean(y, axis=0)) ** 2, axis=0)
+                    r2 = 1 - ss_res / (ss_tot + 1e-8)
+                    return r2
+                case Task.CLASSIFICATION:
+                    return np.mean((y_hat.argmax(axis=1) == y))
             
 
     def load_params(self, path):
@@ -173,53 +183,40 @@ class Trainer(BaseEstimator):
 
     def make_dataset(self, x, y):
 
-        if self.cfg.task == Task.REGRESSION:
-            return (
-                torch.utils.data.TensorDataset(
-                    torch.FloatTensor(x),
-                    torch.FloatTensor(y)
-               )
-            )
-        elif self.cfg.task == Task.CLASSIFICATION:
-            return (
-                torch.utils.data.TensorDataset(
-                    torch.FloatTensor(x),
-                    torch.LongTensor(y)
+        match self.cfg.task:
+            case Task.REGRESSION:
+                return (
+                    torch.utils.data.TensorDataset(
+                        torch.FloatTensor(x),
+                        torch.FloatTensor(y)
                 )
-            )
+                )
+            case Task.CLASSIFICATION:
+                return (
+                    torch.utils.data.TensorDataset(
+                        torch.FloatTensor(x),
+                        torch.LongTensor(y)
+                    )
+                )
         
 
     def make_loader(self, dataset, training):
+
+        drop_last = training and self.cfg.hyperparams.batch_size > len(dataset)
 
         return torch.utils.data.DataLoader(
             dataset,
             batch_size=self.cfg.hyperparams.batch_size,
             shuffle=training,
             pin_memory=True,
-            drop_last=training
+            drop_last=drop_last
         )
 
     
     def select_loss(self):
 
-        if self.cfg.task == Task.REGRESSION:
-            loss = torch.nn.MSELoss()
-        elif self.cfg.task == Task.CLASSIFICATION:
-            loss = torch.nn.CrossEntropyLoss()
-
-        return loss
-
-
-def extract_module_config(model_config, input_shape_config):
-
-    module_config = {}
-    total_config = {**model_config, **input_shape_config}
-
-    for key in total_config.keys():
-        if key.startswith("module__"):
-            module_config[key[len("module__"):]] = total_config[key]
-
-    module_config['regression'] = total_config['regression']
-    module_config['categorical_indicator'] = total_config['categorical_indicator']
-
-    return module_config
+        match self.cfg.task:
+            case Task.REGRESSION:
+                return torch.nn.MSELoss()
+            case Task.CLASSIFICATION:
+                return torch.nn.CrossEntropyLoss()
