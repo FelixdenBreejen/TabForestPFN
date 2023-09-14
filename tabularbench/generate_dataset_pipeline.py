@@ -125,25 +125,28 @@ def generate_dataset(config, rng, split_iter=None):
         openml_dataset_id = openml.tasks.get_task(openml_task_id).dataset_id
         size = config['max_train_samples']
 
-        indices_path = Path(f"data/train_val_test_indices/") / f"{openml_dataset_id}_{size}.npy"
-        
-        matrix = np.zeros(shape=(x.shape[0], split_iter + 1), dtype=np.int8)
+        indices_path = Path(f"data") / f"train_val_test_indices.npy"
 
-        if split_iter > 0:
-            matrix_pre = np.load(indices_path)
-            matrix[:, :split_iter] = matrix_pre
-
-        for i in i_train:
-            matrix[i, split_iter] = 1
-        for i in i_val:
-            matrix[i, split_iter] = 2
-        for i in i_test:
-            matrix[i, split_iter] = 3
-
-        if not indices_path.parent.exists():
+        if not indices_path.exists():
             indices_path.parent.mkdir(parents=True, exist_ok=True)
+            np.save(indices_path, {})
 
-        np.save(indices_path, matrix)
+        indices = np.load(indices_path, allow_pickle=True).item()
+
+        if openml_dataset_id not in indices:
+            indices[openml_dataset_id] = {}
+        if size not in indices[openml_dataset_id]:
+            indices[openml_dataset_id][size] = {}
+        if split_iter == 0:
+            indices[openml_dataset_id][size] = []
+
+        indices[openml_dataset_id][size].append({
+            "train": sorted(i_train),
+            "val": sorted(i_val),
+            "test": sorted(i_test)
+        })
+
+        np.save(indices_path, indices)
 
         print(f"saved indices for {openml_dataset_id} with size {size} and split_iter {split_iter}")
 

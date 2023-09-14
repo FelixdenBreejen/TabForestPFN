@@ -113,54 +113,8 @@ def train_model_config(config) -> dict:
         t = time.time()
         x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator = generate_dataset(config, rng, i)
         continue
-        data_generation_time = time.time() - t
-        print("Data generation time:", data_generation_time)
-        # print(y_train)
-        print(x_train.shape)
 
-        if config["model_type"] == "skorch" and config["regression"]:
-            print("YES")
-            y_train, y_val, y_test = y_train.reshape(-1, 1), y_val.reshape(-1, 1), y_test.reshape(-1, 1)
-            y_train, y_val, y_test = y_train.astype(np.float32), y_val.astype(np.float32), y_test.astype(
-                np.float32)
-        else:
-            y_train, y_val, y_test = y_train.reshape(-1), y_val.reshape(-1), y_test.reshape(-1)
-            # y_train, y_val, y_test = y_train.astype(np.float32), y_val.astype(np.float32), y_test.astype(np.float32)
-        x_train, x_val, x_test = x_train.astype(np.float32), x_val.astype(np.float32), x_test.astype(
-            np.float32)
-
-        start_time = time.time()
-        print(y_train.shape)
-        model = train_model(i, x_train, y_train, categorical_indicator, config, model_id)
-
-        if config["regression"]:
-            try:
-                r2_train, r2_val, r2_test = evaluate_model(model, x_train, y_train, x_val, y_val, x_test,
-                                                            y_test, config, model_id, return_r2=True)
-            except:
-                print("R2 score cannot be computed")
-                print(np.any(np.isnan(y_train)))
-                r2_train, r2_val, r2_test = np.nan, np.nan, np.nan
-            r2_train_scores.append(r2_train)
-            r2_val_scores.append(r2_val)
-            r2_test_scores.append(r2_test)
-        else:
-            r2_train, r2_val, r2_test = np.nan, np.nan, np.nan
-            r2_train_scores.append(r2_train)
-            r2_val_scores.append(r2_val)
-            r2_test_scores.append(r2_test)
-        train_score, val_score, test_score = evaluate_model(model, x_train, y_train, x_val, y_val, x_test,
-                                                            y_test, config, model_id,  return_r2=True,)
-
-        end_time = time.time()
-        print("Train score:", train_score)
-        print("Val score:", val_score)
-        print("Test score:", test_score)
-
-        times.append(end_time - start_time)
-        train_scores.append(train_score)
-        val_scores.append(val_score)
-        test_scores.append(test_score)
+    return
 
     if "model__device" in config.keys():
         if config["model__device"] == "cpu":

@@ -28,7 +28,6 @@ def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
 
     print("seed: ", seed)
 
-    log_to_file(output_dir)
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -44,24 +43,6 @@ def run_sweeps(output_dir: str, gpu: int, seed: int = 0):
         if sweep_config.random_search:
             search_sweep(sweep_config, seed=seed, device=device, is_random=True)
 
-    end_log_to_file()
-
-
-def log_to_file(output_dir: str):
-
-    log_dir = Path(output_dir) / 'logs'
-    log_dir.mkdir(parents=True, exist_ok=True)
-    log_file_name_stdout = str(os.getpid()) + ".out"
-    log_file_name_stderr = str(os.getpid()) + "_error.out"
-
-    sys.stdout = open(log_dir / log_file_name_stdout, "a", 1)
-    sys.stderr = open(log_dir / log_file_name_stderr, "a", 1)
-
-
-def end_log_to_file():
-    
-    sys.stdout.close()
-    sys.stderr.close()
 
 
 def search_sweep(sweep: SweepConfig, seed: int, device: str, is_random: bool):
@@ -74,28 +55,23 @@ def search_sweep(sweep: SweepConfig, seed: int, device: str, is_random: bool):
     results_path = sweep.path / RESULTS_FILE_NAME
     runs_per_dataset = sweep.runs_per_dataset if is_random else 1
     
-    while True:
+    for task_id in sweep.task_ids:
 
-        datasets_unfinished = get_unfinished_task_ids(sweep.task_ids, results_path, runs_per_dataset)
-
-        if len(datasets_unfinished) == 0:
-            break
-        
-        config_run = create_run_config(sweep, datasets_unfinished, search_object, seed, device, is_random)
+        config_run = create_run_config(sweep, [task_id], search_object, seed, device, is_random)
         results = train_model_on_config(config_run)
 
-        if results == -1:
-            # This is the error code in case the run crashes
-            continue
 
-        if config_run['data__keyword'] not in get_unfinished_task_ids(sweep.task_ids, results_path, runs_per_dataset):
-            # This is the case where another process finished the dataset while this process was running
-            # It is important to check this because otherwise the results default runs will be saved multiple times,
-            # which is problematic for computing random search statistics.
-            continue
+    # indices = {}
+    # for path in Path('data/train_val_test_indices').glob('*.npy'):
 
-        return 
-        save_results(results, results_path)
+    #     dataset_id, size = path.stem.split('_')
+
+    #     if dataset_id not in indices:
+    #         indices[dataset_id] = {}
+
+    #     indices[dataset_id][size] = np.load(path)
+
+    # np.save(Path('data/train_val_test_indices.npy'), indices)
 
 
 def create_run_config(
