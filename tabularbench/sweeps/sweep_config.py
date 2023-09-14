@@ -11,7 +11,7 @@ import pandas as pd
 
 from tabularbench.data.benchmarks import benchmarks, benchmark_names
 from tabularbench.sweeps.writer import Writer
-from tabularbench.sweeps.enums import DatasetSize, Task, FeatureType, SearchType
+from tabularbench.core.enums import DatasetSize, Task, FeatureType, SearchType
 
 
 @dataclass
@@ -33,7 +33,7 @@ class SweepConfig():
     openml_dataset_names: list[str]
     runs_per_dataset: int
     dataset_size: DatasetSize
-    model_hyperparameters: DictConfig      # hyperparameters for the model
+    hyperparams: DictConfig      # hyperparameters for the model
 
     def __post_init__(self):
 
@@ -163,7 +163,7 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
             openml_dataset_ids=openml_dataset_ids,
             openml_dataset_names=openml_dataset_names,
             runs_per_dataset=runs_per_dataset,
-            model_hyperparameters=cfg.hyperparams[model]
+            hyperparams=cfg.hyperparams[model]
         )
 
         sweep_configs.append(sweep_config)

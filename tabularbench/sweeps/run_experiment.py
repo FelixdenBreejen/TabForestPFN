@@ -1,6 +1,12 @@
 import sys
 from typing import Optional
-from tabularbench.data.openml_dataset import OpenMLDataset
+
+import torch.nn as nn
+import numpy as np
+from tabularbench.core.get_model import get_model
+
+from tabularbench.core.trainer import Trainer
+from tabularbench.data.dataset_openml import OpenMLDataset
 from tabularbench.sweeps.run_config import RunConfig
 from tabularbench.sweeps.sweep_start import set_seed
 
@@ -14,7 +20,7 @@ def run_experiment(cfg: RunConfig) -> Optional[dict]:
     cfg.logger.info(f"Seed is set to {cfg.seed}, device is {str(cfg.device)}")
 
     cfg.logger.info(f"We are using the following hyperparameters:")
-    for key, value in cfg.model_hyperparameters.items():
+    for key, value in cfg.hyperparams.items():
         cfg.logger.info(f"    {key}: {value}")
 
 
@@ -63,6 +69,17 @@ def run_experiment_(cfg: RunConfig) -> dict:
     
     dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size)
 
+    scores = []
+
     for x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator in dataset.split_iterator():
 
+        model = get_model(cfg, x_train, y_train, categorical_indicator)
+        trainer = Trainer(cfg, model)
+        trainer.train(x_train, x_val, y_train, y_val)
+        
+        score_train = trainer.test(x_train, y_train)
+        score_val = trainer.test(x_val, y_val)
+        score_test = trainer.test(x_test, y_test)
+
         pass
+

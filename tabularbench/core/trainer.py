@@ -6,59 +6,35 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 import numpy as np
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
+from tabularbench.core.enums import Task
+from tabularbench.sweeps.run_config import RunConfig
 
 
 class Trainer(BaseEstimator):
 
     def __init__(
             self, 
-            Model: type[torch.nn.Module], 
-            InputShapeSetter: type[torch.nn.Module], 
-            model_config: dict
+            cfg: RunConfig,
+            model: torch.nn.Module
         ) -> None:
 
-        self.InputShapeSetter = InputShapeSetter
-        self.Model = Model
-        self.cfg = model_config
-        self.model_config = model_config
-
-        self.early_stopping = EarlyStopping(patience=self.cfg['es_patience'])
-        self.checkpoint = Checkpoint("temp_weights", self.cfg['id'])
+        self.cfg = cfg
+        self.model = model
+        self.model.to(self.cfg.device)
         
-        if self.cfg['categorical_indicator'] is not None:
-            self.categorical_indicator = torch.BoolTensor(self.cfg['categorical_indicator'])
-
-
-
-    def fit(self, x_train: np.ndarray, y_train: np.ndarray):
-
-        input_shape_setter = self.InputShapeSetter(
-            categorical_indicator = self.cfg['categorical_indicator'],
-            regression = self.cfg['regression'],
-            batch_size = self.cfg['batch_size'],
-            categories = self.cfg['categories'],
-        )
-
-        input_shape_config = input_shape_setter.on_train_begin(None, x_train, y_train)
-
-        module_config = extract_module_config(self.cfg, input_shape_config)
-
-        self.model = self.Model(**module_config).to(self.cfg['device'])
         self.loss = self.select_loss()
-
         self.optimizer = self.select_optimizer()
         self.scheduler = self.select_scheduler()
 
-        dataset_train, dataset_valid = self.make_dataset(x_train=x_train, y_train=y_train)
-        loader_train = self.make_loader(dataset_train, training=True)
-        loader_valid = self.make_loader(dataset_valid, training=False)
-
-        self.train(loader_train, loader_valid)
-
-        return self
+        self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams.early_stopping_patience)
+        self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
 
 
-    def train(self, loader_train, loader_valid):
+    def train(self, x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y_val: np.ndarray):
+
+
+
+
 
         for epoch in range(self.cfg['max_epochs']):
             
@@ -151,27 +127,25 @@ class Trainer(BaseEstimator):
 
     def select_optimizer(self):
 
-        optimizer_name = self.cfg['optimizer']
-
-        if optimizer_name == "adam":
+        if self.cfg.hyperparams.optimizer == "adam":
             optimizer = Adam(
                 self.model.parameters(), 
-                lr=self.cfg['lr'],
-                betas=(0.9, 0.999),
-                weight_decay=self.cfg['optimizer__weight_decay']
+                lr=self.cfg.hyperparams.lr,
+                betas=(0.9, 0.99),
+                weight_decay=self.cfg.hyperparams.weight_decay
             )
-        elif optimizer_name == "adamw":
+        elif self.cfg.hyperparams.optimizer == "adamw":
             optimizer = AdamW(
                 self.model.parameters(), 
-                lr=self.cfg['lr'],
-                betas=(0.9, 0.999),
-                weight_decay=self.cfg['optimizer__weight_decay']
+                lr=self.cfg.hyperparams.lr,
+                betas=(0.9, 0.99),
+                weight_decay=self.cfg.hyperparams.weight_decay
             )
-        elif optimizer_name == "sgd":
+        elif self.cfg.hyperparams.optimizer == "sgd":
             optimizer = SGD(
                 self.model.parameters(),
-                lr=self.cfg['lr'],
-                weight_decay=self.cfg['optimizer__weight_decay']
+                lr=self.cfg.hyperparams.lr,
+                weight_decay=self.cfg.hyperparams.weight_decay
             )
         else:
             raise ValueError("Optimizer not recognized")
@@ -181,10 +155,10 @@ class Trainer(BaseEstimator):
 
     def select_scheduler(self):
 
-        if self.cfg['lr_scheduler']:                
+        if self.cfg.hyperparams.lr_scheduler:      
             scheduler = ReduceLROnPlateau(
                 self.optimizer, 
-                patience=self.cfg['lr_patience'], 
+                patience=self.cfg.hyperparams.lr_scheduler_patience, 
                 min_lr=2e-5, 
                 factor=0.2
             )
@@ -197,39 +171,20 @@ class Trainer(BaseEstimator):
         return scheduler
     
 
-    def make_dataset(self, x_train, y_train):
+    def make_dataset(self, x, y):
 
-        if self.cfg['regression']:
-            x_t_train, x_t_valid, y_t_train, y_t_valid = train_test_split(
-                x_train, y_train, test_size=0.2
-            )
-        else:
-            skf = StratifiedKFold(n_splits=5)
-            indices = next(skf.split(x_train, y_train))
-            x_t_train, x_t_valid = x_train[indices[0]], x_train[indices[1]]
-            y_t_train, y_t_valid = y_train[indices[0]], y_train[indices[1]]
-
-
-        if self.cfg['regression']:
+        if self.cfg.task == Task.REGRESSION:
             return (
                 torch.utils.data.TensorDataset(
-                    torch.FloatTensor(x_t_train),
-                    torch.FloatTensor(y_t_train)
-                ), 
-                torch.utils.data.TensorDataset(
-                    torch.FloatTensor(x_t_valid),
-                    torch.FloatTensor(y_t_valid)
-                )
+                    torch.FloatTensor(x),
+                    torch.FloatTensor(y)
+               )
             )
-        else:
+        elif self.cfg.task == Task.CLASSIFICATION:
             return (
                 torch.utils.data.TensorDataset(
-                    torch.FloatTensor(x_t_train),
-                    torch.LongTensor(y_t_train)
-                ), 
-                torch.utils.data.TensorDataset(
-                    torch.FloatTensor(x_t_valid),
-                    torch.LongTensor(y_t_valid)
+                    torch.FloatTensor(x),
+                    torch.LongTensor(y)
                 )
             )
         
@@ -238,17 +193,18 @@ class Trainer(BaseEstimator):
 
         return torch.utils.data.DataLoader(
             dataset,
-            batch_size=self.cfg['batch_size'],
+            batch_size=self.cfg.hyperparams.batch_size,
             shuffle=training,
             pin_memory=True,
+            drop_last=training
         )
 
     
     def select_loss(self):
 
-        if self.cfg['regression']:
+        if self.cfg.task == Task.REGRESSION:
             loss = torch.nn.MSELoss()
-        else:
+        elif self.cfg.task == Task.CLASSIFICATION:
             loss = torch.nn.CrossEntropyLoss()
 
         return loss

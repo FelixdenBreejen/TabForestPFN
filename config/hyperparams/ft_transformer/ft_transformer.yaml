@@ -1,5 +1,31 @@
 batch_size: 
   value: 10000
+optimizer:
+  value: adamw
+lr:
+  distribution: log_uniform_values
+  min: 1.e-5
+  max: 1.e-3
+  default: 1.e-4
+weight_decay:
+  distribution: log_uniform_values
+  min: 1.e-6
+  max: 1.e-3
+  default: 1.e-5
+lr_scheduler:
+  values: [True, False]
+  default: True
+lr_scheduler_patience:
+  value: 30
+early_stopping_patience:
+  value: 40
+
+
+d_token:
+  distribution: q_uniform
+  min: 64
+  max: 512
+  default: 192
 activation: 
   value: reglu
 token_bias: 
@@ -41,24 +67,6 @@ residual_dropout:
   min: 0.0
   max: 0.5
   default: 0.0
-lr:
-  distribution: log_uniform_values
-  min: 1.e-5
-  max: 1.e-3
-  default: 1.e-4
-optimizer__weight_decay:
-  distribution: log_uniform_values
-  min: 1.e-6
-  max: 1.e-3
-  default: 1.e-5
-d_token:
-  distribution: q_uniform
-  min: 64
-  max: 512
-  default: 192
-lr_scheduler:
-  values: [True, False]
-  default: True
 transformed_target:
   values: [False, True]
   default: True

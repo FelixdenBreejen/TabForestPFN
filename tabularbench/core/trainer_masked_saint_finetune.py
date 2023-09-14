@@ -10,7 +10,7 @@ import numpy as np
 from transformers.optimization import get_cosine_schedule_with_warmup
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
-from tabularbench.core.dataset_masked_saint import MaskedSaintDataset, MaskedSaintDatasetGenerator
+from tabularbench.data.dataset_masked_saint import MaskedSaintDataset, MaskedSaintDatasetGenerator
 from tabularbench.models.tabPFN.saint import SAINTadapted
 
 

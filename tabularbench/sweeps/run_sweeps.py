@@ -63,7 +63,7 @@ def search_sweep(sweep: SweepConfig, is_random: bool):
     sweep.logger.info(f"Start {sweep.search_type} search for {sweep.model} on {sweep.task}, search type {'random' if is_random else 'default'}")
     set_seed(sweep.seed)
 
-    hyperparam_drawer = HyperparameterDrawer(sweep.model_hyperparameters)
+    hyperparam_drawer = HyperparameterDrawer(sweep.hyperparams)
     results_path = sweep.output_dir / RESULTS_FILE_NAME
     runs_per_dataset = sweep.runs_per_dataset if is_random else 1
     

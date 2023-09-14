@@ -4,7 +4,7 @@ import openml
 import torch
 from sklearn.preprocessing import LabelEncoder, QuantileTransformer
 
-from tabularbench.sweeps.enums import DatasetSize, FeatureType, Task
+from tabularbench.core.enums import DatasetSize, FeatureType, Task
 from tabularbench.sweeps.paths_and_filenames import PATH_TO_DATA_SPLIT
 
 

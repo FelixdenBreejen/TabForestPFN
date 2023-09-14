@@ -9,7 +9,7 @@ import torch
 import pandas as pd
 
 from tabularbench.data.benchmarks import benchmark_names
-from tabularbench.sweeps.enums import FeatureType, Task, DatasetSize
+from tabularbench.core.enums import FeatureType, Task, DatasetSize
 from tabularbench.sweeps.sweep_config import SweepConfig
 from tabularbench.sweeps.writer import Writer
 
@@ -27,7 +27,7 @@ class RunConfig():
     openml_task_id: int
     openml_dataset_id: int
     openml_dataset_name: str
-    model_hyperparameters: DictConfig
+    hyperparams: DictConfig
 
 
     @classmethod
@@ -49,5 +49,5 @@ class RunConfig():
             openml_task_id=task_id,
             openml_dataset_id=dataset_id,
             openml_dataset_name=dataset_name,
-            model_hyperparameters=hyperparams
+            hyperparams=hyperparams
         )
