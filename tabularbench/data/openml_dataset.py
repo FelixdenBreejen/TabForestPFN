@@ -1,0 +1,91 @@
+from typing import Generator, Iterator
+import numpy as np
+import openml
+import torch
+from sklearn.preprocessing import LabelEncoder, QuantileTransformer
+
+from tabularbench.sweeps.enums import DatasetSize, FeatureType, Task
+from tabularbench.sweeps.paths_and_filenames import PATH_TO_DATA_SPLIT
+
+
+
+class OpenMLDataset():
+
+    def __init__(self, openml_dataset_id: int, task: Task, feature_type: FeatureType, dataset_size: DatasetSize):
+        self.openml_dataset_id = openml_dataset_id
+        self.task = task
+        self.feature_type = feature_type
+        self.dataset_size = dataset_size
+
+        dataset = openml.datasets.get_dataset(self.openml_dataset_id, download_data=True)
+        
+        X, y, categorical_indicator, attribute_names = dataset.get_data(
+            dataset_format='dataframe',
+            target=dataset.default_target_attribute
+        )
+        X = X.to_numpy()
+        y = y.to_numpy()
+
+        self.X, self.y, self.categorical_indicator = self.do_basic_preprocessing(X, y, categorical_indicator)
+
+
+    def do_basic_preprocessing(self, X, y, categorical_indicator) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        
+        if y.dtype == np.dtype('O'):
+            y = LabelEncoder().fit_transform(y)
+
+        if self.feature_type == FeatureType.NUMERICAL:
+            assert categorical_indicator is None or not np.array(categorical_indicator).astype(bool).any(), "There are categorical features in the dataset"
+            categorical_indicator = np.zeros(X.shape[1]).astype(bool)
+
+        if self.feature_type == FeatureType.CATEGORICAL:            
+            assert categorical_indicator is None or np.array(categorical_indicator).astype(bool).all(), "There are numerical features in the dataset"
+            categorical_indicator = np.ones(X.shape[1]).astype(bool)
+
+        if self.feature_type == FeatureType.MIXED:
+            assert categorical_indicator is not None, "There is no information about the feature types in the dataset"
+            categorical_indicator = np.array(categorical_indicator).astype(bool)
+
+        if self.task == Task.CLASSIFICATION:
+            y = y.astype(np.int64)
+
+        X = X.astype(np.float32)
+
+        assert X.shape[0] == y.shape[0], "X and y have different number of samples"
+        assert X.shape[1] == categorical_indicator.shape[0], "X and categorical_indicator have different number of features"
+        assert len(y.shape) == 1, "y has more than one dimension" 
+
+        return X, y, categorical_indicator
+    
+
+    def split_iterator(self) -> Iterator[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
+
+        train_val_test_indices_all = np.load(PATH_TO_DATA_SPLIT, allow_pickle=True).item()
+        train_val_test_indices = train_val_test_indices_all[self.openml_dataset_id][int(self.dataset_size)]
+
+        for idcs in train_val_test_indices:
+            
+            train_idcs = idcs['train']
+            val_idcs = idcs['val']
+            test_idcs = idcs['test']
+
+            x_train = self.X[train_idcs]
+            x_val = self.X[val_idcs]
+            x_test = self.X[test_idcs]
+
+            y_train = self.y[train_idcs]
+            y_val = self.y[val_idcs]
+            y_test = self.y[test_idcs]
+
+            categorical_indicator = self.categorical_indicator
+
+            if self.feature_type == FeatureType.NUMERICAL or self.feature_type == FeatureType.MIXED:
+                qt = QuantileTransformer(output_distribution="normal")
+                x_train[:, ~categorical_indicator] = qt.fit_transform(x_train[:, ~categorical_indicator])
+                x_val[:, ~categorical_indicator] = qt.transform(x_val[:, ~categorical_indicator])
+                x_test[:, ~categorical_indicator] = qt.transform(x_test[:, ~categorical_indicator])
+
+            yield x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator
+
+
+

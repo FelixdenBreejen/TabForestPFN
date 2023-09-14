@@ -63,6 +63,6 @@ def run_experiment_(cfg: RunConfig) -> dict:
     
     dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size)
 
-    for x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator in dataset.split_generator():
+    for x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator in dataset.split_iterator():
 
         pass
