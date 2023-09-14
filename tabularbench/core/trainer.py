@@ -1,5 +1,6 @@
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.preprocessing import QuantileTransformer, FunctionTransformer
 import torch
 from torch.optim import AdamW, Adam, SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
@@ -15,7 +16,7 @@ class Trainer(BaseEstimator):
     def __init__(
             self, 
             cfg: RunConfig,
-            model: torch.nn.Module
+            model: torch.nn.Module,
         ) -> None:
 
         self.cfg = cfg
@@ -32,15 +33,17 @@ class Trainer(BaseEstimator):
 
     def train(self, x_train: np.ndarray, x_val: np.ndarray, y_train: np.ndarray, y_val: np.ndarray):
 
-        dataset_train = self.make_dataset(x_train, y_train)
-        dataset_valid = self.make_dataset(x_val, y_val)
+        self.y_transformer = self.create_y_transformer(y_train)
+
+        dataset_train = self.make_dataset_xy(x_train, self.y_transformer.transform(y_train))
+        dataset_valid = self.make_dataset_x(x_val)
 
         dataloader_train = self.make_loader(dataset_train, training=True)
         dataloader_valid = self.make_loader(dataset_valid, training=False)
 
         for epoch in range(self.cfg.hyperparams.max_epochs):
-            loss_train, score_train = self.run_epoch(dataloader_train, training=True)
-            loss_valid, score_valid = self.run_epoch(dataloader_valid, training=False)
+            loss_train, score_train = self.train_epoch(dataloader_train)
+            loss_valid, score_valid = self.test_epoch(dataloader_valid, y_val)
 
             self.cfg.logger.info(f"Epoch {epoch} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Valid loss: {loss_valid:.4f} | Valid score: {score_valid:.4f}")
 
@@ -54,53 +57,64 @@ class Trainer(BaseEstimator):
             self.scheduler.step(loss_valid)
 
 
-    def test(self, x_test: np.ndarray, y_test: np.ndarray):
+    def train_epoch(self, dataloader: torch.utils.data.DataLoader):
 
-        dataset_test = self.make_dataset(x_test, y_test)
-        dataloader_test = self.make_loader(dataset_test, training=False)
-
-        _, score_test = self.run_epoch(dataloader_test, training=False)
-
-        return score_test
-
-    
-    def run_epoch(self, dataloader: torch.utils.data.DataLoader, training: bool):
-
-        if training:
-            self.model.train()
-        else:
-            self.model.eval()
+        self.model.train()
         
         epoch_statistics = EpochStatistics()
 
-        with torch.set_grad_enabled(training):
+        for batch in dataloader:
+            x, y = batch
 
-            for batch in dataloader:
-                x, y = batch
-                x = x.to(self.cfg.device)
-                y = y.to(self.cfg.device)
-                y_hat = self.model(x)
-                loss = self.loss(y_hat, y)
-                score = self.score(y_hat, y)
+            x = x.to(self.cfg.device)
+            y = y.to(self.cfg.device)
+            y_hat = self.model(x)
 
-                if training:
-                    self.optimizer.zero_grad()
-                    loss.backward()
-                    self.optimizer.step()
+            loss = self.loss(y_hat, y)
+            score = self.score(y_hat, y)
 
-                epoch_statistics.update(loss.item(), score, x.shape[0])
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            epoch_statistics.update(loss.item(), score, x.shape[0])
 
         loss, score = epoch_statistics.get()
         return loss, score
+    
+
+    def test(self, x_test: np.ndarray, y_test: np.ndarray):
+
+        dataset_test = self.make_dataset_x(x_test)
+        dataloader_test = self.make_loader(dataset_test, training=False)
+        loss_test, score_test = self.test_epoch(dataloader_test, y_test)
+
+        return loss_test, score_test
 
 
-    def predict(self, x: np.ndarray) -> np.ndarray:
+    def test_epoch(self, dataloader_x: torch.utils.data.DataLoader, y_test: np.ndarray):
+        
+        y_hats = self.predict_epoch(dataloader_x)
+        y_hats = self.y_transformer.inverse_transform(y_hats)
 
-        dataset = torch.utils.data.TensorDataset(torch.FloatTensor(x))
-        dataloader = self.make_loader(dataset, training=False)
+        loss_test = self.loss(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
+        score_test = self.score(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
+        return loss_test, score_test
+    
+
+    def predict(self, x: np.ndarray):
+
+        dataset_x = self.make_dataset_x(x)
+        dataloader_x = self.make_loader(dataset_x, training=False)
+        y_hats = self.predict_epoch(dataloader_x)
+        y_hats = self.y_transformer.inverse_transform(y_hats)
+
+        return y_hats
+
+
+    def predict_epoch(self, dataloader: torch.utils.data.DataLoader) -> np.ndarray:
 
         self.model.eval()
-
         y_hats = []
 
         with torch.no_grad():
@@ -117,22 +131,32 @@ class Trainer(BaseEstimator):
 
     def score(self, y_hat, y):
 
-        with torch.no_grad():
-            y_hat = y_hat.cpu().numpy()
-            y = y.cpu().numpy()
-
-            match self.cfg.task:
-                case Task.REGRESSION:                
-                    ss_res = np.sum((y - y_hat) ** 2, axis=0)
-                    ss_tot = np.sum((y - np.mean(y, axis=0)) ** 2, axis=0)
-                    r2 = 1 - ss_res / (ss_tot + 1e-8)
-                    return r2
-                case Task.CLASSIFICATION:
-                    return np.mean((y_hat.argmax(axis=1) == y))
+        match self.cfg.task:
+            case Task.REGRESSION:                
+                ss_res = torch.sum((y - y_hat) ** 2, axis=0)
+                ss_tot = torch.sum((y - torch.mean(y, axis=0)) ** 2, axis=0)
+                r2 = 1 - ss_res / (ss_tot + 1e-8)
+                return r2
+            case Task.CLASSIFICATION:
+                return (y_hat.argmax(axis=1) == y).sum() / len(y)
             
 
     def load_params(self, path):
         self.model.load_state_dict(torch.load(path))
+
+
+    def create_y_transformer(self, y_train: np.ndarray) -> TransformerMixin:
+        # The y_transformer transformers the target variable to a normal distribution
+        # This should be used for the y variable when training a regression model,
+        # but when testing the model, we want to inverse transform the predictions
+
+        match self.cfg.task:
+            case Task.REGRESSION:
+                y_transformer = QuantileTransformer(output_distribution="normal")
+                y_transformer.fit(y_train[:, None])[:, 0]
+                return y_transformer
+            case Task.CLASSIFICATION:
+                return FunctionTransformer(func=lambda x: x)
 
 
     def select_optimizer(self):
@@ -181,23 +205,19 @@ class Trainer(BaseEstimator):
         return scheduler
     
 
-    def make_dataset(self, x, y):
+    def make_dataset_xy(self, x, y):
+        return (
+            torch.utils.data.TensorDataset(
+                torch.as_tensor(x),
+                torch.as_tensor(y)
+            )
+        )
+            
 
-        match self.cfg.task:
-            case Task.REGRESSION:
-                return (
-                    torch.utils.data.TensorDataset(
-                        torch.FloatTensor(x),
-                        torch.FloatTensor(y)
-                )
-                )
-            case Task.CLASSIFICATION:
-                return (
-                    torch.utils.data.TensorDataset(
-                        torch.FloatTensor(x),
-                        torch.LongTensor(y)
-                    )
-                )
+    def make_dataset_x(self, x):   
+        return torch.utils.data.TensorDataset(
+            torch.as_tensor(x)
+        )
         
 
     def make_loader(self, dataset, training):

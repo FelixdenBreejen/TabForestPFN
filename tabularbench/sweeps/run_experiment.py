@@ -64,22 +64,23 @@ def debugger_is_active() -> bool:
     return hasattr(sys, 'gettrace') and sys.gettrace() is not None
 
 
-def run_experiment_(cfg: RunConfig) -> list[dict]:
+def run_experiment_(cfg: RunConfig):
 
     
     dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size)
 
     scores = []
+    losses = []
 
     for x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator in dataset.split_iterator():
 
         model = get_model(cfg, x_train, y_train, categorical_indicator)
         trainer = Trainer(cfg, model)
         trainer.train(x_train, x_val, y_train, y_val)
-        
-        score_train = trainer.test(x_train, y_train)
-        score_val = trainer.test(x_val, y_val)
-        score_test = trainer.test(x_test, y_test)
+
+        loss_train, score_train = trainer.test(x_train, y_train)
+        loss_val, score_val = trainer.test(x_val, y_val)
+        loss_test, score_test = trainer.test(x_test, y_test)
 
         scores.append({
             "train": score_train,
@@ -87,5 +88,11 @@ def run_experiment_(cfg: RunConfig) -> list[dict]:
             "test": score_test
         })
 
-    return scores
+        losses.append({
+            "train": loss_train,
+            "val": loss_val,
+            "test": loss_test
+        })
+
+    return scores, losses
 

@@ -2,7 +2,7 @@ from typing import Generator, Iterator
 import numpy as np
 import openml
 import torch
-from sklearn.preprocessing import LabelEncoder, QuantileTransformer
+from sklearn.preprocessing import LabelEncoder, QuantileTransformer, FunctionTransformer
 
 from tabularbench.core.enums import DatasetSize, FeatureType, Task
 from tabularbench.sweeps.paths_and_filenames import PATH_TO_DATA_SPLIT
