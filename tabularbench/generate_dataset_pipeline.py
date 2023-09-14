@@ -117,35 +117,6 @@ def generate_dataset(config, rng, split_iter=None):
 
     x_train, x_val, x_test, y_train, y_val, y_test, i_train, i_val, i_test = data_to_train_test(x, y, config, rng=rng)
 
-    if split_iter is not None:
-        indices_path = Path(f"data/train_val_test_indices.pkl")
-        if not indices_path.exists():
-            indices_path.parent.mkdir(parents=True, exist_ok=True)
-            indices_path.touch()
-            with open(indices_path, "wb") as f:
-                pickle.dump({}, f)
-        
-        with open(indices_path, "rb") as f:
-            indices_saved = pickle.load(f)
-
-        openml_id = config['data__keyword']
-        size = config['max_train_samples']
-
-        if openml_id not in indices_saved.keys():
-            indices_saved[openml_id] = {}
-        if size not in indices_saved[openml_id].keys():
-            indices_saved[openml_id][size] = []
-
-        if split_iter == 0:
-            indices_saved[openml_id][size] = []
-
-        assert len(indices_saved[openml_id][size]) == split_iter
-
-        indices_saved[openml_id][size].append((i_train, i_val, i_test))
-
-        with open(indices_path, "wb") as f:
-            pickle.dump(indices_saved, f)
-
 
     x_train, x_val, x_test, y_train, y_val, y_test = transform_data(x_train, x_val, x_test, y_train, y_val, y_test, config, rng,
                                                                     categorical_indicator=categorical_indicator)

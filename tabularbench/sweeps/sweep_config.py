@@ -11,6 +11,7 @@ import pandas as pd
 
 from tabularbench.data.benchmarks import benchmarks, benchmark_names
 from tabularbench.sweeps.writer import Writer
+from tabularbench.sweeps.enums import DatasetSize, Task, FeatureType, SearchType
 
 
 @dataclass
@@ -22,27 +23,23 @@ class SweepConfig():
     device: torch.device
     model: str
     model_plot_name: str
-    task: str
-    feature_type: str     # what the paper calls 'categorical', we call 'mixed'
+    task: Task
+    feature_type: FeatureType
     benchmark_name: str
-    search_type: str
+    search_type: SearchType
     openml_suite_id: int
     openml_task_ids: list[int]
     openml_dataset_ids: list[int]
     openml_dataset_names: list[str]
     runs_per_dataset: int
-    dataset_size: int
+    dataset_size: DatasetSize
     model_hyperparameters: DictConfig      # hyperparameters for the model
 
     def __post_init__(self):
 
         # TODO: validate model name
         assert self.benchmark_name in benchmark_names, f"{self.benchmark_name} is not a valid benchmark. Please choose from {benchmark_names}"
-        assert self.dataset_size in [10000, 50000]
-        assert self.search_type in ['default', 'random'], f"{self.search_type} is not a valid search type. Please choose from ['default', 'random']"
-        assert self.task in ['regression', 'classification'], f"{self.task} is not a valid task. Please choose from ['regression', 'classification']"
-        assert self.feature_type in ['numerical', 'categorical', 'mixed'], f"{self.feature_type} is not a valid feature type. Please choose from ['numerical', 'categorical', 'mixed']"
-
+       
         self.folder_name = f'{self.benchmark_name}_{self.search_type}_{self.model}'
 
 
@@ -120,24 +117,24 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
             runs_per_dataset = cfg.runs_per_dataset
 
         if benchmark['categorical']:
-            feature_type = 'mixed'
+            feature_type = FeatureType.MIXED
         else:
-            feature_type = 'numerical'
+            feature_type = FeatureType.NUMERICAL
 
         if benchmark['task'] == 'regression':
-            task = 'regression'
+            task = Task.REGRESSION
         elif benchmark['task'] == 'classif':
-            task = 'classification'
+            task = Task.CLASSIFICATION
         else:
             raise ValueError(f"task must be one of ['regression', 'classif']. Got {benchmark['task']}")
 
             
         if benchmark['dataset_size'] == 'small':
-            dataset_size = 1000
+            dataset_size = DatasetSize.SMALL
         elif benchmark['dataset_size'] == 'medium':
-            dataset_size = 10000
+            dataset_size = DatasetSize.MEDIUM
         elif benchmark['dataset_size'] == 'large':
-            dataset_size = 50000
+            dataset_size = DatasetSize.LARGE
         else:
             raise ValueError(f"dataset_size_str must be one of ['small', 'medium', 'large']. Got {benchmark['dataset_size']}")
         

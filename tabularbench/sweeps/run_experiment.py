@@ -1,6 +1,6 @@
 import sys
 from typing import Optional
-from tabularbench.data.dataset_openml import OpenMLDataset
+from tabularbench.data.openml_dataset import OpenMLDataset
 from tabularbench.sweeps.run_config import RunConfig
 from tabularbench.sweeps.sweep_start import set_seed
 

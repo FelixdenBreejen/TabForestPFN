@@ -9,6 +9,7 @@ import torch
 import pandas as pd
 
 from tabularbench.data.benchmarks import benchmark_names
+from tabularbench.sweeps.enums import FeatureType, Task, DatasetSize
 from tabularbench.sweeps.sweep_config import SweepConfig
 from tabularbench.sweeps.writer import Writer
 
@@ -20,21 +21,13 @@ class RunConfig():
     device: torch.device
     model: str
     seed: int
-    task: str
-    feature_type: str
-    dataset_size: int
+    task: Task
+    feature_type: FeatureType
+    dataset_size: DatasetSize
     openml_task_id: int
     openml_dataset_id: int
     openml_dataset_name: str
     model_hyperparameters: DictConfig
-
-
-    def __post_init__(self):
-
-        assert self.dataset_size in [10000, 50000]
-        assert self.task in ['regression', 'classification'], f"{self.task} is not a valid task. Please choose from ['regression', 'classification']"
-        assert self.feature_type in ['numerical', 'categorical', 'mixed'], f"{self.feature_type} is not a valid feature type. Please choose from ['numerical', 'categorical', 'mixed']"
-
 
 
     @classmethod

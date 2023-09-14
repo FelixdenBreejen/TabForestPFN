@@ -71,7 +71,7 @@ this benchmark for a given number of random search iteration,
 you can use the results from our random searches, by running:
 
 ```
-curl -L -o analyses/results/benchmark_total.csv https://figshare.com/ndownloader/files/40081681
+curl -L -o data/benchmark_total.csv https://figshare.com/ndownloader/files/40081681
 ```
 
 ## Using our code
