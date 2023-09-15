@@ -139,11 +139,13 @@ def save_results(config_run: RunConfig, results: tuple[dict, dict], results_path
 
     if not results_path.exists():
         results_path.parent.mkdir(parents=True, exist_ok=True)
-        df_new.to_csv(results_path, mode='w', index=False, header=True)
+        csv_string = df_new.to_csv(index=False, header=True)
+        config_run.writer.write(results_path, csv_string, mode="w")
     else:
         df = pd.read_csv(results_path)
         df = pd.concat([df, df_new], ignore_index=True)
-        df.to_csv(results_path, mode='w', index=False, header=True)
+        csv_string = df.to_csv(index=False, header=True)
+        config_run.writer.write(results_path, csv_string, mode="w")
 
 
 if __name__ == '__main__':
