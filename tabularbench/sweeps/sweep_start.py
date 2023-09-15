@@ -45,5 +45,6 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
 
 
-def add_device_to_cfg(cfg: dict, gpu: int) -> None:
+def add_device_and_seed_to_cfg(cfg: dict, gpu: int, seed: int) -> None:
     cfg.device = f'cuda:{gpu}' if torch.cuda.is_available() else 'cpu'
+    cfg.seed = seed

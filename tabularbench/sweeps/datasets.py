@@ -1,7 +1,10 @@
 from __future__ import annotations
 from pathlib import Path
+import random
 
 import pandas as pd
+
+from tabularbench.core.enums import SearchType
 
 
 def get_unfinished_dataset_ids(dataset_ids_all: list[int], results_path: Path, runs_per_dataset: int) -> list[int]:
@@ -22,3 +25,14 @@ def get_unfinished_dataset_ids(dataset_ids_all: list[int], results_path: Path, r
             datasets_unfinished.append(dataset_id)
 
     return datasets_unfinished
+
+
+def draw_dataset_id(datasets_unfinished: list[int], seed: int, search_type: SearchType, first_run: bool) -> int:
+    """Draw a dataset id from the list of unfinished datasets."""
+
+    if first_run and search_type == SearchType.DEFAULT:
+        idx = seed % len(datasets_unfinished)
+        return datasets_unfinished[idx]
+
+    else:
+        return random.choice(datasets_unfinished)

@@ -75,6 +75,7 @@ def save_config(cfg: DictConfig) -> None:
     del config_to_save.continue_last_output
     del config_to_save.monitor_interval_in_seconds
     del config_to_save.runs_per_device
+    del config_to_save.seed
 
     OmegaConf.save(config_to_save, config_path, resolve=True)    
     logger.info(f"Saved config to {config_path}")
@@ -88,15 +89,15 @@ def launch_sweeps(cfg) -> None:
     time_seed = int(time.time()) * cfg.continue_last_output
 
     mp.set_start_method('spawn')
-    writer_queue = mp.Queue()
+    writer_queue = mp.JoinableQueue()
 
     mp.Process(target=file_writer, args=(writer_queue,)).start()
     logger.info(f"Launched writer")
 
-    for seed, gpu in enumerate(gpus):
-        mp.Process(target=run_sweeps, args=(path, writer_queue, gpu, seed)).start()
-        logger.info(f"Launched agent {seed} on device {gpu}")
-        seed += time_seed
+    for gpu_i, gpu in enumerate(gpus):
+        sd = cfg.seed + gpu_i + time_seed
+        mp.Process(target=run_sweeps, args=(path, writer_queue, gpu, sd)).start()
+        logger.info(f"Launched agent on device {gpu} with seed {sd}")
 
     process = mp.Process(target=monitor_and_make_plots, args=(path, writer_queue, cfg.monitor_interval_in_seconds))
     process.start()

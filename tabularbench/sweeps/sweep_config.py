@@ -37,10 +37,8 @@ class SweepConfig():
 
     def __post_init__(self):
 
-        # TODO: validate model name
         assert self.benchmark_name in benchmark_names, f"{self.benchmark_name} is not a valid benchmark. Please choose from {benchmark_names}"
-       
-        self.folder_name = f'{self.benchmark_name}_{self.search_type}_{self.model}'
+        self.sweep_dir = self.output_dir / f'{self.benchmark_name}_{self.model}_{self.search_type}'
 
 
 
@@ -57,36 +55,7 @@ class SweepConfig():
             runs_per_dataset=sweep_dict['runs_per_dataset'],
             dataset_size=sweep_dict['dataset_size'],
         )
-    
 
-    def to_dict(self) -> dict:
-
-        return {
-            'model': self.model,
-            'plot_name': self.plot_name,
-            'task': self.task,
-            'feature_type': self.feature_type,
-            'benchmark_name': self.benchmark_name,
-            'search_type': self.search_type,
-            'runs_per_dataset': self.runs_per_dataset,
-            'dataset_size': self.dataset_size,
-        }
-    
-
-    def to_dict_all_params(self) -> dict:
-
-        return {
-            'model': self.model,
-            'plot_name': self.plot_name,
-            'task': self.task,
-            'feature_type': self.feature_type,
-            'benchmark_name': self.benchmark_name,
-            'search_type': self.search_type,
-            'runs_per_dataset': self.runs_per_dataset,
-            'dataset_size': self.dataset_size,
-            'folder_name': self.folder_name,
-        }
-    
 
     def __str__(self) -> str:
 
@@ -110,6 +79,11 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
                 break
         else:
             raise ValueError(f"Benchmark {benchmark_name} not found in benchmarks")
+        
+        if hasattr(cfg, 'device'):
+            device = torch.device(cfg.device)
+        else:
+            device = None
 
         if search_type == 'default':
             runs_per_dataset = 1
@@ -154,7 +128,7 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
             writer=writer,
             output_dir=Path(cfg.output_dir),
             seed=cfg.seed,
-            device=torch.device(cfg.device),
+            device=device,
             model=model,
             model_plot_name=model_plot_name,
             benchmark_name=benchmark['name'],

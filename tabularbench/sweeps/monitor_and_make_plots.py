@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 
 from tabularbench.configs.all_model_configs import total_config
+from tabularbench.core.enums import SearchType
 from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
 from tabularbench.sweeps.datasets import get_unfinished_dataset_ids
 from tabularbench.sweeps.paths_and_filenames import (
@@ -26,7 +27,7 @@ def monitor_and_make_plots(output_dir: str, writer: Writer, delay_in_seconds: in
     import time
     time.sleep(1e6)
 
-    sweep_configs = create_sweep_config_list_from_main_config(output_dir, writer, logger)
+    sweep_configs = create_sweep_config_list_from_main_config(cfg, writer, logger)
     
     logger.info(f"Found {len(sweep_configs)} sweeps to monitor")
     logger.info(f"Start monitoring all sweeps")
@@ -52,12 +53,12 @@ def monitor_and_make_plots(output_dir: str, writer: Writer, delay_in_seconds: in
             make_random_sweep_plots(sweep)
             logger.info(f"Finished making result plots for sweep {str(sweep)}")
 
-            if sweep.random_search:
+            if sweep.search_type == SearchType.RANDOM:
                 logger.info(f"Start making hyperparam plots for sweep {str(sweep)}")
                 make_hyperparam_plots(sweep)
                 logger.info(f"Finished making hyperparam plots for sweep {str(sweep)}")
             
-            if sweep_random_finished(sweep) or not sweep.random_search:
+            if sweep_random_finished(sweep) or sweep.search_type == SearchType.DEFAULT:
                 break
 
             time.sleep(delay_in_seconds)
@@ -70,8 +71,7 @@ def monitor_and_make_plots(output_dir: str, writer: Writer, delay_in_seconds: in
 def sweep_default_finished(sweep: SweepConfig) -> bool:
     
     # default sweep always finishes before random sweep starts, so we just check if every dataset has one run
-    unfinished_tasks = get_unfinished_task_ids(sweep.task_ids, sweep.path / RESULTS_FILE_NAME, runs_per_dataset=1)
-
+    unfinished_tasks = get_unfinished_dataset_ids(sweep.openml_dataset_ids, sweep.sweep_dir / RESULTS_FILE_NAME, runs_per_dataset=1)
     return len(unfinished_tasks) == 0
 
 
@@ -80,9 +80,7 @@ def sweep_random_finished(sweep: SweepConfig) -> bool:
     if not sweep.random_search:
         return True
     
-    # default sweep always finishes before random sweep starts, so we just check if every dataset has one run
-    unfinished_tasks = get_unfinished_task_ids(sweep.task_ids, sweep.path / RESULTS_FILE_NAME, runs_per_dataset=sweep.runs_per_dataset)
-
+    unfinished_tasks = get_unfinished_dataset_ids(sweep.openml_dataset_ids, sweep.sweep_dir / RESULTS_FILE_NAME, runs_per_dataset=sweep.runs_per_dataset)
     return len(unfinished_tasks) == 0
 
 
@@ -131,13 +129,6 @@ def make_results_csv_modified_for_plotting(sweep: SweepConfig):
     df['data__openmlid'] = df['data__keyword']
     df['data__keyword'] = df['data__openmlid'].map(dict(zip(sweep.task_ids, sweep.dataset_names)))
     df['model_name'] = sweep.plot_name
-
-    if not sweep.random_search:
-        # for default sweep, we want a straight line, so we fake the results by duplicating them
-        df_random_fake = df.copy()
-        df_random_fake['hp'] = 'random'
-        df = pd.concat([df] + [df_random_fake]*999)
-
 
     df.to_csv(sweep.path / RESULTS_MODIFIED_FILE_NAME, mode='w', index=False, header=True)
 

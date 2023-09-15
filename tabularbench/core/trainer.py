@@ -45,7 +45,7 @@ class Trainer(BaseEstimator):
             loss_train, score_train = self.train_epoch(dataloader_train)
             loss_valid, score_valid = self.test_epoch(dataloader_valid, y_val)
 
-            self.cfg.logger.info(f"Epoch {epoch} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Valid loss: {loss_valid:.4f} | Valid score: {score_valid:.4f}")
+            self.cfg.logger.info(f"Epoch {epoch:03d} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Valid loss: {loss_valid:.4f} | Valid score: {score_valid:.4f}")
 
             self.checkpoint(self.model, loss_valid)
             

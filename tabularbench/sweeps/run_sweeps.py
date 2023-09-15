@@ -15,15 +15,15 @@ from tabularbench.core.enums import SearchType
 from tabularbench.run_experiment import train_model_on_config
 from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
 from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
-from tabularbench.sweeps.datasets import get_unfinished_dataset_ids
+from tabularbench.sweeps.datasets import draw_dataset_id, get_unfinished_dataset_ids
 from tabularbench.sweeps.paths_and_filenames import SWEEP_FILE_NAME, RESULTS_FILE_NAME, CONFIG_DUPLICATE
 from tabularbench.sweeps.run_config import RunConfig
-from tabularbench.sweeps.sweep_start import get_config, get_logger, set_seed, add_device_to_cfg
+from tabularbench.sweeps.sweep_start import get_config, get_logger, set_seed, add_device_and_seed_to_cfg
 from tabularbench.sweeps.writer import Writer
 from tabularbench.sweeps.run_experiment import run_experiment
 
 
-def run_sweeps(output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0):
+def run_sweeps(output_dir: str, writer_queue: mp.JoinableQueue, gpu: int, seed: int = 0):
     """
     Run all sweeps as specified in the config file.
 
@@ -39,7 +39,7 @@ def run_sweeps(output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0)
     logger = get_logger(cfg, log_file_name=f"gpu_{gpu}_seed_{seed}.log")
     writer = Writer(writer_queue)
 
-    add_device_to_cfg(cfg, gpu)
+    add_device_and_seed_to_cfg(cfg, gpu, seed)
 
     logger.info(f"Run sweeps started: device {cfg['device']}, seed {seed}")
 
@@ -65,7 +65,7 @@ def search_sweep(sweep: SweepConfig, search_type: SearchType):
     set_seed(sweep.seed)
 
     hyperparam_drawer = HyperparameterDrawer(sweep.hyperparams)
-    results_path = sweep.output_dir / RESULTS_FILE_NAME
+    results_path = sweep.sweep_dir / RESULTS_FILE_NAME
     runs_per_dataset = sweep.runs_per_dataset if search_type == SearchType.RANDOM else 1
     
     while True:
@@ -76,19 +76,22 @@ def search_sweep(sweep: SweepConfig, search_type: SearchType):
             break
 
         hyperparams = hyperparam_drawer.draw_config(search_type)
-        dataset_id = random.choice(datasets_unfinished)
+        dataset_id = draw_dataset_id(datasets_unfinished, sweep.seed, search_type, first_run=datasets_unfinished == sweep.openml_dataset_ids)
 
         config_run = RunConfig.create(sweep, dataset_id, hyperparams)
         results = run_experiment(config_run)
 
         if results is None:
             # This is the error code in case the run crashes
+            sweep.logger.info(f"Run crashed for {sweep.model} on {sweep.benchmark_name} with dataset {dataset_id}")
             continue
 
         if config_run.openml_dataset_id not in get_unfinished_dataset_ids(sweep.openml_dataset_ids, results_path, runs_per_dataset):
             # This is the case where another process finished the dataset while this process was running
             # It is important to check this because otherwise the results default runs will be saved multiple times,
             # which is problematic for computing random search statistics.
+            sweep.logger.info(f"Run finished by another process for {sweep.model} on {sweep.benchmark_name} with dataset {dataset_id}")
+            sweep.logger.info(f"Results are not being saved.")
             continue
 
         save_results(config_run, results, results_path, search_type)

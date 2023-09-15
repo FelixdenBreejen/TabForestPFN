@@ -28,6 +28,11 @@ class OpenMLDataset():
 
         self.X, self.y, self.categorical_indicator = self.do_basic_preprocessing(X, y, categorical_indicator)
 
+        train_val_test_indices_all = np.load(PATH_TO_DATA_SPLIT, allow_pickle=True).item()
+        self.train_val_test_indices = train_val_test_indices_all[self.openml_dataset_id][int(self.dataset_size)]
+
+        self.n_splits = len(self.train_val_test_indices)
+
 
     def do_basic_preprocessing(self, X, y, categorical_indicator) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         
@@ -60,10 +65,7 @@ class OpenMLDataset():
 
     def split_iterator(self) -> Iterator[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
 
-        train_val_test_indices_all = np.load(PATH_TO_DATA_SPLIT, allow_pickle=True).item()
-        train_val_test_indices = train_val_test_indices_all[self.openml_dataset_id][int(self.dataset_size)]
-
-        for idcs in train_val_test_indices:
+        for idcs in self.train_val_test_indices:
             
             train_idcs = idcs['train']
             val_idcs = idcs['val']
