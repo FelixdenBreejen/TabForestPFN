@@ -17,7 +17,7 @@ class OpenMLDataset():
         self.feature_type = feature_type
         self.dataset_size = dataset_size
 
-        dataset = openml.datasets.get_dataset(self.openml_dataset_id, download_data=True)
+        dataset = openml.datasets.get_dataset(self.openml_dataset_id, download_data=True, download_qualities=False, download_features_meta_data=False)
         
         X, y, categorical_indicator, attribute_names = dataset.get_data(
             dataset_format='dataframe',

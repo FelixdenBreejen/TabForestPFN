@@ -143,8 +143,12 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
         openml_suite = openml.study.get_suite(benchmark['suite_id'])
         openml_task_ids = openml_suite.tasks
         openml_dataset_ids = openml_suite.data
-        openml_dataset_names = [openml.datasets.get_dataset(dataset_id).name for dataset_id in openml_dataset_ids]
+        openml_dataset_names = []
         
+        for dataset_id in openml_dataset_ids:
+            dataset = openml.datasets.get_dataset(dataset_id, download_data=False, download_qualities=False, download_features_meta_data=False)
+            openml_dataset_names.append(dataset.name)
+
         sweep_config = SweepConfig(
             logger=logger,
             writer=writer,

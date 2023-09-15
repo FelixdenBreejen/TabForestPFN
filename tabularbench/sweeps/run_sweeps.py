@@ -11,6 +11,7 @@ import pandas as pd
 import torch.multiprocessing as mp
 
 from tabularbench.configs.all_model_configs import total_config
+from tabularbench.core.enums import SearchType
 from tabularbench.run_experiment import train_model_on_config
 from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
 from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
@@ -48,24 +49,24 @@ def run_sweeps(output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0)
 
     for sweep_config in sweep_configs: 
         
-        logger.info("Sweep config: benchmark {sweep_config.benchmark_name}, model {sweep_config.model}, search type {sweep_config.search_type}") 
+        logger.info(f"Sweep config: benchmark {sweep_config.benchmark_name}, model {sweep_config.model}, search type {sweep_config.search_type}") 
               
-        search_sweep(sweep_config, is_random=False)
-        if sweep_config.search_type == 'random':
-            search_sweep(sweep_config, is_random=True)
+        search_sweep(sweep_config, SearchType.DEFAULT)
+        if sweep_config.search_type == SearchType.RANDOM:
+            search_sweep(sweep_config, SearchType.RANDOM)
 
 
 
 
-def search_sweep(sweep: SweepConfig, is_random: bool):
+def search_sweep(sweep: SweepConfig, search_type: SearchType):
     """Perform one sweep: one row of the sweep.csv file."""
 
-    sweep.logger.info(f"Start {sweep.search_type} search for {sweep.model} on {sweep.task}, search type {'random' if is_random else 'default'}")
+    sweep.logger.info(f"Start {sweep.search_type} search for {sweep.model} on {sweep.task}, search type {search_type}")
     set_seed(sweep.seed)
 
     hyperparam_drawer = HyperparameterDrawer(sweep.hyperparams)
     results_path = sweep.output_dir / RESULTS_FILE_NAME
-    runs_per_dataset = sweep.runs_per_dataset if is_random else 1
+    runs_per_dataset = sweep.runs_per_dataset if search_type == SearchType.RANDOM else 1
     
     while True:
 
@@ -74,17 +75,13 @@ def search_sweep(sweep: SweepConfig, is_random: bool):
         if len(datasets_unfinished) == 0:
             break
 
-        if is_random:
-            hyperparams = hyperparam_drawer.draw_random_config()
-        else:
-            hyperparams = hyperparam_drawer.draw_default_config()
-        
+        hyperparams = hyperparam_drawer.draw_config(search_type)
         dataset_id = random.choice(datasets_unfinished)
 
         config_run = RunConfig.create(sweep, dataset_id, hyperparams)
         results = run_experiment(config_run)
 
-        if results == -1:
+        if results is None:
             # This is the error code in case the run crashes
             continue
 

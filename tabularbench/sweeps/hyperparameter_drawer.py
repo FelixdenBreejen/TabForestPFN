@@ -11,15 +11,7 @@ class HyperparameterDrawer:
     def __init__(self, cfg: dict):
         
         self.search_objects = [RandomSearchObject(name, cfg) for name, cfg in cfg.items()]
-
-    
-    def draw_random_config(self):
-        return self.draw_config(SearchType.RANDOM)
-    
-
-    def draw_default_config(self):
-        return self.draw_config(SearchType.DEFAULT)
-    
+            
     
     def draw_config(self, type: SearchType) -> DictConfig:
         
