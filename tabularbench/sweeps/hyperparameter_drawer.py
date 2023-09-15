@@ -2,6 +2,8 @@ import numpy as np
 import random
 from omegaconf import DictConfig
 
+from tabularbench.core.enums import SearchType
+
 
 class HyperparameterDrawer:
     """Random or default search in WandB sweep config format"""
@@ -12,25 +14,24 @@ class HyperparameterDrawer:
 
     
     def draw_random_config(self):
-        return self.draw_config('random')
+        return self.draw_config(SearchType.RANDOM)
     
 
     def draw_default_config(self):
-        return self.draw_config('default')
+        return self.draw_config(SearchType.DEFAULT)
     
     
-    def draw_config(self, type: str) -> DictConfig:
-
-        assert type in ['random', 'default']
+    def draw_config(self, type: SearchType) -> DictConfig:
         
         config = {}
 
         for search_object in self.search_objects:
 
-            if type == 'default':
-                config[search_object.name] = search_object.draw_default()
-            else:
-                config[search_object.name] = search_object.draw_random()
+            match type:
+                case SearchType.DEFAULT:
+                    config[search_object.name] = search_object.draw_default()
+                case SearchType.RANDOM:
+                    config[search_object.name] = search_object.draw_random()
 
         dict_config = DictConfig(config)
         return dict_config
@@ -47,29 +48,32 @@ class RandomSearchObject:
 
     def draw_default(self):
 
-        assert 'default' in self.cfg or 'value' in self.cfg, f"There is no default value for this hyperparameter: {self.name}"
-
-        if 'default' in self.cfg:
-            return self.cfg['default']
-        else:
-            return self.cfg['value']
+        match self.cfg:
+            case {'default': value}:
+                return value
+            case {'value': value}:
+                return value
+            case value if isinstance(value, (float, int, str, bool)):
+                return value
+            case _:
+                raise ValueError(f'Invalid default search object?: {self.cfg}')
 
 
     def draw_random(self):
 
-        if 'value' in self.cfg:
-            return self.cfg['value']
-        
-        if 'probabilities' in self.cfg:
-            return self.draw_probabilities()
-
-        if 'values' in self.cfg:
-            return self.draw_values()
-
-        if 'distribution' in self.cfg:
-            return self.draw_distribution()
-
-        raise ValueError(f'Invalid random search object?: {self.cfg}')
+        match self.cfg:
+            case {'value': value}:
+                return value
+            case {'probabilities': _ }:
+                return self.draw_probabilities()
+            case {'values': _ }:
+                return self.draw_values()
+            case {'distribution': _ }:
+                return self.draw_distribution()
+            case value if isinstance(value, (float, int, str, bool)):
+                return value
+            case _:
+                raise ValueError(f'Invalid random search object?: {self.cfg}')
     
 
     def draw_probabilities(self):
