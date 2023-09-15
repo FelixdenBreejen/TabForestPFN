@@ -61,7 +61,7 @@ def run_sweeps(output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0)
 def search_sweep(sweep: SweepConfig, search_type: SearchType):
     """Perform one sweep: one row of the sweep.csv file."""
 
-    sweep.logger.info(f"Start {sweep.search_type} search for {sweep.model} on {sweep.task}, search type {search_type}")
+    sweep.logger.info(f"Start {search_type.name} search for {sweep.model} on {sweep.benchmark_name}")
     set_seed(sweep.seed)
 
     hyperparam_drawer = HyperparameterDrawer(sweep.hyperparams)
@@ -92,6 +92,8 @@ def search_sweep(sweep: SweepConfig, search_type: SearchType):
             continue
 
         save_results(config_run, results, results_path, search_type)
+
+    sweep.logger.info(f"Finished {search_type.name} search for {sweep.model} on {sweep.benchmark_name}")
 
     
 

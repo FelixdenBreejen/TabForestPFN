@@ -58,7 +58,7 @@ def run_experiment_(cfg: RunConfig):
 
     for split_i, (x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator) in enumerate(dataset.split_iterator()):
 
-        cfg.logger.info(f"Start split {split_i+1} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task} with {cfg.feature_type} features")
+        cfg.logger.info(f"Start split {split_i+1} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
 
         model = get_model(cfg, x_train, y_train, categorical_indicator)
         trainer = Trainer(cfg, model)
