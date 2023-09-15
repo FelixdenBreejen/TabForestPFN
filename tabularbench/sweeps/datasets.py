@@ -11,8 +11,8 @@ def get_unfinished_dataset_ids(dataset_ids_all: list[int], results_path: Path, r
         return dataset_ids_all
     
     results_df = pd.read_csv(results_path)
-    #TODO: update column name
-    datasets_run_count = results_df.groupby('openml_task_id').count()['data__categorical'].to_dict()
+    
+    datasets_run_count = results_df.groupby('openml_dataset_id').count()['model'].to_dict()
 
     datasets_unfinished = []
     for dataset_id in dataset_ids_all:

@@ -14,7 +14,7 @@ from tabularbench.sweeps.sweep_start import set_seed
 
 def run_experiment(cfg: RunConfig) -> Optional[dict]:
 
-    cfg.logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task} with {cfg.feature_type} features")
+    cfg.logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
     
     set_seed(cfg.seed)
     cfg.logger.info(f"Seed is set to {cfg.seed}, device is {str(cfg.device)}")
@@ -25,16 +25,22 @@ def run_experiment(cfg: RunConfig) -> Optional[dict]:
 
 
     if debugger_is_active():
-        metrics = run_experiment_(cfg)
+        scores, losses = run_experiment_(cfg)
     try:
-        metrics = run_experiment_(cfg)
+        scores, losses = run_experiment_(cfg)
     except Exception as e:
         cfg.logger.exception("Exception occurred while running experiment")        
         return None
     
-    cfg.logger.info(f"Finished experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task} with {cfg.feature_type} features")
-    cfg.logger.info(f"Final scores: {metrics}")
-    return metrics
+    cfg.logger.info(f"Finished experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
+    cfg.logger.info(f"Final scores: ")
+
+    for i, split in enumerate(scores):
+        match split:
+            case {'train': score_train, 'val': score_val, 'test': score_test}:
+                cfg.logger.info(f"split_{i} :: train: {score_train:.4f}, val: {score_val:.4f}, test: {score_test:.4f}")
+
+    return scores, losses
     
 
 def debugger_is_active() -> bool:
@@ -50,7 +56,9 @@ def run_experiment_(cfg: RunConfig):
     scores = []
     losses = []
 
-    for x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator in dataset.split_iterator():
+    for split_i, (x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator) in enumerate(dataset.split_iterator()):
+
+        cfg.logger.info(f"Start split {split_i+1} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task} with {cfg.feature_type} features")
 
         model = get_model(cfg, x_train, y_train, categorical_indicator)
         trainer = Trainer(cfg, model)

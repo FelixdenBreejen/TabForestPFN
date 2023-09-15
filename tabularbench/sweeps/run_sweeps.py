@@ -36,7 +36,7 @@ def run_sweeps(output_dir: str, writer_queue: mp.Queue, gpu: int, seed: int = 0)
 
     cfg = get_config(output_dir)
 
-    logger = get_logger(cfg, log_file_name="gpu_{gpu}_seed_{seed}.log")
+    logger = get_logger(cfg, log_file_name=f"gpu_{gpu}_seed_{seed}.log")
     writer = Writer(writer_queue)
 
     add_device_to_cfg(cfg, gpu)
@@ -91,20 +91,56 @@ def search_sweep(sweep: SweepConfig, search_type: SearchType):
             # which is problematic for computing random search statistics.
             continue
 
-        save_results(config_run, results, results_path)
+        save_results(config_run, results, results_path, search_type)
 
     
 
-def save_results(config_run: RunConfig, results: dict, results_path: Path):
+def save_results(config_run: RunConfig, results: tuple[dict, dict], results_path: Path, search_type: SearchType):
 
-    df_new = pd.Series(results).to_frame().T
+    scores, losses = results
+
+    scores_train = [score['train'] for score in scores]
+    scores_val = [score['val'] for score in scores]
+    scores_test = [score['test'] for score in scores]
+    losses_train = [loss['train'] for loss in losses]
+    losses_val = [loss['val'] for loss in losses]
+    losses_test = [loss['test'] for loss in losses]
+
+    scores_train_mean = sum(scores_train) / len(scores_train)
+    scores_val_mean = sum(scores_val) / len(scores_val)
+    scores_test_mean = sum(scores_test) / len(scores_test)
+    losses_train_mean = sum(losses_train) / len(losses_train)
+    losses_val_mean = sum(losses_val) / len(losses_val)
+    losses_test_mean = sum(losses_test) / len(losses_test)
+
+    results_dict = config_run.to_results_dict()
+
+    results_dict = {
+        **results_dict,
+        'score_train_mean': scores_train_mean,
+        'score_val_mean': scores_val_mean,
+        'score_test_mean': scores_test_mean,
+        'loss_train_mean': losses_train_mean,
+        'loss_val_mean': losses_val_mean,
+        'loss_test_mean': losses_test_mean,
+        'score_train': scores_train,
+        'score_val': scores_val,
+        'score_test': scores_test,
+        'loss_train': losses_train,
+        'loss_val': losses_val,
+        'loss_test': losses_test,
+        'search_type': search_type.name
+    }
+    
+
+    df_new = pd.Series(results_dict).to_frame().T
 
     if not results_path.exists():
         results_path.parent.mkdir(parents=True, exist_ok=True)
         df_new.to_csv(results_path, mode='w', index=False, header=True)
     else:
         df = pd.read_csv(results_path)
-        df = df.append(df_new, ignore_index=True)
+        df = pd.concat([df, df_new], ignore_index=True)
         df.to_csv(results_path, mode='w', index=False, header=True)
 
 

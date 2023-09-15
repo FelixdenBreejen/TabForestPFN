@@ -51,3 +51,22 @@ class RunConfig():
             openml_dataset_name=dataset_name,
             hyperparams=hyperparams
         )
+    
+
+    def to_results_dict(self) -> dict:
+
+        result_dict = {
+            'model': self.model,
+            'device': str(self.device),
+            'task': self.task.name,
+            'feature_type': self.feature_type.name,
+            'dataset_size': self.dataset_size.name,
+            'openml_task_id': self.openml_task_id,
+            'openml_dataset_id': self.openml_dataset_id,
+            'openml_dataset_name': self.openml_dataset_name,
+        }
+
+        for key, value in self.hyperparams.items():
+            result_dict["hp__"+str(key)] = value
+
+        return result_dict
