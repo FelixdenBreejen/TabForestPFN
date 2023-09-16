@@ -84,6 +84,8 @@ class Trainer(BaseEstimator):
 
     def test(self, x_test: np.ndarray, y_test: np.ndarray):
 
+        self.load_params(self.checkpoint.path)
+
         dataset_test = self.make_dataset_x(x_test)
         dataloader_test = self.make_loader(dataset_test, training=False)
         loss_test, score_test = self.test_epoch(dataloader_test, y_test)
@@ -164,14 +166,14 @@ class Trainer(BaseEstimator):
             optimizer = Adam(
                 self.model.parameters(), 
                 lr=self.cfg.hyperparams.lr,
-                betas=(0.9, 0.99),
+                betas=(0.9, 0.999),
                 weight_decay=self.cfg.hyperparams.weight_decay
             )
         elif self.cfg.hyperparams.optimizer == "adamw":
             optimizer = AdamW(
                 self.model.parameters(), 
                 lr=self.cfg.hyperparams.lr,
-                betas=(0.9, 0.99),
+                betas=(0.9, 0.999),
                 weight_decay=self.cfg.hyperparams.weight_decay
             )
         elif self.cfg.hyperparams.optimizer == "sgd":

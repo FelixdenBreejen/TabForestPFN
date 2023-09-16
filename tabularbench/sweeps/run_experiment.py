@@ -1,8 +1,6 @@
 import sys
 from typing import Optional
 
-import torch.nn as nn
-import numpy as np
 from tabularbench.core.get_model import get_model
 
 from tabularbench.core.trainer import Trainer
@@ -52,7 +50,7 @@ def debugger_is_active() -> bool:
 
 def run_experiment_(cfg: RunConfig):
 
-    dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size)
+    dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size, cfg.openml_task_id)
 
     scores = []
     losses = []

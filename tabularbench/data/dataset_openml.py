@@ -1,8 +1,7 @@
-from typing import Generator, Iterator
+from typing import Iterator
 import numpy as np
 import openml
-import torch
-from sklearn.preprocessing import LabelEncoder, QuantileTransformer, FunctionTransformer
+from sklearn.preprocessing import LabelEncoder, QuantileTransformer
 
 from tabularbench.core.enums import DatasetSize, FeatureType, Task
 from tabularbench.sweeps.paths_and_filenames import PATH_TO_DATA_SPLIT
@@ -11,11 +10,12 @@ from tabularbench.sweeps.paths_and_filenames import PATH_TO_DATA_SPLIT
 
 class OpenMLDataset():
 
-    def __init__(self, openml_dataset_id: int, task: Task, feature_type: FeatureType, dataset_size: DatasetSize):
+    def __init__(self, openml_dataset_id: int, task: Task, feature_type: FeatureType, dataset_size: DatasetSize, task_id):
         self.openml_dataset_id = openml_dataset_id
         self.task = task
         self.feature_type = feature_type
         self.dataset_size = dataset_size
+        self.openml_task_id = task_id
 
         dataset = openml.datasets.get_dataset(self.openml_dataset_id, download_data=True, download_qualities=False, download_features_meta_data=False)
         
@@ -64,6 +64,7 @@ class OpenMLDataset():
     
 
     def split_iterator(self) -> Iterator[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
+        
 
         for idcs in self.train_val_test_indices:
             
