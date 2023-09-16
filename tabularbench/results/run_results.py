@@ -160,12 +160,8 @@ class RunResults():
         cls,
         cfg: RunConfig, 
         search_type: SearchType,
-        scores_train: list[float],
-        scores_val: list[float],
-        scores_test: list[float],
-        losses_train: list[float],
-        losses_val: list[float],
-        losses_test: list[float],
+        scores: dict[str, list[float]],
+        losses: dict[str, list[float]],
     ) -> RunResults:
 
         return cls(
@@ -179,12 +175,12 @@ class RunResults():
             search_type=search_type,
             seed=cfg.seed,
             device=cfg.device,
-            scores_train=scores_train,
-            scores_val=scores_val,
-            scores_test=scores_test,
-            losses_train=losses_train,
-            losses_val=losses_val,
-            losses_test=losses_test,
+            scores_train=scores['train'],
+            scores_val=scores['val'],
+            scores_test=scores['test'],
+            losses_train=losses['train'],
+            losses_val=losses['val'],
+            losses_test=losses['test'],
             hyperparams=cfg.hyperparams,
         )
 

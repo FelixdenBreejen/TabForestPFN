@@ -97,14 +97,7 @@ def save_results(config_run: RunConfig, results: tuple[dict, dict], results_path
 
     scores, losses = results
 
-    scores_train = [score['train'] for score in scores]
-    scores_val = [score['val'] for score in scores]
-    scores_test = [score['test'] for score in scores]
-    losses_train = [loss['train'] for loss in losses]
-    losses_val = [loss['val'] for loss in losses]
-    losses_test = [loss['test'] for loss in losses]
-
-    results_dict = RunResults.from_run_config(config_run, search_type, scores_train, scores_val, scores_test, losses_train, losses_val, losses_test).to_dict()
+    results_dict = RunResults.from_run_config(config_run, search_type, scores, losses).to_dict()
 
     df_new = pd.Series(results_dict).to_frame().T
 

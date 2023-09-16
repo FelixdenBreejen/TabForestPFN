@@ -50,10 +50,18 @@ def debugger_is_active() -> bool:
 
 def run_experiment_(cfg: RunConfig):
 
-    dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size, cfg.openml_task_id)
+    dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size)
 
-    scores = []
-    losses = []
+    scores: dict[str, list[float]] = {
+        "train": [],
+        "val": [],
+        "test": []
+    }
+    losses: dict[str, list[float]]  = {
+        "train": [],
+        "val": [],
+        "test": []
+    }
 
     for split_i, (x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator) in enumerate(dataset.split_iterator()):
 
@@ -67,17 +75,13 @@ def run_experiment_(cfg: RunConfig):
         loss_val, score_val = trainer.test(x_val, y_val)
         loss_test, score_test = trainer.test(x_test, y_test)
 
-        scores.append({
-            "train": score_train,
-            "val": score_val,
-            "test": score_test
-        })
+        scores["train"].append(score_train)
+        scores["val"].append(score_val)
+        scores["test"].append(score_test)
 
-        losses.append({
-            "train": loss_train,
-            "val": loss_val,
-            "test": loss_test
-        })
+        losses["train"].append(loss_train)
+        losses["val"].append(loss_val)
+        losses["test"].append(loss_test)
 
     return scores, losses
 
