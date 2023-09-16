@@ -1,6 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 from dataclasses import dataclass
+from typing import Optional
 from omegaconf import DictConfig
 import itertools
 import logging
@@ -20,7 +21,7 @@ class SweepConfig():
     writer: Writer
     output_dir: Path
     seed: int
-    device: torch.device
+    device: Optional[torch.device]
     model: str
     model_plot_name: str
     task: Task
@@ -39,22 +40,6 @@ class SweepConfig():
 
         assert self.benchmark_name in benchmark_names, f"{self.benchmark_name} is not a valid benchmark. Please choose from {benchmark_names}"
         self.sweep_dir = self.output_dir / f'{self.benchmark_name}_{self.model}_{self.search_type}'
-
-
-
-    @classmethod
-    def from_dict(cls, sweep_dict: dict) -> SweepConfig:
-
-        return cls(
-            model=sweep_dict['model'],
-            plot_name=sweep_dict['plot_name'],
-            task=sweep_dict['task'],
-            feature_type=sweep_dict['feature_type'],
-            benchmark_name=sweep_dict['benchmark_name'],
-            search_type=sweep_dict['search_type'],
-            runs_per_dataset=sweep_dict['runs_per_dataset'],
-            dataset_size=sweep_dict['dataset_size'],
-        )
 
 
     def __str__(self) -> str:
@@ -80,7 +65,7 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
         else:
             raise ValueError(f"Benchmark {benchmark_name} not found in benchmarks")
         
-        if hasattr(cfg, 'device'):
+        if hasattr(cfg, 'device') and cfg.device is not None:
             device = torch.device(cfg.device)
         else:
             device = None
@@ -116,7 +101,11 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
 
         openml_suite = openml.study.get_suite(benchmark['suite_id'])
         openml_task_ids = openml_suite.tasks
+        assert openml_task_ids is not None
+
         openml_dataset_ids = openml_suite.data
+        assert openml_dataset_ids is not None
+
         openml_dataset_names = []
         
         for dataset_id in openml_dataset_ids:

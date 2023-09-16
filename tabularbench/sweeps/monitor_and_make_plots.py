@@ -1,18 +1,16 @@
 from __future__ import annotations
 import argparse
-from pathlib import Path
 import subprocess
 import time
 
 import pandas as pd
-import numpy as np
 
 from tabularbench.configs.all_model_configs import total_config
 from tabularbench.core.enums import SearchType
 from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
 from tabularbench.sweeps.datasets import get_unfinished_dataset_ids
 from tabularbench.sweeps.paths_and_filenames import (
-    SWEEP_FILE_NAME, RESULTS_FILE_NAME, RESULTS_MODIFIED_FILE_NAME, 
+    RESULTS_FILE_NAME, RESULTS_MODIFIED_FILE_NAME, 
     PATH_TO_ALL_BENCH_CSV, DEFAULT_RESULTS_FILE_NAME
 )
 from tabularbench.sweeps.sweep_start import get_config, get_logger, set_seed
@@ -22,10 +20,9 @@ from tabularbench.sweeps.writer import Writer
 def monitor_and_make_plots(output_dir: str, writer: Writer, delay_in_seconds: int = 10):
 
     cfg = get_config(output_dir)
-    logger = get_logger(cfg, 'monitor_and_make_plots.log')
+    cfg.seed = 0
 
-    import time
-    time.sleep(1e6)
+    logger = get_logger(cfg, 'monitor_and_make_plots.log')
 
     sweep_configs = create_sweep_config_list_from_main_config(cfg, writer, logger)
     
@@ -34,6 +31,7 @@ def monitor_and_make_plots(output_dir: str, writer: Writer, delay_in_seconds: in
 
     for sweep in sweep_configs:
 
+        set_seed(sweep.seed)
         logger.info(f"Start monitoring sweep {str(sweep)}")
 
         while True:
@@ -86,9 +84,8 @@ def sweep_random_finished(sweep: SweepConfig) -> bool:
 
 def make_default_results(sweep: SweepConfig):
 
-    df = pd.read_csv(sweep.path / RESULTS_FILE_NAME)
-    df['data__keyword'] = df['data__keyword'].map(dict(zip(sweep.task_ids, sweep.dataset_names)))
-    df.sort_values(by='data__keyword', inplace=True, ascending=True)
+    df = pd.read_csv(sweep.sweep_dir / RESULTS_FILE_NAME)
+    df.sort_values(by='openml_dataset_id', inplace=True, ascending=True)
 
     df_all = pd.read_csv(PATH_TO_ALL_BENCH_CSV)
 
@@ -96,7 +93,7 @@ def make_default_results(sweep: SweepConfig):
     # Not all benchmarks have this model, and also it's not a very important model.
     benchmark_plot_names.remove('HistGradientBoostingTree')
 
-    assert sweep.plot_name not in benchmark_plot_names, f"Don't use plot name {sweep.plot_name}, the benchmark already has a model with that name"
+    assert sweep.model_plot_name not in benchmark_plot_names, f"Don't use plot name {sweep.plot_name}, the benchmark already has a model with that name"
 
     index = benchmark_plot_names + [sweep.plot_name]
     df_new = pd.DataFrame(columns=df['data__keyword'].unique().tolist(), index=index)

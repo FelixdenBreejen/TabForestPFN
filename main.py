@@ -89,7 +89,7 @@ def launch_sweeps(cfg) -> None:
     time_seed = int(time.time()) * cfg.continue_last_output
 
     mp.set_start_method('spawn')
-    writer_queue = mp.JoinableQueue()
+    writer_queue = mp.JoinableQueue()    # type: ignore
 
     mp.Process(target=file_writer, args=(writer_queue,)).start()
     logger.info(f"Launched writer")

@@ -1,14 +1,10 @@
 from __future__ import annotations
-from pathlib import Path
-import openml
 from dataclasses import dataclass
 import logging
 from omegaconf import DictConfig
 
 import torch
-import pandas as pd
 
-from tabularbench.data.benchmarks import benchmark_names
 from tabularbench.core.enums import FeatureType, Task, DatasetSize
 from tabularbench.sweeps.sweep_config import SweepConfig
 from tabularbench.sweeps.writer import Writer
