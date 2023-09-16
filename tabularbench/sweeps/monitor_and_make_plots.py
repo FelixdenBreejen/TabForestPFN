@@ -7,11 +7,12 @@ import pandas as pd
 
 from tabularbench.configs.all_model_configs import total_config
 from tabularbench.core.enums import SearchType
+from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
 from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
 from tabularbench.sweeps.datasets import get_unfinished_dataset_ids
 from tabularbench.sweeps.paths_and_filenames import (
     RESULTS_FILE_NAME, RESULTS_MODIFIED_FILE_NAME, 
-    PATH_TO_ALL_BENCH_CSV, DEFAULT_RESULTS_FILE_NAME
+    DEFAULT_RESULTS_FILE_NAME
 )
 from tabularbench.sweeps.sweep_start import get_config, get_logger, set_seed
 from tabularbench.sweeps.writer import Writer
@@ -47,7 +48,6 @@ def monitor_and_make_plots(output_dir: str, writer: Writer, delay_in_seconds: in
         while True:
             
             logger.info(f"Start making result plots for sweep {str(sweep)}")
-            make_results_csv_modified_for_plotting(sweep)
             make_random_sweep_plots(sweep)
             logger.info(f"Finished making result plots for sweep {str(sweep)}")
 
@@ -84,50 +84,40 @@ def sweep_random_finished(sweep: SweepConfig) -> bool:
 
 def make_default_results(sweep: SweepConfig):
 
-    df = pd.read_csv(sweep.sweep_dir / RESULTS_FILE_NAME)
-    df.sort_values(by='openml_dataset_id', inplace=True, ascending=True)
+    df_cur = pd.read_csv(sweep.sweep_dir / RESULTS_FILE_NAME)
+    df_cur['model'] = sweep.model_plot_name
 
-    df_all = pd.read_csv(PATH_TO_ALL_BENCH_CSV)
+    df_bench = get_benchmark_csv_reformatted()
+    df = pd.concat([df_bench, df_cur], ignore_index=True)
 
-    benchmark_plot_names = df_all['model_name'].unique().tolist()
+    df.sort_values(by=['model', 'openml_dataset_name'], inplace=True)
+
+    benchmark_plot_names = df_bench['model'].unique().tolist()
     # Not all benchmarks have this model, and also it's not a very important model.
     benchmark_plot_names.remove('HistGradientBoostingTree')
 
-    assert sweep.model_plot_name not in benchmark_plot_names, f"Don't use plot name {sweep.plot_name}, the benchmark already has a model with that name"
+    assert sweep.model_plot_name not in benchmark_plot_names, f"Don't use plot name {sweep.model_plot_name}, the benchmark already has a model with that name"
 
-    index = benchmark_plot_names + [sweep.plot_name]
-    df_new = pd.DataFrame(columns=df['data__keyword'].unique().tolist(), index=index)
+    index = benchmark_plot_names + [sweep.model_plot_name]
+    df_new = pd.DataFrame(columns=df_cur['openml_dataset_name'].unique().tolist(), index=index, dtype=float)
 
-    df_new.loc[sweep.plot_name] = df[df['hp'] == 'default']['mean_test_score'].to_list()
+    for model_name in index:
 
-    for model_name in benchmark_plot_names:
+        correct_model = df['model'] == model_name
+        correct_search_type = df['search_type'] == SearchType.DEFAULT.name 
+        correct_dataset_size = df['dataset_size'] == sweep.dataset_size.name
+        correct_feature_type = df['feature_type'] == sweep.feature_type.name
+        correct_task = df['task'] == sweep.task.name
 
-        correct_model = df_all['model_name'] == model_name
-        correct_task = df_all['hp'] == 'default'
-        correct_benchmark = df_all['benchmark'] == sweep.benchmark + '_' + sweep.dataset_size
+        correct_all = correct_model & correct_search_type & correct_dataset_size & correct_feature_type & correct_task
 
-        default_runs = df_all.loc[correct_model & correct_task & correct_benchmark]
-        default_runs.sort_values(by='data__keyword', inplace=True, ascending=True)
+        default_runs = df.loc[correct_all]
 
-        df_new.loc[model_name] = default_runs['mean_test_score'].tolist()
+        df_new.loc[model_name] = default_runs['score_test_mean'].tolist()
     
-    df_new.rename(columns=dict(zip(sweep.task_ids, sweep.dataset_names)), inplace=True)
-    df_new.to_csv(sweep.path / DEFAULT_RESULTS_FILE_NAME, mode='w', index=True, header=True)
+    df_new = df_new.applymap("{:.4f}".format)
+    df_new.to_csv(sweep.sweep_dir / DEFAULT_RESULTS_FILE_NAME, mode='w', index=True, header=True)
 
-
-def make_results_csv_modified_for_plotting(sweep: SweepConfig):
-
-    results_path = sweep.path / RESULTS_FILE_NAME
-    
-    df = pd.read_csv(results_path)
-    
-    df['benchmark'] = sweep.benchmark + '_' + sweep.dataset_size
-
-    df['data__openmlid'] = df['data__keyword']
-    df['data__keyword'] = df['data__openmlid'].map(dict(zip(sweep.task_ids, sweep.dataset_names)))
-    df['model_name'] = sweep.plot_name
-
-    df.to_csv(sweep.path / RESULTS_MODIFIED_FILE_NAME, mode='w', index=False, header=True)
 
 
 def make_random_sweep_plots(sweep: SweepConfig):

@@ -12,15 +12,15 @@ from tabularbench.sweeps.paths_and_filenames import CONFIG_DUPLICATE
 
 
 def get_config(output_dir: str) -> DictConfig:
-    return OmegaConf.load(Path(output_dir) / CONFIG_DUPLICATE)
+    return OmegaConf.load(Path(output_dir) / CONFIG_DUPLICATE)  # type: ignore
     
 
-def get_logger(cfg: OmegaConf, log_file_name) -> logging.Logger:
+def get_logger(cfg: DictConfig, log_file_name) -> logging.Logger:
 
     logging.setLogRecordFactory(CustomLogRecord)
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s :: %(levelname)-8s :: %(funcNameMaxWidth)-18s ::   %(message)s')
+    formatter = logging.Formatter('%(asctime)s :: %(levelname)-8s :: %(funcNameMaxWidth)-15s ::   %(message)s')
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
@@ -36,7 +36,7 @@ def get_logger(cfg: OmegaConf, log_file_name) -> logging.Logger:
 class CustomLogRecord(logging.LogRecord):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.funcNameMaxWidth = self.funcName[:15] + '...' if len(self.funcName) > 18 else self.funcName
+        self.funcNameMaxWidth = self.funcName[:12] + '...' if len(self.funcName) > 15 else self.funcName
 
     
 def set_seed(seed: int) -> None:
@@ -45,6 +45,6 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
 
 
-def add_device_and_seed_to_cfg(cfg: dict, gpu: int, seed: int) -> None:
+def add_device_and_seed_to_cfg(cfg: DictConfig, gpu: int, seed: int) -> None:
     cfg.device = f'cuda:{gpu}' if torch.cuda.is_available() else 'cpu'
     cfg.seed = seed

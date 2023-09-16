@@ -1,5 +1,4 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.preprocessing import QuantileTransformer, FunctionTransformer
 import torch
 from torch.optim import AdamW, Adam, SGD
@@ -45,7 +44,7 @@ class Trainer(BaseEstimator):
             loss_train, score_train = self.train_epoch(dataloader_train)
             loss_valid, score_valid = self.test_epoch(dataloader_valid, y_val)
 
-            self.cfg.logger.info(f"Epoch {epoch:03d} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Valid loss: {loss_valid:.4f} | Valid score: {score_valid:.4f}")
+            self.cfg.logger.info(f"Epoch {epoch:03d} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Val loss: {loss_valid:.4f} | Val score: {score_valid:.4f}")
 
             self.checkpoint(self.model, loss_valid)
             
@@ -125,8 +124,8 @@ class Trainer(BaseEstimator):
                 y_hat = self.model(x)
                 y_hats.append(y_hat.cpu().numpy())
 
-        y_hats = np.concatenate(y_hats, axis=0)
-        return y_hats
+        y_hats_arr = np.concatenate(y_hats, axis=0)
+        return y_hats_arr
 
 
     def score(self, y_hat, y):

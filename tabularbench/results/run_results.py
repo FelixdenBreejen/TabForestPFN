@@ -11,7 +11,7 @@ from tabularbench.core.enums import DatasetSize, Task, FeatureType, SearchType
 
 
 @dataclass
-class Results():
+class RunResults():
     model: str
     openml_task_id: int
     openml_dataset_id: int
@@ -75,7 +75,7 @@ class Results():
     
 
     @classmethod
-    def from_dict(cls, d: dict) -> Results:
+    def from_dict(cls, d: dict) -> RunResults:
             
         hyperparams = {}
         for key, value in d.items():
@@ -166,7 +166,7 @@ class Results():
         losses_train: list[float],
         losses_val: list[float],
         losses_test: list[float],
-    ) -> Results:
+    ) -> RunResults:
 
         return cls(
             model=cfg.model,

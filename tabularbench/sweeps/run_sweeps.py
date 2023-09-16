@@ -5,7 +5,7 @@ import pandas as pd
 import torch.multiprocessing as mp
 
 from tabularbench.core.enums import SearchType
-from tabularbench.results.results import Results
+from tabularbench.results.run_results import RunResults
 from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
 from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
 from tabularbench.sweeps.datasets import draw_dataset_id, get_unfinished_dataset_ids
@@ -104,7 +104,7 @@ def save_results(config_run: RunConfig, results: tuple[dict, dict], results_path
     losses_val = [loss['val'] for loss in losses]
     losses_test = [loss['test'] for loss in losses]
 
-    results_dict = Results.from_run_config(config_run, search_type, scores_train, scores_val, scores_test, losses_train, losses_val, losses_test).to_dict()
+    results_dict = RunResults.from_run_config(config_run, search_type, scores_train, scores_val, scores_test, losses_train, losses_val, losses_test).to_dict()
 
     df_new = pd.Series(results_dict).to_frame().T
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
-from tabularbench.results.results import Results
+from tabularbench.results.run_results import RunResults
 
 from tabularbench.sweeps.paths_and_filenames import PATH_TO_ALL_BENCH_CSV, PATH_TO_ALL_BENCH_CSV_REFORMATTED
 
@@ -16,7 +16,7 @@ def reformat_benchmark():
     rows_new = []
 
     for _, row in tqdm(df.iterrows(), total=df.shape[0]):
-        results = Results.from_benchmark_row(row)
+        results = RunResults.from_benchmark_row(row)
 
         if results is None:
             continue
@@ -29,7 +29,7 @@ def reformat_benchmark():
 
 def get_benchmark_csv_reformatted():
 
-    if not PATH_TO_ALL_BENCH_CSV_REFORMATTED.exists():
+    if not Path(PATH_TO_ALL_BENCH_CSV_REFORMATTED).exists():
         reformat_benchmark()
 
     df = pd.read_csv(PATH_TO_ALL_BENCH_CSV_REFORMATTED)
