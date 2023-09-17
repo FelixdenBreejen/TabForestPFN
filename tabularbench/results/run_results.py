@@ -6,8 +6,8 @@ from omegaconf import DictConfig
 
 import torch
 
-from tabularbench.sweeps.run_config import RunConfig
 from tabularbench.core.enums import DatasetSize, Task, FeatureType, SearchType
+from tabularbench.sweeps.run_config import RunConfig
 
 
 @dataclass
@@ -112,7 +112,6 @@ class RunResults():
                not np.isfinite(row['max_train_samples']) 
             or not np.isfinite(row['data__regression'])
             or not np.isfinite(row['data__categorical'])
-            or not np.isfinite(row['mean_train_score'])
             or not np.isfinite(row['mean_val_score'])
             or not np.isfinite(row['mean_test_score'])
         ):
@@ -124,14 +123,30 @@ class RunResults():
         search_type = SearchType.RANDOM if row['hp'] == 'random' else SearchType.DEFAULT
         dataset_size = DatasetSize(row['max_train_samples'])
 
-        if row['train_scores'] is np.nan:
-            train_scores = [row['mean_train_score']]
-            val_scores = [row['mean_val_score']]
-            test_scores = [row['mean_test_score']]
-        else:
-            train_scores = [float(score) for score in row['train_scores'].strip('[]').split(',')]
-            val_scores = [float(score) for score in row['val_scores'].strip('[]').split(',')]
-            test_scores = [float(score) for score in row['test_scores'].strip('[]').split(',')]
+        match task:
+            case Task.CLASSIFICATION:
+
+                if row['val_scores'] is np.nan or row['test_scores'] is np.nan:
+                    train_scores = [row['mean_train_score']]
+                    val_scores = [row['mean_val_score']]
+                    test_scores = [row['mean_test_score']]
+                else:
+                    train_scores = [float(score) for score in row['train_scores'].strip('[]').split(',')]
+                    val_scores = [float(score) for score in row['val_scores'].strip('[]').split(',')]
+                    test_scores = [float(score) for score in row['test_scores'].strip('[]').split(',')]
+
+            case Task.REGRESSION:
+
+                train_scores = [row['mean_r2_train']]
+                val_scores = [max(row['mean_r2_val'], 0)]
+                test_scores = [max(row['mean_r2_test'], 0)]
+
+                assert np.isfinite(val_scores[0])
+                assert np.isfinite(test_scores[0])
+
+
+        if any(score > 1 for score in train_scores+val_scores+test_scores):
+            print(f"Scores above 1: {row['model_name'], row['data__keyword']}")
 
         
         return cls(

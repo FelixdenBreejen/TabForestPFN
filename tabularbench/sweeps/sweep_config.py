@@ -111,6 +111,10 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
         openml_dataset_ids = openml_suite.data
         assert openml_dataset_ids is not None
 
+        openml_dataset_ids_to_ignore = cfg.ignore_datasets
+        openml_dataset_ids = [dataset_id for dataset_id in openml_dataset_ids if dataset_id not in openml_dataset_ids_to_ignore]
+        openml_task_ids = [task_id for task_id, dataset_id in zip(openml_task_ids, openml_dataset_ids) if dataset_id not in openml_dataset_ids_to_ignore]
+
         openml_dataset_names = []
         
         for dataset_id in openml_dataset_ids:

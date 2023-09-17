@@ -26,7 +26,7 @@ class Tokenizer(nn.Module):
     ) -> None:
         #categories = None
         super().__init__()
-        if categories is None:
+        if categories is None or len(categories) == 0:
             d_bias = d_numerical
             self.category_offsets = None
             self.category_embeddings = None
@@ -274,7 +274,7 @@ class Transformer(nn.Module):
         return x
 
     def forward(self, x) -> Tensor:
-        if not self.categorical_indicator is None:
+        if sum(self.categorical_indicator) > 0:
             x_num = x[:, ~self.categorical_indicator].float()
             x_cat = x[:, self.categorical_indicator].long() #TODO
         else:
@@ -369,7 +369,7 @@ class InputShapeSetterTransformer():
 
     def on_train_begin(self, X, y):
         print("categorical_indicator", self.categorical_indicator)
-        if self.categorical_indicator is None:
+        if sum(self.categorical_indicator) == 0:
             d_numerical = X.shape[1]
             categories = None
         else:

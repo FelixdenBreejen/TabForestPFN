@@ -11,7 +11,7 @@ defaults:
 continue_last_output: True
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [6]
+devices: [1, 2, 4, 5, 6, 7]
 runs_per_device: 1
 runs_per_dataset: 1000                  # suggested: 500, only for random search
 monitor_interval_in_seconds: 10       # plot the results every x seconds
@@ -21,17 +21,21 @@ models:
 model_plot_names:
   - FTTrans
 benchmarks:
-  - categorical_classification
+  # - categorical_classification
   # - numerical_classification
   # - categorical_regression
-  # - numerical_regression
+  - numerical_regression
   # - categorical_classification_large
   # - numerical_classification_large
   # - categorical_regression_large
   # - numerical_regression_large
 search_type:
-  - random
-  # - default
+  # - random
+  - default
+
+ignore_datasets:
+  - 44140  # diamonds numerical regression
+  # - 44142  # bike sharing numerical regression
 
 
 plotting:
@@ -39,7 +43,7 @@ plotting:
   n_random_shuffles: 100         # Number of random shuffles for plotting the confidence boundaries
   confidence_bound: 0.90       # Confidence bounds ratio for plotting the confidence boundaries
 
-  score_normalization_models:   # Based on which models do we normalize the accuracy and R2
+  benchmark_models:   # Based on which models do we normalize the accuracy and R2
     - MLP
     - Resnet
     - SAINT

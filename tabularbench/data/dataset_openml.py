@@ -38,20 +38,22 @@ class OpenMLDataset():
         if y.dtype == np.dtype('O'):
             y = LabelEncoder().fit_transform(y)
 
-        if self.feature_type == FeatureType.NUMERICAL:
-            assert categorical_indicator is None or not np.array(categorical_indicator).astype(bool).any(), "There are categorical features in the dataset"
-            categorical_indicator = np.zeros(X.shape[1]).astype(bool)
+        match self.feature_type:
+            case FeatureType.NUMERICAL:
+                assert categorical_indicator is None or not np.array(categorical_indicator).astype(bool).any(), "There are categorical features in the dataset"
+                categorical_indicator = np.zeros(X.shape[1]).astype(bool)
+            case FeatureType.CATEGORICAL:
+                assert categorical_indicator is None or np.array(categorical_indicator).astype(bool).all(), "There are numerical features in the dataset"
+                categorical_indicator = np.ones(X.shape[1]).astype(bool)
+            case FeatureType.MIXED:
+                assert categorical_indicator is not None, "There is no information about the feature types in the dataset"
+                categorical_indicator = np.array(categorical_indicator).astype(bool)
 
-        if self.feature_type == FeatureType.CATEGORICAL:            
-            assert categorical_indicator is None or np.array(categorical_indicator).astype(bool).all(), "There are numerical features in the dataset"
-            categorical_indicator = np.ones(X.shape[1]).astype(bool)
-
-        if self.feature_type == FeatureType.MIXED:
-            assert categorical_indicator is not None, "There is no information about the feature types in the dataset"
-            categorical_indicator = np.array(categorical_indicator).astype(bool)
-
-        if self.task == Task.CLASSIFICATION:
-            y = y.astype(np.int64)
+        match self.task:
+            case Task.CLASSIFICATION:
+                y = y.astype(np.int64)
+            case Task.REGRESSION:
+                y = y.astype(np.float32)
 
         X = X.astype(np.float32)
 

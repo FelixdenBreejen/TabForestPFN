@@ -4,7 +4,7 @@ import math
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
-from tabularbench.core.enums import SearchType
+from tabularbench.core.enums import SearchType, Task
 
 from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
 from tabularbench.sweeps.paths_and_filenames import RESULTS_FILE_NAME
@@ -67,7 +67,7 @@ def make_combined_dataset_plot(sweep: SweepConfig):
                 n_shuffles = sweep.plotting.n_random_shuffles
             )
 
-            sequences_normalized = (sequences - score_min) / (score_max - score_min)
+            sequences_normalized = (sequences - score_min).clip(min=0) / (score_max - score_min)
 
             sequences_all[model_i, dataset_i, :, :] = sequences_normalized
 
@@ -134,14 +134,10 @@ def make_separate_dataset_plots(sweep: SweepConfig):
 
         correct_all = correct_dataset & correct_dataset_size & correct_feature_type & correct_task
         df_correct = df.loc[correct_all]
-        models = df_correct['model'].unique().tolist()
-
-        if 'HistGradientBoostingTree' in models:
-            models.remove('HistGradientBoostingTree')
 
         sequences_all = []        
 
-        for model in models:
+        for model in sweep.plotting.benchmark_models + [sweep.model_plot_name]:
 
             correct_model = df_correct['model'] == model
             pick_default = df_correct['search_type'] == SearchType.DEFAULT.name
@@ -208,7 +204,7 @@ def scores_min_max(sweep: SweepConfig, df: pd.DataFrame, dataset_name: str) -> t
     """
 
     models = df['model'].unique().tolist()
-    models = [model for model in models if model in sweep.plotting.score_normalization_models]
+    models = [model for model in models if model in sweep.plotting.benchmark_models]
 
     correct_model = df['model'].isin(models)
     correct_dataset = df['openml_dataset_name'] == dataset_name
@@ -219,7 +215,12 @@ def scores_min_max(sweep: SweepConfig, df: pd.DataFrame, dataset_name: str) -> t
     correct_all = correct_dataset & correct_dataset_size & correct_feature_type & correct_task & correct_model
     df_correct = df.loc[correct_all]
 
-    score_min = df_correct['score_test_mean'].quantile(0.10)
+    match sweep.task:
+        case Task.REGRESSION:
+            score_min = df_correct['score_test_mean'].quantile(0.50)
+        case Task.CLASSIFICATION:
+            score_min = df_correct['score_test_mean'].quantile(0.10)
+
     score_max = df_correct['score_test_mean'].max()
 
     sweep.logger.info(f"For dataset {dataset_name}, we will normalize with min {score_min:.4f} and max {score_max:.4f}")

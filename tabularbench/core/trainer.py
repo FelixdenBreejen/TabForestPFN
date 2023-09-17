@@ -69,6 +69,9 @@ class Trainer(BaseEstimator):
             y = y.to(self.cfg.device)
             y_hat = self.model(x)
 
+            if self.cfg.task == Task.REGRESSION:
+                y_hat = torch.squeeze(y_hat)
+
             loss = self.loss(y_hat, y)
             score = self.score(y_hat, y)
 
@@ -124,6 +127,10 @@ class Trainer(BaseEstimator):
                 x = batch[0]
                 x = x.to(self.cfg.device)
                 y_hat = self.model(x)
+
+                if self.cfg.task == Task.REGRESSION:
+                    y_hat = torch.squeeze(y_hat)
+                    
                 y_hats.append(y_hat.cpu().numpy())
 
         y_hats_arr = np.concatenate(y_hats, axis=0)
@@ -134,8 +141,8 @@ class Trainer(BaseEstimator):
 
         match self.cfg.task:
             case Task.REGRESSION:                
-                ss_res = torch.sum((y - y_hat) ** 2, axis=0)
-                ss_tot = torch.sum((y - torch.mean(y, axis=0)) ** 2, axis=0)
+                ss_res = torch.sum((y - y_hat) ** 2)
+                ss_tot = torch.sum((y - torch.mean(y)) ** 2, axis=0)
                 r2 = 1 - ss_res / (ss_tot + 1e-8)
                 return r2
             case Task.CLASSIFICATION:
@@ -153,11 +160,11 @@ class Trainer(BaseEstimator):
 
         match self.cfg.task:
             case Task.REGRESSION:
-                y_transformer = QuantileTransformer(output_distribution="normal")
-                y_transformer.fit(y_train[:, None])[:, 0]
+                y_transformer = QuantileTransformer1D(output_distribution="normal")
+                y_transformer.fit(y_train)
                 return y_transformer
             case Task.CLASSIFICATION:
-                return FunctionTransformer(func=lambda x: x)
+                return FunctionTransformer(func=lambda x: x, inverse_func=lambda x: x)
 
 
     def select_optimizer(self):
@@ -241,3 +248,21 @@ class Trainer(BaseEstimator):
                 return torch.nn.MSELoss()
             case Task.CLASSIFICATION:
                 return torch.nn.CrossEntropyLoss()
+
+
+
+
+class QuantileTransformer1D(BaseEstimator, TransformerMixin):
+
+    def __init__(self, output_distribution="normal") -> None:
+        self.quantile_transformer = QuantileTransformer(output_distribution=output_distribution)
+
+    def fit(self, x: np.ndarray):
+        self.quantile_transformer.fit(x[:, None])
+        return self
+    
+    def transform(self, x: np.ndarray):
+        return self.quantile_transformer.transform(x[:, None])[:, 0]
+    
+    def inverse_transform(self, x: np.ndarray):
+        return self.quantile_transformer.inverse_transform(x[:, None])[:, 0]
