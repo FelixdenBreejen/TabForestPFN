@@ -88,6 +88,7 @@ def run_experiment_(cfg: RunConfig):
 
 
         rng = np.random.RandomState(split_i)
+        print(rng.randn(1))
         x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator = generate_dataset(config, rng, split_i)
         x_train = x_train.astype(np.float32)
         x_val = x_val.astype(np.float32)
