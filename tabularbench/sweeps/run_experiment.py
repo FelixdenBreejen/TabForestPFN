@@ -7,16 +7,12 @@ from tabularbench.core.get_model import get_model
 from tabularbench.core.trainer import Trainer
 from tabularbench.data.dataset_openml import OpenMLDataset
 from tabularbench.sweeps.run_config import RunConfig
-from tabularbench.sweeps.sweep_start import set_seed
 
 
 
 def run_experiment(cfg: RunConfig) -> Optional[tuple[dict, dict]]:
 
     cfg.logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
-    
-    set_seed(cfg.seed)
-    cfg.logger.info(f"Seed is set to {cfg.seed}, device is {str(cfg.device)}")
 
     cfg.logger.info(f"We are using the following hyperparameters:")
     for key, value in cfg.hyperparams.items():
