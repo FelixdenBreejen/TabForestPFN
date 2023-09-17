@@ -13,6 +13,103 @@ from tabularbench.sweeps.sweep_config import SweepConfig
 
 def make_random_sweep_plots(sweep: SweepConfig):
 
+    make_separate_dataset_plots(sweep)
+    make_combined_dataset_plot(sweep)
+
+
+
+def make_combined_dataset_plot(sweep: SweepConfig):
+
+    df_bench = get_benchmark_csv_reformatted()
+
+    df_cur = pd.read_csv(sweep.sweep_dir / RESULTS_FILE_NAME)
+    df_cur['model'] = sweep.model_plot_name
+
+    df = pd.concat([df_bench, df_cur], ignore_index=True)
+
+
+    models = df['model'].unique().tolist()
+    if 'HistGradientBoostingTree' in models:
+        models.remove('HistGradientBoostingTree')
+
+    sequences_all = np.zeros((len(models), len(sweep.openml_dataset_names), sweep.plotting.n_random_shuffles, sweep.plotting.n_runs))
+
+    for dataset_i, dataset_name in enumerate(sorted(sweep.openml_dataset_names)):
+
+        score_min, score_max = scores_min_max(sweep, df_bench, dataset_name)
+
+        correct_dataset = df['openml_dataset_name'] == dataset_name
+        correct_dataset_size = df['dataset_size'] == sweep.dataset_size.name
+        correct_feature_type = df['feature_type'] == sweep.feature_type.name
+        correct_task = df['task'] == sweep.task.name
+
+        correct_all = correct_dataset & correct_dataset_size & correct_feature_type & correct_task
+        df_correct = df.loc[correct_all]
+
+        for model_i, model in enumerate(models):
+
+            correct_model = df_correct['model'] == model
+            pick_default = df_correct['search_type'] == SearchType.DEFAULT.name
+            pick_random = df_correct['search_type'] == SearchType.RANDOM.name
+
+            default_value_val = df_correct[correct_model & pick_default]['score_val_mean'].item()
+            default_value_test = df_correct[correct_model & pick_default]['score_test_mean'].item()
+            
+            random_values_val = df_correct[correct_model & pick_random]['score_val_mean'].values
+            random_values_test = df_correct[correct_model & pick_random]['score_test_mean'].values
+
+            sequences = create_random_sequences(
+                default_value_val = default_value_val, 
+                default_value_test = default_value_test,
+                random_values_val = random_values_val,
+                random_values_test = random_values_test,
+                sequence_length = sweep.plotting.n_runs,
+                n_shuffles = sweep.plotting.n_random_shuffles
+            )
+
+            sequences_normalized = (sequences - score_min) / (score_max - score_min)
+
+            sequences_all[model_i, dataset_i, :, :] = sequences_normalized
+
+
+    sequences_all = np.mean(sequences_all, axis=1)   # [models, sequence_length, n_shuffles]
+    
+    fig, ax = plt.subplots(figsize=(25, 25))
+
+    for model_i, model in enumerate(models):
+
+        sequence_mean = np.mean(sequences_all[model_i, :, :], axis=0)
+        sequence_lower_bound = np.quantile(sequences_all[model_i, :, :], q=1-sweep.plotting.confidence_bound, axis=0)
+        sequence_upper_bound = np.quantile(sequences_all[model_i, :, :], q=sweep.plotting.confidence_bound, axis=0)
+
+        ax.plot(sequence_mean, label=model, linewidth=12)
+        ax.fill_between(
+            x=np.arange(len(sequence_mean)), 
+            y1=sequence_lower_bound, 
+            y2=sequence_upper_bound, 
+            alpha=0.2
+        )
+
+    ax.set_title(f"Averaged Normalized Test Score for all datasets of size {sweep.dataset_size.name} \n with {sweep.feature_type.name} features on the {sweep.task.name} task", fontsize=40)
+    ax.title.set_size(40)
+    ax.set_xlabel("Number of runs")
+    ax.xaxis.label.set_size(40)
+    ax.set_ylabel("Normalized Test score")
+    ax.yaxis.label.set_size(40)
+    ax.tick_params(axis='both', which='major', labelsize=30)
+
+    ax.set_xscale('log')
+    ax.set_xlim([1, sweep.plotting.n_runs])
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: int(x)))
+
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, loc='lower center', ncol=5, fontsize=30)
+    fig.savefig(sweep.sweep_dir / "combined_dataset_plot.png")
+
+
+
+def make_separate_dataset_plots(sweep: SweepConfig):
+
     df_bench = get_benchmark_csv_reformatted()
     
     df_cur = pd.read_csv(sweep.sweep_dir / RESULTS_FILE_NAME)
@@ -101,6 +198,39 @@ def make_random_sweep_plots(sweep: SweepConfig):
     fig.legend(handles, labels, loc='lower center', ncol=5, fontsize=30)
     fig.suptitle(f"Test Score for all datasets of size {sweep.dataset_size.name} \n with {sweep.feature_type.name} features on the {sweep.task.name} task", fontsize=40)
     fig.savefig(sweep.sweep_dir / "dataset_plots.png")
+
+
+
+def scores_min_max(sweep: SweepConfig, df: pd.DataFrame, dataset_name: str) -> tuple[float, float]:
+    """
+    Based on the benchmark results, we normalize the scores of the sweep.
+    Returns the min and max scores to normalize with
+    """
+
+    models = df['model'].unique().tolist()
+    models = [model for model in models if model in sweep.plotting.score_normalization_models]
+
+    correct_model = df['model'].isin(models)
+    correct_dataset = df['openml_dataset_name'] == dataset_name
+    correct_dataset_size = df['dataset_size'] == sweep.dataset_size.name
+    correct_feature_type = df['feature_type'] == sweep.feature_type.name
+    correct_task = df['task'] == sweep.task.name
+
+    correct_all = correct_dataset & correct_dataset_size & correct_feature_type & correct_task & correct_model
+    df_correct = df.loc[correct_all]
+
+    score_min = df_correct['score_test_mean'].quantile(0.10)
+    score_max = df_correct['score_test_mean'].max()
+
+    sweep.logger.info(f"For dataset {dataset_name}, we will normalize with min {score_min:.4f} and max {score_max:.4f}")
+
+    return score_min, score_max
+
+
+
+
+
+
 
 
 def create_random_sequences(
