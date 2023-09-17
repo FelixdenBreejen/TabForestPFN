@@ -8,7 +8,7 @@ defaults:
   - _self_
 
 
-continue_last_output: False
+continue_last_output: True
 output_dir: ${hydra:run.dir}
 seed: 0
 devices: [1, 2, 4, 5, 6, 7]
@@ -32,3 +32,18 @@ benchmarks:
 search_type:
   # - random
   - default
+
+
+plotting:
+  n_runs: 500                   # Number of runs to consider for plotting
+  n_random_shuffles: 20         # Number of random shuffles for plotting the confidence boundaries
+  confidence_bound: 0.90       # Confidence bounds ratio for plotting the confidence boundaries
+
+  score_normalization_models:   # Based on which models do we normalize the accuracy and R2
+    - MLP
+    - Resnet
+    - SAINT
+    - FT Transformer
+    - RandomForest
+    - XGBoost
+    - GradientBoostingTree
