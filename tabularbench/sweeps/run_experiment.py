@@ -1,10 +1,14 @@
 import sys
 from typing import Optional
 
+import numpy as np
+from tabularbench.core.enums import FeatureType, Task
+
 from tabularbench.core.get_model import get_model
 
 from tabularbench.core.trainer import Trainer
 from tabularbench.data.dataset_openml import OpenMLDataset
+from tabularbench.generate_dataset_pipeline import generate_dataset
 from tabularbench.sweeps.run_config import RunConfig
 from tabularbench.sweeps.sweep_start import set_seed
 
@@ -49,7 +53,6 @@ def debugger_is_active() -> bool:
 
 
 def run_experiment_(cfg: RunConfig):
-
     dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size)
 
     scores: dict[str, list[float]] = {
@@ -63,7 +66,32 @@ def run_experiment_(cfg: RunConfig):
         "test": []
     }
 
-    for split_i, (x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator) in enumerate(dataset.split_iterator()):
+    for split_i, (batch) in enumerate(dataset.split_iterator()):
+
+        config = {
+            "data__categorical": cfg.feature_type == FeatureType.MIXED,
+            "data__method_name": "openml_no_transform",
+            "data__regression": cfg.task == Task.REGRESSION,
+            "regression": cfg.task == Task.REGRESSION,
+            "n_iter": "auto",
+            "max_train_samples": 10000,
+            "data__keyword": cfg.openml_task_id,
+            "train_prop": 0.70,
+            "val_test_prop": 0.3,
+            "max_val_samples": 50000,
+            "max_test_samples": 50000,
+            "transform__0__method_name": "gaussienize",
+            "transform__0__type": "quantile",
+            "transform__0__apply_on": "numerical",
+            "transformed_target": True,
+        }
+
+
+        rng = np.random.RandomState(split_i)
+        x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator = generate_dataset(config, rng, split_i)
+        x_train = x_train.astype(np.float32)
+        x_val = x_val.astype(np.float32)
+        x_test = x_test.astype(np.float32)
 
         cfg.logger.info(f"Start split {split_i+1}/{dataset.n_splits} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
 

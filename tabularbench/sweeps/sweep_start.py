@@ -43,8 +43,6 @@ def set_seed(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.backends.cudnn.benchmark = False
-    torch.use_deterministic_algorithms(True)
 
 
 def add_device_and_seed_to_cfg(cfg: DictConfig, gpu: int, seed: int) -> None:
