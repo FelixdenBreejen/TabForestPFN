@@ -13,17 +13,21 @@ class HyperparameterDrawer:
         self.search_objects = [RandomSearchObject(name, cfg) for name, cfg in cfg.items()]
             
     
-    def draw_config(self, type: SearchType) -> DictConfig:
+    def draw_config(self, search_type: SearchType) -> DictConfig:
         
         config = {}
 
         for search_object in self.search_objects:
 
-            match type:
+            match search_type:
                 case SearchType.DEFAULT:
                     config[search_object.name] = search_object.draw_default()
                 case SearchType.RANDOM:
                     config[search_object.name] = search_object.draw_random()
+
+        for k, v, in config.items():
+            if isinstance(v, float):
+                config[k] = float(v)
 
         dict_config = DictConfig(config)
         return dict_config

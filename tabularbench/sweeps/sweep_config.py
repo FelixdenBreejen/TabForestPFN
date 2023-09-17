@@ -72,9 +72,13 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
             device = None
 
         if search_type == 'default':
+            search_type = SearchType.DEFAULT
             runs_per_dataset = 1
-        else:
+        elif search_type == 'random':
+            search_type = SearchType.RANDOM
             runs_per_dataset = cfg.runs_per_dataset
+        else:
+            raise ValueError(f"search_type must be one of ['default', 'random']. Got {search_type}")
 
         if benchmark['categorical']:
             feature_type = FeatureType.MIXED

@@ -2,7 +2,6 @@
 import math
 import typing as ty
 
-import skorch
 import numpy as np
 import torch
 import torch.nn as nn
@@ -10,12 +9,8 @@ import torch.nn.functional as F
 import torch.nn.init as nn_init
 from torch import Tensor
 
-import sys
 from tabularbench.core.enums import Task
-
 from tabularbench.sweeps.run_config import RunConfig
-sys.path.append("")
-import tabularbench.models.tabular.lib as lib
 
 
 # %%
@@ -243,8 +238,8 @@ class Transformer(nn.Module):
                     assert kv_compression_sharing == 'key-value'
             self.layers.append(layer)
 
-        self.activation = lib.get_activation_fn(activation)
-        self.last_activation = lib.get_nonglu_activation_fn(activation)
+        self.activation = get_activation_fn(activation)
+        self.last_activation = get_nonglu_activation_fn(activation)
         self.prenormalization = prenormalization
         self.last_normalization = make_normalization() if prenormalization else None
         self.ffn_dropout = ffn_dropout
@@ -322,6 +317,48 @@ class Transformer(nn.Module):
         return x
     
 
+def get_activation_fn(name: str) -> ty.Callable[[Tensor], Tensor]:
+    return (
+        reglu
+        if name == 'reglu'
+        else geglu
+        if name == 'geglu'
+        else torch.sigmoid
+        if name == 'sigmoid'
+        else getattr(F, name)
+    )
+
+
+def get_nonglu_activation_fn(name: str) -> ty.Callable[[Tensor], Tensor]:
+    return (
+        F.relu
+        if name == 'reglu'
+        else F.gelu
+        if name == 'geglu'
+        else get_activation_fn(name)
+    )
+
+
+def reglu(x: Tensor) -> Tensor:
+    a, b = x.chunk(2, dim=-1)
+    return a * F.relu(b)
+
+
+def geglu(x: Tensor) -> Tensor:
+    a, b = x.chunk(2, dim=-1)
+    return a * F.gelu(b)
+
+
+class ReGLU(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return reglu(x)
+
+
+class GEGLU(nn.Module):
+    def forward(self, x: Tensor) -> Tensor:
+        return geglu(x)
+    
+
 class InputShapeSetterTransformer():
     def __init__(self, regression=False, batch_size=None,
                  categorical_indicator=None, categories=None):
@@ -364,12 +401,16 @@ class FTTransformer(nn.Module):
 
         input_shape = input_shape_setter.on_train_begin(x_train, y_train)
 
+        d_token = cfg.hyperparams.d_token
+        if d_token % cfg.hyperparams.n_heads != 0:
+            d_token = cfg.hyperparams.n_heads * math.ceil(cfg.hyperparams.d_token / cfg.hyperparams.n_heads)
+
         self.transformer = Transformer(
             d_numerical = input_shape['d_numerical'],
             categories = input_shape['categories'],
             token_bias = cfg.hyperparams.token_bias,
             n_layers = cfg.hyperparams.n_layers,
-            d_token = cfg.hyperparams.d_token,
+            d_token = d_token,
             n_heads = cfg.hyperparams.n_heads,
             d_ffn_factor = cfg.hyperparams.d_ffn_factor,
             attention_dropout = cfg.hyperparams.attention_dropout,

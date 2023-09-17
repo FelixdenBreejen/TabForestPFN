@@ -1,4 +1,6 @@
-batch_size: 512
+batch_size: 
+  values: [256, 512, 1024]
+  default: 512
 max_epochs: 300
 optimizer: adamw
 lr:
@@ -55,7 +57,7 @@ attention_dropout:
   max: 0.5
   default: 0.2
 residual_dropout:
-  distribution: 0.0
+  distribution: uniform
   min: 0.0
   max: 0.5
   default: 0.0
