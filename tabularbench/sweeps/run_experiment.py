@@ -1,18 +1,25 @@
 import sys
 from typing import Optional
 
+from omegaconf import DictConfig
+from tabularbench.core.enums import DatasetSize, FeatureType, Task
+
 
 from tabularbench.core.get_model import get_model
 
 from tabularbench.core.trainer import Trainer
 from tabularbench.data.dataset_openml import OpenMLDataset
 from tabularbench.sweeps.run_config import RunConfig
+from tabularbench.sweeps.sweep_start import set_seed
 
 
 
 def run_experiment(cfg: RunConfig) -> Optional[tuple[dict, dict]]:
 
     cfg.logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
+
+    set_seed(cfg.seed)
+    cfg.logger.info(f"Set seed to {cfg.seed}")
 
     cfg.logger.info(f"We are using the following hyperparameters:")
     for key, value in cfg.hyperparams.items():
@@ -81,3 +88,60 @@ def run_experiment_(cfg: RunConfig):
 
     return scores, losses
 
+
+
+if __name__ == "__main__":
+
+    import logging
+    from tabularbench.sweeps.writer import StandardWriter
+    import torch
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+
+    cfg = RunConfig(
+        logger = logging.getLogger("run_experiment"),
+        writer = StandardWriter(),
+        device = torch.device("cuda:5"),
+        model = "ft_transformer",
+        seed = 0,
+        task = Task.CLASSIFICATION,
+        feature_type = FeatureType.MIXED,
+        dataset_size = DatasetSize.MEDIUM,
+        openml_task_id = 361111,
+        openml_dataset_id = 44157,
+        openml_dataset_name = "eye-movements",
+        hyperparams = DictConfig({
+            'batch_size': 512,
+            'max_epochs': 300,
+            'optimizer': 'adamw',
+            'lr': 1.e-4,
+            'weight_decay': 1.e-5,
+            'lr_scheduler': True,
+            'lr_scheduler_patience': 30,
+            'early_stopping_patience': 40,
+            'd_token': 192,
+            'activation': 'reglu',
+            'token_bias': True,
+            'prenormalization': True,
+            'kv_compression': True,
+            'kv_compression_sharing': 'headwise',
+            'initialization': 'kaiming',
+            'n_layers': 3,
+            'n_heads': 8,
+            'd_ffn_factor': 1.333,
+            'ffn_dropout': 0.1,
+            'attention_dropout': 0.2,
+            'residual_dropout': 0.0
+        })
+    )
+
+    results = run_experiment(cfg)
+    assert results is not None
+    scores, losses = results
+    print(scores)

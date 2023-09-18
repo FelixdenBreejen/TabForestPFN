@@ -1,4 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.preprocessing import QuantileTransformer, FunctionTransformer
 import torch
 from torch.optim import AdamW, Adam, SGD
@@ -30,19 +31,21 @@ class Trainer(BaseEstimator):
         self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
 
 
-    def train(self, x_train: np.ndarray, x_val: np.ndarray, y_train: np.ndarray, y_val: np.ndarray):
+    def train(self, x_train: np.ndarray, x_val, y_train: np.ndarray, y_val):
 
         self.y_transformer = self.create_y_transformer(y_train)
 
-        dataset_train = self.make_dataset_xy(x_train, self.y_transformer.transform(y_train))
-        dataset_valid = self.make_dataset_x(x_val)
+        x_train_train, x_train_val, y_train_train, y_train_val = self.make_train_split(x_train, y_train)
+
+        dataset_train = self.make_dataset_xy(x_train_train, self.y_transformer.transform(y_train_train))
+        dataset_valid = self.make_dataset_x(x_train_val)
 
         dataloader_train = self.make_loader(dataset_train, training=True)
         dataloader_valid = self.make_loader(dataset_valid, training=False)
 
         for epoch in range(self.cfg.hyperparams.max_epochs):
             loss_train, score_train = self.train_epoch(dataloader_train)
-            loss_valid, score_valid = self.test_epoch(dataloader_valid, y_val)
+            loss_valid, score_valid = self.test_epoch(dataloader_valid, y_train_val)
 
             self.cfg.logger.info(f"Epoch {epoch:03d} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Val loss: {loss_valid:.4f} | Val score: {score_valid:.4f}")
 
@@ -142,7 +145,7 @@ class Trainer(BaseEstimator):
         match self.cfg.task:
             case Task.REGRESSION:                
                 ss_res = torch.sum((y - y_hat) ** 2)
-                ss_tot = torch.sum((y - torch.mean(y)) ** 2, axis=0)
+                ss_tot = torch.sum((y - torch.mean(y)) ** 2)
                 r2 = 1 - ss_res / (ss_tot + 1e-8)
                 return r2
             case Task.CLASSIFICATION:
@@ -211,6 +214,22 @@ class Trainer(BaseEstimator):
             )
 
         return scheduler
+    
+
+    def make_train_split(self, x_train, y_train):
+
+        match self.cfg.task:
+            case Task.REGRESSION:
+                x_t_train, x_t_valid, y_t_train, y_t_valid = train_test_split(
+                    x_train, y_train, test_size=0.2
+                )
+            case Task.CLASSIFICATION:
+                skf = StratifiedKFold(n_splits=5, shuffle=True)
+                indices = next(skf.split(x_train, y_train))
+                x_t_train, x_t_valid = x_train[indices[0]], x_train[indices[1]]
+                y_t_train, y_t_valid = y_train[indices[0]], y_train[indices[1]]
+
+        return x_t_train, x_t_valid, y_t_train, y_t_valid
     
 
     def make_dataset_xy(self, x, y):

@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterator
 
 import torch
 
@@ -32,7 +32,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         )
 
 
-    def __iter__(self) -> Iterable:
+    def __iter__(self) -> Iterator:
         return self.make_dataset()
     
 

@@ -11,6 +11,15 @@ class Writer():
         self.queue.put((path, txt, mode))
         self.queue.join()
 
+class StandardWriter():
+
+    def __init__(self) -> None:
+        pass
+
+    def write(self, path: Path, txt: str, mode: str) -> None:
+        with open(path, mode) as f:
+            f.write(txt)
+
 
 def file_writer(queue: mp.JoinableQueue) -> None:
 

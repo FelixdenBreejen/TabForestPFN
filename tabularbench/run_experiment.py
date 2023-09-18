@@ -215,7 +215,55 @@ def train_model_config(config) -> dict:
 
 
 if __name__ == """__main__""":
-    
-    config = {'data__categorical': True, 'data__method_name': 'openml_no_transform', 'data__regression': False, 'regression': False, 'n_iter': 'auto', 'max_train_samples': 10000, 'data__keyword': 361282, 'model__lr_scheduler': True, 'model__module__n_layers': 4, 'model__module__d_layers': 256, 'model__module__dropout': 0.0, 'model__lr': 0.001, 'model__module__d_embedding': 128, 'use_gpu': True, 'log_training': True, 'model__device': 'cuda', 'model_type': 'skorch', 'model__use_checkpoints': True, 'model__optimizer': 'adamw', 'model__batch_size': 512, 'model__max_epochs': 300, 'transform__0__method_name': 'gaussienize', 'transform__0__type': 'quantile', 'transform__0__apply_on': 'numerical', 'transformed_target': True, 'model_name': 'rtdl_mlp', 'hp': 'default', 'seed': 0, 'train_prop': 0.7, 'val_test_prop': 0.3, 'max_val_samples': 50000, 'max_test_samples': 50000}
 
-    train_model_on_config(config)
+    import os
+    os.environ["CUDA_VISIBLE_DEVICES"] = "5"
+    
+    config = {
+        'data__categorical': True, 
+        'data__method_name': 'openml_no_transform', 
+        'data__regression': False, 
+        'regression': False, 
+        'n_iter': 'auto', 
+        'max_train_samples': 10000, 
+        'data__keyword': 361111, 
+        'd_token': 192,
+        'model__lr_scheduler': True, 
+        'model__module__n_layers': 3, 
+        'model__module__n_heads': 8,
+        'model__module__d_ffn_factor': 1.3333,
+        'model__module__activation': 'reglu',
+        'model__module__token_bias': True,
+        'model__module__prenormalization': True,
+        'model__module__kv_compression': True,
+        'model__module__kv_compression_sharing': 'headwise',
+        'model__module__initialization': 'kaiming',
+        'model__module__ffn_dropout': 0.1,
+        'model__module__attention_dropout': 0.2,
+        'model__module__residual_dropout': 0.0,
+        'model__lr': 1.e-4, 
+        'use_gpu': True, 
+        'log_training': True, 
+        'model__device': 'cuda', 
+        'model_type': 'torch', 
+        'model__use_checkpoints': True, 
+        'model__optimizer': 'adamw', 
+        'model__batch_size': 512, 
+        'model__max_epochs': 300, 
+        'model__optimizer__weight_decay': 1e-05,
+        'transform__0__method_name': 'gaussienize', 
+        'transform__0__type': 'quantile', 
+        'transform__0__apply_on': 'numerical', 
+        'transformed_target': True, 
+        'model_name': 'ft_transformer', 
+        'hp': 'default', 
+        'seed': 0, 
+    }
+
+    results = train_model_on_config(config)
+
+    print("train_scores", results["train_scores"])
+    print("val_scores", results["val_scores"])
+    print("test_scores", results["test_scores"])
+
+    pass

@@ -1,21 +1,10 @@
-import torch.nn
-from skorch.callbacks import Checkpoint, EarlyStopping, LRScheduler
-from skorch import NeuralNetClassifier
-from skorch.callbacks import EpochScoring
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch.optim import AdamW, Adam, sgd
 
-from tabularbench.models.tabular.bin.resnet import ResNet, InputShapeSetterResnet
-from tabularbench.models.tabular.bin.mlp import MLP, InputShapeSetterMLP
-from tabularbench.models.tabular.bin.mlp_pwl import MLP_PWL, InputShapeSetterMLP_PWL
 from tabularbench.models.tabular.bin.ft_transformer import Transformer, InputShapeSetterTransformer
 
-from tabularbench.core.trainer import Trainer
+from tabularbench.core.trainer_old import Trainer
 from tabularbench.core.trainer_pfn import TrainerPFN
 from tabularbench.core.trainer_masked_saint_finetune import TrainerMaskedSaintFinetune
 
-from skorch.callbacks import Callback
-import numpy as np
 
 
 def modify_config(model_config, id):
