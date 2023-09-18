@@ -1,13 +1,15 @@
 import math
 from typing import Optional
+import numpy as np
 
 import torch
 import torch.nn as nn
 from torch import Tensor
 from torch.nn import Module, TransformerEncoder
 
-from tabularbench.models.tabPFN.layer import TransformerEncoderLayer, _get_activation_fn
+from tabularbench.models.tabPFN.layer import TransformerEncoderLayer
 from tabularbench.models.tabPFN.utils import SeqBN, bool_mask_to_att_mask
+from tabularbench.sweeps.run_config import RunConfig
 
 
 
@@ -229,3 +231,13 @@ class TransformerEncoderDiffInit(Module):
             output = self.norm(output)
 
         return output
+    
+
+class TabPFN():
+    
+    def __init__(self, cfg: RunConfig, x_train: np.ndarray, y_train: np.ndarray, categorical_indicator: np.ndarray):
+        super().__init__()
+
+        self.cfg = cfg
+
+

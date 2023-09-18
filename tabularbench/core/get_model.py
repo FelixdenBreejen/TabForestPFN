@@ -12,5 +12,7 @@ def get_model(cfg: RunConfig, x_train: np.ndarray, y_train: np.ndarray, categori
     match cfg.model:
         case ModelName.FT_TRANSFORMER:
             return FTTransformer(cfg, x_train, y_train, categorical_indicator)
+        case ModelName.TABPFN_FINETUNE:
+            return None
         case _:
             raise NotImplementedError(f"Model {cfg.model} not implemented yet")
