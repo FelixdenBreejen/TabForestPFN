@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 
-class RetrievalDataset(torch.utils.data.Dataset):
+class TabPFNDataset(torch.utils.data.Dataset):
 
     def __init__(
         self, 
@@ -34,7 +34,7 @@ class RetrievalDataset(torch.utils.data.Dataset):
         # We push the whole training data through the model, unless it's bigger than the batch size
         self.batch_size = min(self.n_train_observations, batch_size)
         
-        if y_test is not None:
+        if self.y_test is not None:
             self.y_tests = self.split_in_chunks(self.y_test, batch_size)
 
 
@@ -122,7 +122,7 @@ class RetrievalDataset(torch.utils.data.Dataset):
 
 
 
-def RetrievalDatasetGenerator(
+def TabPFNGenerator(
     x: np.ndarray, 
     y: np.ndarray, 
     batch_size: int = 1024,
@@ -139,7 +139,7 @@ def RetrievalDatasetGenerator(
             stratify=y
         )
 
-        static_dataset = RetrievalDataset(
+        static_dataset = TabPFNDataset(
             x_train=x_train,
             y_train=y_train,
             x_test=x_test,

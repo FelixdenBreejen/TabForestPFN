@@ -1,13 +1,14 @@
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
 from sklearn.model_selection import StratifiedKFold, train_test_split
-from sklearn.preprocessing import QuantileTransformer, FunctionTransformer
 import torch
-from torch.optim import AdamW, Adam, SGD
-from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 import numpy as np
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.core.enums import Task
+from tabularbench.core.get_loss import get_loss
+from tabularbench.core.get_optimizer import get_optimizer
+from tabularbench.core.get_scheduler import get_scheduler
+from tabularbench.core.y_transformer import create_y_transformer
 from tabularbench.sweeps.run_config import RunConfig
 
 
@@ -23,17 +24,17 @@ class Trainer(BaseEstimator):
         self.model = model
         self.model.to(self.cfg.device)
         
-        self.loss = self.select_loss()
-        self.optimizer = self.select_optimizer()
-        self.scheduler = self.select_scheduler()
+        self.loss = get_loss(self.cfg.task)
+        self.optimizer = get_optimizer(self.cfg.hyperparams, self.model)
+        self.scheduler = get_scheduler(self.cfg.hyperparams, self.optimizer)
 
         self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams.early_stopping_patience)
         self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
 
 
-    def train(self, x_train: np.ndarray, x_val, y_train: np.ndarray, y_val):
+    def train(self, x_train: np.ndarray, y_train: np.ndarray):
 
-        self.y_transformer = self.create_y_transformer(y_train)
+        self.y_transformer = create_y_transformer(y_train, self.cfg.task)
 
         x_train_train, x_train_val, y_train_train, y_train_val = self.make_train_split(x_train, y_train)
 
@@ -57,6 +58,38 @@ class Trainer(BaseEstimator):
                 break
 
             self.scheduler.step(loss_valid)
+    
+
+    def test(self, x_test: np.ndarray, y_test: np.ndarray):
+
+        self.load_params(self.checkpoint.path)
+
+        y_hats = self.predict(x_test)
+
+        loss_test = self.loss(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
+        score_test = self.score(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
+
+        return loss_test, score_test
+    
+
+    def test_epoch(self, dataloader: torch.utils.data.DataLoader, y_test: np.ndarray):
+
+        y_hats = self.predict_epoch(dataloader)
+        
+        loss_test = self.loss(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
+        score_test = self.score(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
+
+        return loss_test, score_test
+    
+
+    def predict(self, x: np.ndarray):
+
+        dataset_x = self.make_dataset_x(x)
+        dataloader_x = self.make_loader(dataset_x, training=False)
+        y_hats = self.predict_epoch(dataloader_x)
+        y_hats = self.y_transformer.inverse_transform(y_hats)
+
+        return y_hats
 
 
     def train_epoch(self, dataloader: torch.utils.data.DataLoader):
@@ -86,37 +119,6 @@ class Trainer(BaseEstimator):
 
         loss, score = epoch_statistics.get()
         return loss, score
-    
-
-    def test(self, x_test: np.ndarray, y_test: np.ndarray):
-
-        self.load_params(self.checkpoint.path)
-
-        dataset_test = self.make_dataset_x(x_test)
-        dataloader_test = self.make_loader(dataset_test, training=False)
-        loss_test, score_test = self.test_epoch(dataloader_test, y_test)
-
-        return loss_test, score_test
-
-
-    def test_epoch(self, dataloader_x: torch.utils.data.DataLoader, y_test: np.ndarray):
-        
-        y_hats = self.predict_epoch(dataloader_x)
-        y_hats = self.y_transformer.inverse_transform(y_hats)
-
-        loss_test = self.loss(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
-        score_test = self.score(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
-        return loss_test, score_test
-    
-
-    def predict(self, x: np.ndarray):
-
-        dataset_x = self.make_dataset_x(x)
-        dataloader_x = self.make_loader(dataset_x, training=False)
-        y_hats = self.predict_epoch(dataloader_x)
-        y_hats = self.y_transformer.inverse_transform(y_hats)
-
-        return y_hats
 
 
     def predict_epoch(self, dataloader: torch.utils.data.DataLoader) -> np.ndarray:
@@ -140,6 +142,7 @@ class Trainer(BaseEstimator):
         return y_hats_arr
 
 
+
     def score(self, y_hat, y):
 
         match self.cfg.task:
@@ -155,66 +158,6 @@ class Trainer(BaseEstimator):
     def load_params(self, path):
         self.model.load_state_dict(torch.load(path))
 
-
-    def create_y_transformer(self, y_train: np.ndarray) -> TransformerMixin:
-        # The y_transformer transformers the target variable to a normal distribution
-        # This should be used for the y variable when training a regression model,
-        # but when testing the model, we want to inverse transform the predictions
-
-        match self.cfg.task:
-            case Task.REGRESSION:
-                y_transformer = QuantileTransformer1D(output_distribution="normal")
-                y_transformer.fit(y_train)
-                return y_transformer
-            case Task.CLASSIFICATION:
-                return FunctionTransformer(func=lambda x: x, inverse_func=lambda x: x)
-
-
-    def select_optimizer(self):
-
-        if self.cfg.hyperparams.optimizer == "adam":
-            optimizer = Adam(
-                self.model.parameters(), 
-                lr=self.cfg.hyperparams.lr,
-                betas=(0.9, 0.999),
-                weight_decay=self.cfg.hyperparams.weight_decay
-            )
-        elif self.cfg.hyperparams.optimizer == "adamw":
-            optimizer = AdamW(
-                self.model.parameters(), 
-                lr=self.cfg.hyperparams.lr,
-                betas=(0.9, 0.999),
-                weight_decay=self.cfg.hyperparams.weight_decay
-            )
-        elif self.cfg.hyperparams.optimizer == "sgd":
-            optimizer = SGD(
-                self.model.parameters(),
-                lr=self.cfg.hyperparams.lr,
-                weight_decay=self.cfg.hyperparams.weight_decay
-            )
-        else:
-            raise ValueError("Optimizer not recognized")
-        
-        return optimizer
-        
-
-    def select_scheduler(self):
-
-        if self.cfg.hyperparams.lr_scheduler:      
-            scheduler = ReduceLROnPlateau(
-                self.optimizer, 
-                patience=self.cfg.hyperparams.lr_scheduler_patience, 
-                min_lr=2e-5, 
-                factor=0.2
-            )
-        else:
-            scheduler = LambdaLR(
-                self.optimizer,
-                lambda _: 1
-            )
-
-        return scheduler
-    
 
     def make_train_split(self, x_train, y_train):
 
@@ -259,29 +202,3 @@ class Trainer(BaseEstimator):
             drop_last=drop_last
         )
 
-    
-    def select_loss(self):
-
-        match self.cfg.task:
-            case Task.REGRESSION:
-                return torch.nn.MSELoss()
-            case Task.CLASSIFICATION:
-                return torch.nn.CrossEntropyLoss()
-
-
-
-
-class QuantileTransformer1D(BaseEstimator, TransformerMixin):
-
-    def __init__(self, output_distribution="normal") -> None:
-        self.quantile_transformer = QuantileTransformer(output_distribution=output_distribution)
-
-    def fit(self, x: np.ndarray):
-        self.quantile_transformer.fit(x[:, None])
-        return self
-    
-    def transform(self, x: np.ndarray):
-        return self.quantile_transformer.transform(x[:, None])[:, 0]
-    
-    def inverse_transform(self, x: np.ndarray):
-        return self.quantile_transformer.inverse_transform(x[:, None])[:, 0]

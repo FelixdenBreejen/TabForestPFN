@@ -1,16 +1,16 @@
 import math
 from typing import Optional
-import numpy as np
+from functools import partial
 
 import torch
 import torch.nn as nn
 from torch import Tensor
 from torch.nn import Module, TransformerEncoder
 
+import tabularbench.models.tabPFN.encoders as encoders
 from tabularbench.models.tabPFN.layer import TransformerEncoderLayer
 from tabularbench.models.tabPFN.utils import SeqBN, bool_mask_to_att_mask
 from tabularbench.sweeps.run_config import RunConfig
-
 
 
 class TransformerModel(nn.Module):
@@ -233,11 +233,55 @@ class TransformerEncoderDiffInit(Module):
         return output
     
 
-class TabPFN():
+class TabPFN(torch.nn.Module):
     
-    def __init__(self, cfg: RunConfig, x_train: np.ndarray, y_train: np.ndarray, categorical_indicator: np.ndarray):
+    def __init__(self, cfg: RunConfig):
         super().__init__()
 
-        self.cfg = cfg
+        model_state, optimizer_state, config_sample = torch.load(cfg.hyperparams.path_to_weights, map_location='cpu')
+
+        if (('nan_prob_no_reason' in config_sample and config_sample['nan_prob_no_reason'] > 0.0) or
+            ('nan_prob_a_reason' in config_sample and config_sample['nan_prob_a_reason'] > 0.0) or
+            ('nan_prob_unknown_reason' in config_sample and config_sample['nan_prob_unknown_reason'] > 0.0)):
+            encoder = encoders.NanHandlingEncoder
+        else:
+            encoder = partial(encoders.Linear, replace_nan_by_zero=True)
+
+        n_out = config_sample['max_num_classes']
+
+        encoder = encoder(config_sample['num_features'], config_sample['emsize'])
+
+        nhid = config_sample['emsize'] * config_sample['nhid_factor']
+        y_encoder_generator = encoders.get_Canonical(config_sample['max_num_classes']) \
+            if config_sample.get('canonical_y_encoder', False) else encoders.Linear
+
+        assert config_sample['max_num_classes'] > 2
+        loss = torch.nn.CrossEntropyLoss(reduction='none', weight=torch.ones(int(config_sample['max_num_classes'])))
+
+        model = TransformerModel(encoder, n_out, config_sample['emsize'], config_sample['nhead'], nhid,
+                                config_sample['nlayers'], y_encoder=y_encoder_generator(1, config_sample['emsize']),
+                                dropout=config_sample['dropout'],
+                                efficient_eval_masking=config_sample['efficient_eval_masking'])
+
+        # print(f"Using a Transformer with {sum(p.numel() for p in model.parameters()) / 1000 / 1000:.{2}f} M parameters")
+
+        model.criterion = loss
+
+        if cfg.hyperparams.use_pretrained_weights:
+            module_prefix = 'module.'
+            model_state = {k.replace(module_prefix, ''): v for k, v in model_state.items()}
+            model.load_state_dict(model_state)
+
+        self.model = model
+
+
+    def forward(self, x_train: torch.Tensor, y_train: torch.Tensor, x_test: torch.Tensor):
+
+        single_eval_pos = x_train.shape[0]
+        x_full = torch.cat([x_train, x_test], 0)
+
+        src = (None, x_full, y_train)
+
+        return self.model(src, single_eval_pos=single_eval_pos)
 
 

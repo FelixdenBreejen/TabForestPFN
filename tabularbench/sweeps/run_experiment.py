@@ -4,8 +4,8 @@ from omegaconf import DictConfig
 
 from tabularbench.core.enums import DatasetSize, FeatureType, Task
 from tabularbench.core.get_model import get_model
+from tabularbench.core.get_trainer import get_trainer
 
-from tabularbench.core.trainer import Trainer
 from tabularbench.data.dataset_openml import OpenMLDataset
 from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.sweeps.run_config import RunConfig
@@ -54,15 +54,15 @@ def run_experiment_(cfg: RunConfig) -> RunMetrics:
 
     for split_i, (x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator) in enumerate(dataset.split_iterator()):
 
-        cfg.logger.info(f"Start split {split_i+1}/{dataset.n_splits} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
+        cfg.logger.info(f"Start split {split_i+1}/{dataset.n_splits} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model.name} doing {cfg.task.name} with {cfg.feature_type.name} features")
 
         model = get_model(cfg, x_train, y_train, categorical_indicator)
-        trainer = Trainer(cfg, model)
-        trainer.train(x_train, x_val, y_train, y_val)
+        trainer = get_trainer(cfg, model)
+        trainer.train(x_train, y_train)
 
-        loss_train, score_train = trainer.test(x_train, y_train)
-        loss_val, score_val = trainer.test(x_val, y_val)
-        loss_test, score_test = trainer.test(x_test, y_test)
+        loss_train, score_train = trainer.test(x_train, y_train, x_train, y_train)
+        loss_val, score_val = trainer.test(x_train, y_train, x_val, y_val)
+        loss_test, score_test = trainer.test(x_train, y_train, x_test, y_test)
 
         metrics.append(score_train, score_val, score_test, loss_train, loss_val, loss_test)
 

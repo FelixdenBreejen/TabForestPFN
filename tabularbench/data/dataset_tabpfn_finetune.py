@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 
-class TabPFNDataset(torch.utils.data.Dataset):
+class TabPFNFinetuneDataset(torch.utils.data.Dataset):
 
     def __init__(
         self, 
@@ -50,10 +50,8 @@ class TabPFNDataset(torch.utils.data.Dataset):
         self.x_tests = self.split_in_chunks(self.x_test, batch_size)
         self.y_tests = self.split_in_chunks(self.y_test, batch_size)
 
-        # This single eval pos is necessary for the tab pfn forward pass
-        # It's a marker for when the training data ends and the test data starts
         # We push the whole training data through the model, unless it's bigger than the batch size
-        self.single_eval_pos = min(self.n_train_observations, self.batch_size)
+        self.train_size = min(self.n_train_observations, self.batch_size)
 
 
     def __len__(self):
@@ -61,27 +59,21 @@ class TabPFNDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
 
-        train_size = self.single_eval_pos
-
         train_indices = np.random.choice(
             self.n_train_observations, 
-            size=train_size, 
+            size=self.train_size, 
             replace=False
         )
 
         x_train = self.x_train[train_indices]
         y_train = self.y_train[train_indices]
 
-        x_full = np.concatenate([x_train, self.x_tests[idx]], axis=0)
-        x_full = torch.FloatTensor(x_full)
-        y_train = torch.FloatTensor(y_train)
+        x_train_tensor = torch.as_tensor(x_train)
+        y_train_tensor = torch.FloatTensor(y_train)
+        x_test_tensor = torch.as_tensor(self.x_tests[idx])
+        y_test_tensor = torch.as_tensor(self.y_tests[idx])
 
-        if self.regression:
-            y_test = torch.FloatTensor(self.y_tests[idx])
-        else:
-            y_test = torch.LongTensor(self.y_tests[idx])
-
-        return x_full, y_train, y_test
+        return x_train_tensor, y_train_tensor, x_test_tensor, y_test_tensor
         
 
     def cutoff_excess_features(self, x: np.ndarray, max_features: int) -> np.ndarray:
@@ -107,6 +99,10 @@ class TabPFNDataset(torch.utils.data.Dataset):
         """
         Normalizes the data by the mean and std
         """
+
+        # singular values are set to 1 to avoid division by zero
+        std[std == 0] = 1
+
         x = (x - mean) / std
         return x
 
@@ -125,7 +121,8 @@ class TabPFNDataset(torch.utils.data.Dataset):
         """
         Increases the number of features to the number of features the tab pfn model has been trained on
         """
-        x = np.concatenate([x, np.zeros((x.shape[0], max_features - x.shape[1]))], axis=1)
+        added_zeros = np.zeros((x.shape[0], max_features - x.shape[1]), dtype=np.float32)
+        x = np.concatenate([x, added_zeros], axis=1)
         return x
 
 
@@ -147,7 +144,7 @@ class TabPFNDataset(torch.utils.data.Dataset):
 
 
 
-def TabPFNDatasetGenerator(
+def TabPFNFinetuneGenerator(
     x: np.ndarray, 
     y: np.ndarray, 
     regression: bool,
@@ -171,7 +168,7 @@ def TabPFNDatasetGenerator(
             stratify=stratify
         )
 
-        static_dataset = TabPFNDataset(
+        static_dataset = TabPFNFinetuneDataset(
             x_train=x_train,
             y_train=y_train,
             x_test=x_test,

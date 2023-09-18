@@ -1,16 +1,15 @@
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import train_test_split, StratifiedKFold
 import torch
-from torch.optim import AdamW, Adam, SGD
+from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 import numpy as np
 from sklearn.preprocessing import OneHotEncoder
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.models.tabPFN.load_model import load_model
-from tabularbench.models.tabPFN.dataset import TabPFNDataset, TabPFNDatasetGenerator
+from tabularbench.data.dataset import TabPFNDataset, TabPFNDatasetGenerator
 
-from tabpfn import TabPFNClassifier
 
 
 class TrainerPFN(BaseEstimator):
