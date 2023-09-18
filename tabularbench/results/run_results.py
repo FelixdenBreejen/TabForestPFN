@@ -6,13 +6,14 @@ from omegaconf import DictConfig
 
 import torch
 
-from tabularbench.core.enums import DatasetSize, Task, FeatureType, SearchType
+from tabularbench.core.enums import DatasetSize, ModelName, Task, FeatureType, SearchType
+from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.sweeps.run_config import RunConfig
 
 
 @dataclass
 class RunResults():
-    model: str
+    model: ModelName
     openml_task_id: int
     openml_dataset_id: int
     openml_dataset_name: str
@@ -44,7 +45,7 @@ class RunResults():
     def to_dict(self):
 
         d = {
-            'model': self.model,
+            'model': self.model.name,
             'openml_task_id': self.openml_task_id,
             'openml_dataset_id': self.openml_dataset_id,
             'openml_dataset_name': self.openml_dataset_name,
@@ -175,8 +176,7 @@ class RunResults():
         cls,
         cfg: RunConfig, 
         search_type: SearchType,
-        scores: dict[str, list[float]],
-        losses: dict[str, list[float]],
+        metrics: RunMetrics
     ) -> RunResults:
 
         return cls(
@@ -190,12 +190,12 @@ class RunResults():
             search_type=search_type,
             seed=cfg.seed,
             device=cfg.device,
-            scores_train=scores['train'],
-            scores_val=scores['val'],
-            scores_test=scores['test'],
-            losses_train=losses['train'],
-            losses_val=losses['val'],
-            losses_test=losses['test'],
+            scores_train=metrics.scores_train,
+            scores_val=metrics.scores_val,
+            scores_test=metrics.scores_test,
+            losses_train=metrics.losses_train,
+            losses_val=metrics.losses_val,
+            losses_test=metrics.losses_test,
             hyperparams=cfg.hyperparams,
         )
 

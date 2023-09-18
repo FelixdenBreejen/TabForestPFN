@@ -1,5 +1,6 @@
 from enum import Enum, IntEnum
 
+
 class Task(Enum):
     CLASSIFICATION = 1
     REGRESSION = 2
@@ -20,4 +21,9 @@ class DatasetSize(IntEnum):
     SMALL = 1000
     MEDIUM = 10000
     LARGE = 50000
+
+
+class ModelName(Enum):
+    FT_TRANSFORMER = 1
+    TABPFN_FINETUNE = 2
 

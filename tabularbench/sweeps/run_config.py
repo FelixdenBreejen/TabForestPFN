@@ -5,7 +5,7 @@ from omegaconf import DictConfig
 
 import torch
 
-from tabularbench.core.enums import FeatureType, Task, DatasetSize
+from tabularbench.core.enums import FeatureType, ModelName, Task, DatasetSize
 from tabularbench.sweeps.sweep_config import SweepConfig
 from tabularbench.sweeps.writer import Writer
 
@@ -15,7 +15,7 @@ class RunConfig():
     logger: logging.Logger
     writer: Writer
     device: torch.device
-    model: str
+    model: ModelName
     seed: int
     task: Task
     feature_type: FeatureType

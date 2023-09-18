@@ -11,7 +11,7 @@ import openml
 
 from tabularbench.data.benchmarks import benchmarks, benchmark_names
 from tabularbench.sweeps.writer import Writer
-from tabularbench.core.enums import DatasetSize, Task, FeatureType, SearchType
+from tabularbench.core.enums import DatasetSize, ModelName, Task, FeatureType, SearchType
 
 
 @dataclass
@@ -21,7 +21,7 @@ class SweepConfig():
     output_dir: Path
     seed: int
     device: Optional[torch.device]
-    model: str
+    model: ModelName
     model_plot_name: str
     task: Task
     feature_type: FeatureType
@@ -45,7 +45,7 @@ class SweepConfig():
 
     def __str__(self) -> str:
 
-        return f"{self.benchmark_name}-{self.search_type}-{self.model}"
+        return f"{self.benchmark_name}-{self.search_type}-{self.model.name}"
     
 
 def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, logger: logging.Logger) -> list[SweepConfig]:
@@ -102,7 +102,8 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
         else:
             raise ValueError(f"dataset_size_str must be one of ['small', 'medium', 'large']. Got {benchmark['dataset_size']}")
         
-        assert model in cfg.hyperparams, f"Model {model} not found in main configuration's hyperparams"
+        model_name = ModelName[model.upper()]
+        assert model_name.name.lower() in cfg.hyperparams, f"Model {model_name.name.lower()} not found in main configuration's hyperparams"
 
         openml_suite = openml.study.get_suite(benchmark['suite_id'])
         openml_task_ids = openml_suite.tasks
@@ -127,7 +128,7 @@ def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, l
             output_dir=Path(cfg.output_dir),
             seed=cfg.seed,
             device=device,
-            model=model,
+            model=model_name,
             model_plot_name=model_plot_name,
             benchmark_name=benchmark['name'],
             search_type=search_type,

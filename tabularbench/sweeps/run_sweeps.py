@@ -5,6 +5,7 @@ import pandas as pd
 import torch.multiprocessing as mp
 
 from tabularbench.core.enums import SearchType
+from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.results.run_results import RunResults
 from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
 from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
@@ -42,7 +43,7 @@ def run_sweeps(output_dir: str, writer_queue: mp.JoinableQueue, gpu: int, seed: 
 
     for sweep_config in sweep_configs: 
         
-        logger.info(f"Sweep config: benchmark {sweep_config.benchmark_name}, model {sweep_config.model}, search type {sweep_config.search_type}") 
+        logger.info(f"Sweep config: benchmark {sweep_config.benchmark_name}, model {sweep_config.model.name}, search type {sweep_config.search_type.name}") 
               
         search_sweep(sweep_config, SearchType.DEFAULT)
         if sweep_config.search_type == SearchType.RANDOM:
@@ -54,7 +55,7 @@ def run_sweeps(output_dir: str, writer_queue: mp.JoinableQueue, gpu: int, seed: 
 def search_sweep(sweep: SweepConfig, search_type: SearchType):
     """Perform one sweep: one row of the sweep.csv file."""
 
-    sweep.logger.info(f"Start {search_type.name} search for {sweep.model} on {sweep.benchmark_name}")
+    sweep.logger.info(f"Start {search_type.name} search for {sweep.model.name} on {sweep.benchmark_name}")
     set_seed(sweep.seed)
 
     hyperparam_drawer = HyperparameterDrawer(sweep.hyperparams)
@@ -72,32 +73,30 @@ def search_sweep(sweep: SweepConfig, search_type: SearchType):
         dataset_id = draw_dataset_id(datasets_unfinished, sweep.seed, search_type, first_run=datasets_unfinished == sweep.openml_dataset_ids)
 
         config_run = RunConfig.create(sweep, dataset_id, hyperparams)
-        results = run_experiment(config_run)
+        metrics = run_experiment(config_run)
 
-        if results is None:
+        if metrics is None:
             # This is the error code in case the run crashes
-            sweep.logger.info(f"Run crashed for {sweep.model} on {sweep.benchmark_name} with dataset {dataset_id}")
+            sweep.logger.info(f"Run crashed for {sweep.model.name} on {sweep.benchmark_name} with dataset {dataset_id}")
             continue
 
         if config_run.openml_dataset_id not in get_unfinished_dataset_ids(sweep.openml_dataset_ids, results_path, runs_per_dataset):
             # This is the case where another process finished the dataset while this process was running
             # It is important to check this because otherwise the results default runs will be saved multiple times,
             # which is problematic for computing random search statistics.
-            sweep.logger.info(f"Run finished by another process for {sweep.model} on {sweep.benchmark_name} with dataset {dataset_id}")
+            sweep.logger.info(f"Run finished by another process for {sweep.model.name} on {sweep.benchmark_name} with dataset {dataset_id}")
             sweep.logger.info(f"Results are not being saved.")
             continue
 
-        save_results(config_run, results, results_path, search_type)
+        save_results(config_run, metrics, results_path, search_type)
 
-    sweep.logger.info(f"Finished {search_type.name} search for {sweep.model} on {sweep.benchmark_name}")
+    sweep.logger.info(f"Finished {search_type.name} search for {sweep.model.name} on {sweep.benchmark_name}")
 
     
 
-def save_results(config_run: RunConfig, results: tuple[dict, dict], results_path: Path, search_type: SearchType):
+def save_results(config_run: RunConfig, metrics: RunMetrics, results_path: Path, search_type: SearchType):
 
-    scores, losses = results
-
-    results_dict = RunResults.from_run_config(config_run, search_type, scores, losses).to_dict()
+    results_dict = RunResults.from_run_config(config_run, search_type, metrics).to_dict()
 
     df_new = pd.Series(results_dict).to_frame().T
 

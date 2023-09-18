@@ -1,20 +1,19 @@
 import sys
 from typing import Optional
-
 from omegaconf import DictConfig
+
 from tabularbench.core.enums import DatasetSize, FeatureType, Task
-
-
 from tabularbench.core.get_model import get_model
 
 from tabularbench.core.trainer import Trainer
 from tabularbench.data.dataset_openml import OpenMLDataset
+from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.sweeps.run_config import RunConfig
 from tabularbench.sweeps.sweep_start import set_seed
 
 
 
-def run_experiment(cfg: RunConfig) -> Optional[tuple[dict, dict]]:
+def run_experiment(cfg: RunConfig) -> Optional[RunMetrics]:
 
     cfg.logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
 
@@ -27,11 +26,9 @@ def run_experiment(cfg: RunConfig) -> Optional[tuple[dict, dict]]:
 
 
     if debugger_is_active():
-        scores, losses = run_experiment_(cfg)
-        return scores, losses
-
+        metrics = run_experiment_(cfg)
     try:
-        scores, losses = run_experiment_(cfg)
+        metrics = run_experiment_(cfg)
     except Exception as e:
         cfg.logger.exception("Exception occurred while running experiment")        
         return None
@@ -39,12 +36,10 @@ def run_experiment(cfg: RunConfig) -> Optional[tuple[dict, dict]]:
     cfg.logger.info(f"Finished experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
     cfg.logger.info(f"Final scores: ")
 
-    for i, split in enumerate(scores):
-        match split:
-            case {'train': score_train, 'val': score_val, 'test': score_test}:
-                cfg.logger.info(f"split_{i} :: train: {score_train:.4f}, val: {score_val:.4f}, test: {score_test:.4f}")
+    for i in range(len(metrics)):
+        cfg.logger.info(f"split_{i} :: train: {metrics.scores_train[i]:.4f}, val: {metrics.scores_val[i]:.4f}, test: {metrics.scores_test[i]:.4f}")
 
-    return scores, losses
+    return metrics
     
 
 def debugger_is_active() -> bool:
@@ -52,19 +47,10 @@ def debugger_is_active() -> bool:
     return hasattr(sys, 'gettrace') and sys.gettrace() is not None
 
 
-def run_experiment_(cfg: RunConfig):
-    dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size)
+def run_experiment_(cfg: RunConfig) -> RunMetrics:
 
-    scores: dict[str, list[float]] = {
-        "train": [],
-        "val": [],
-        "test": []
-    }
-    losses: dict[str, list[float]]  = {
-        "train": [],
-        "val": [],
-        "test": []
-    }
+    dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size)
+    metrics = RunMetrics()
 
     for split_i, (x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator) in enumerate(dataset.split_iterator()):
 
@@ -78,15 +64,9 @@ def run_experiment_(cfg: RunConfig):
         loss_val, score_val = trainer.test(x_val, y_val)
         loss_test, score_test = trainer.test(x_test, y_test)
 
-        scores["train"].append(score_train)
-        scores["val"].append(score_val)
-        scores["test"].append(score_test)
+        metrics.append(score_train, score_val, score_test, loss_train, loss_val, loss_test)
 
-        losses["train"].append(loss_train)
-        losses["val"].append(loss_val)
-        losses["test"].append(loss_test)
-
-    return scores, losses
+    return metrics
 
 
 
