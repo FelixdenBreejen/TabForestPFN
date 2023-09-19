@@ -40,12 +40,12 @@ class SweepConfig():
     def __post_init__(self):
 
         assert self.benchmark_name in benchmark_names, f"{self.benchmark_name} is not a valid benchmark. Please choose from {benchmark_names}"
-        self.sweep_dir = self.output_dir / f'{self.benchmark_name}_{self.model}_{self.search_type}'
+        self.sweep_dir = self.output_dir / f'{self.benchmark_name}_{self.model.name}_{self.search_type.name}'
 
 
     def __str__(self) -> str:
 
-        return f"{self.benchmark_name}-{self.search_type}-{self.model.name}"
+        return f"{self.benchmark_name}-{self.model.name}-{self.search_type.name}"
     
 
 def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, logger: logging.Logger) -> list[SweepConfig]:

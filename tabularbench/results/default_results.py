@@ -40,7 +40,14 @@ def make_default_results(sweep: SweepConfig):
 
         default_runs = df.loc[correct_all]
 
-        df_new.loc[model_name] = default_runs['score_test_mean'].tolist()
+        results = []
+        for dataset_name in sorted(sweep.openml_dataset_names):
+            if dataset_name in default_runs['openml_dataset_name'].tolist():
+                results.append(default_runs.loc[default_runs['openml_dataset_name'] == dataset_name, 'score_test_mean'].item())
+            else:
+                results.append(None)
+
+        df_new.loc[model_name] = results
     
     df_new = df_new.applymap("{:.4f}".format)
     df_new.to_csv(sweep.sweep_dir / DEFAULT_RESULTS_FILE_NAME, mode='w', index=True, header=True)

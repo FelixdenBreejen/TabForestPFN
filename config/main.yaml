@@ -12,20 +12,20 @@ defaults:
 continue_last_output: False
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [1, 3, 5, 6, 7]
+devices: [6]
 runs_per_device: 1
-runs_per_dataset: 1000                  # suggested: 500, only for random search
+runs_per_dataset: 3000                  # suggested: 500, only for random search
 monitor_interval_in_seconds: 10       # plot the results every x seconds
 
 models:
   - tabpfn_finetune
 model_plot_names:
-  - TabPFN Finetune
+  - TabPFN Zeroshot 1k
 benchmarks:
-  # - categorical_classification
-  # - numerical_classification
+  - categorical_classification
+  - numerical_classification
   # - categorical_regression
-  - numerical_regression
+  # - numerical_regression
   # - categorical_classification_large
   # - numerical_classification_large
   # - categorical_regression_large
@@ -35,8 +35,13 @@ search_type:
   - default
 
 ignore_datasets:
-  - 44140  # diamonds numerical regression
-  # - 44142  # bike sharing numerical regression
+  # - 44140  # diamonds numerical regression  (missing benchmark values)
+  # - 44059  # diamonds categorical regression (missing benchmark values)
+  - 44135  # isolet numerical regression (613 features)
+  - 44061  # mercedes_benz categorical regression (359 features)
+  - 45041  # topo categorical regression (255 features)
+  - 45046  # allstate_claims categorical regression (124 features)
+  - 45019  # bioresponse numerical classification (419 features)
 
 
 plotting:

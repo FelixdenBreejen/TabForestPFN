@@ -85,7 +85,7 @@ class Trainer(BaseEstimator):
 
         self.load_params(self.checkpoint.path)
 
-        y_hats = self.predict(x_train, y_train, x_test)
+        y_hats = self.predict(x_train, self.y_transformer.transform(y_train), x_test)
 
         loss_test = self.loss(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
         score_test = self.score(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
@@ -137,8 +137,11 @@ class Trainer(BaseEstimator):
             
             y_hat = self.model(x_train, y_train, x_test)
 
-            if self.cfg.task == Task.REGRESSION:
-                y_hat = torch.squeeze(y_hat)
+            match self.cfg.task:
+                case Task.REGRESSION:
+                    y_hat = y_hat[:, 0]
+                case Task.CLASSIFICATION:
+                    y_hat = y_hat[:, :2]
 
             loss = self.loss(y_hat, y_test)
             score = self.score(y_hat, y_test)
@@ -170,8 +173,11 @@ class Trainer(BaseEstimator):
                 
                 y_hat = self.model(x_train, y_train, x_test)
 
-                if self.cfg.task == Task.REGRESSION:
-                    y_hat = torch.squeeze(y_hat)
+                match self.cfg.task:
+                    case Task.REGRESSION:
+                        y_hat = y_hat[:, 0]
+                    case Task.CLASSIFICATION:
+                        y_hat = y_hat[:, :2]
 
                 y_hat_list.append(y_hat.cpu().numpy())
 

@@ -52,8 +52,13 @@ def make_combined_dataset_plot(sweep: SweepConfig):
             pick_default = df_correct['search_type'] == SearchType.DEFAULT.name
             pick_random = df_correct['search_type'] == SearchType.RANDOM.name
 
-            default_value_val = df_correct[correct_model & pick_default]['score_val_mean'].item()
-            default_value_test = df_correct[correct_model & pick_default]['score_test_mean'].item()
+            if len(df_correct[correct_model & pick_default]) == 1:
+                default_value_val = df_correct[correct_model & pick_default]['score_val_mean'].item()
+                default_value_test = df_correct[correct_model & pick_default]['score_test_mean'].item()
+            else:
+                sweep.logger.warning(f"No default value found for model {model} on dataset {dataset_name}. We will assume 0.")
+                default_value_val = 0
+                default_value_test = 0
             
             random_values_val = df_correct[correct_model & pick_random]['score_val_mean'].values
             random_values_test = df_correct[correct_model & pick_random]['score_test_mean'].values
@@ -143,8 +148,13 @@ def make_separate_dataset_plots(sweep: SweepConfig):
             pick_default = df_correct['search_type'] == SearchType.DEFAULT.name
             pick_random = df_correct['search_type'] == SearchType.RANDOM.name
 
-            default_value_val = df_correct[correct_model & pick_default]['score_val_mean'].item()
-            default_value_test = df_correct[correct_model & pick_default]['score_test_mean'].item()
+            if len(df_correct[correct_model & pick_default]) == 1:
+                default_value_val = df_correct[correct_model & pick_default]['score_val_mean'].item()
+                default_value_test = df_correct[correct_model & pick_default]['score_test_mean'].item()
+            else:
+                sweep.logger.warning(f"No default value found for model {model} on dataset {dataset_name}. We will assume 0.")
+                default_value_val = 0
+                default_value_test = 0
             
             random_values_val = df_correct[correct_model & pick_random]['score_val_mean'].values
             random_values_test = df_correct[correct_model & pick_random]['score_test_mean'].values

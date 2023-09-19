@@ -238,6 +238,8 @@ class TabPFN(torch.nn.Module):
     def __init__(self, cfg: RunConfig):
         super().__init__()
 
+        self.cfg = cfg
+
         model_state, optimizer_state, config_sample = torch.load(cfg.hyperparams.path_to_weights, map_location='cpu')
 
         if (('nan_prob_no_reason' in config_sample and config_sample['nan_prob_no_reason'] > 0.0) or
@@ -282,6 +284,8 @@ class TabPFN(torch.nn.Module):
 
         src = (None, x_full, y_train)
 
-        return self.model(src, single_eval_pos=single_eval_pos)
+        pred = self.model(src, single_eval_pos=single_eval_pos)
+        
+        return pred
 
 

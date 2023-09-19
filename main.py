@@ -91,7 +91,9 @@ def launch_sweeps(cfg) -> None:
     mp.set_start_method('spawn')
     writer_queue = mp.JoinableQueue()    # type: ignore
 
-    mp.Process(target=file_writer, args=(writer_queue,)).start()
+    writing_process = mp.Process(target=file_writer, args=(writer_queue,))
+    writing_process.daemon = True
+    writing_process.start()
     logger.info(f"Launched writer")
 
     for gpu_i, gpu in enumerate(gpus):
@@ -103,6 +105,7 @@ def launch_sweeps(cfg) -> None:
     process.start()
     logger.info(f"Launched monitor and plotter")
     process.join()
+    logger.info(f"Monitoring finished, exiting main process")
 
 
 def check_existence_of_benchmark_results_csv() -> None:
