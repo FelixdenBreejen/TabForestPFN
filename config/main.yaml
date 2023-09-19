@@ -5,25 +5,23 @@ hydra:
 
 defaults:
   - hyperparams/ft_transformer: ft_transformer
-  - hyperparams/tabpfn_finetune: tabpfn_finetune
-  - _self_
-
+  - hyperparams/tabpfn_finetune: tabpfn_zeroshot_10k
 
 continue_last_output: False
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [6]
+devices: [6, 7]
 runs_per_device: 1
-runs_per_dataset: 3000                  # suggested: 500, only for random search
+runs_per_dataset: 1000                  # suggested: 500, only for random search
 monitor_interval_in_seconds: 10       # plot the results every x seconds
 
 models:
   - tabpfn_finetune
 model_plot_names:
-  - TabPFN Zeroshot 1k
+  - TabPFN Zeroshot 10k
 benchmarks:
   - categorical_classification
-  - numerical_classification
+  # - numerical_classification
   # - categorical_regression
   # - numerical_regression
   # - categorical_classification_large

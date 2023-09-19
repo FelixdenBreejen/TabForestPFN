@@ -71,6 +71,7 @@ def make_combined_dataset_plot(sweep: SweepConfig):
                 sequence_length = sweep.plotting.n_runs,
                 n_shuffles = sweep.plotting.n_random_shuffles
             )
+            sequences = sequences.clip(min=0)
 
             sequences_normalized = (sequences - score_min).clip(min=0) / (score_max - score_min)
 
@@ -108,7 +109,8 @@ def make_combined_dataset_plot(sweep: SweepConfig):
     ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: int(x)))
 
     handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='lower center', ncol=5, fontsize=30)
+    fig.legend(handles, labels, loc='lower center', ncol=4, fontsize=30)
+    fig.tight_layout(pad=2.0, rect=[0, 0.07, 1, 0.92])
     fig.savefig(sweep.sweep_dir / "combined_dataset_plot.png")
 
 
@@ -123,7 +125,7 @@ def make_separate_dataset_plots(sweep: SweepConfig):
     df = pd.concat([df_bench, df_cur], ignore_index=True)
 
     num_horizontal_subplots = math.ceil(math.sqrt(len(sweep.openml_dataset_names)))
-    fig, axs = plt.subplots(nrows=num_horizontal_subplots, ncols=num_horizontal_subplots, figsize=(25, 25))
+    fig, axs = plt.subplots(nrows=num_horizontal_subplots, ncols=num_horizontal_subplots, figsize=(25, 25), )
     axs = axs.flatten()
 
     #remove the last few subplots that we don't need
@@ -167,6 +169,8 @@ def make_separate_dataset_plots(sweep: SweepConfig):
                 sequence_length = sweep.plotting.n_runs,
                 n_shuffles = sweep.plotting.n_random_shuffles
             )
+            sequences = sequences.clip(min=0)
+
             sequences_all.append(sequences)
 
             sequence_mean = np.mean(sequences, axis=0)
@@ -193,6 +197,10 @@ def make_separate_dataset_plots(sweep: SweepConfig):
 
         min_y = np.quantile(sequences_stack, q=0.005)
         max_y = np.quantile(sequences_stack, q=0.995)
+        spread = max_y - min_y
+        min_y = min_y - 0.1 * spread
+        max_y = max_y + 0.1 * spread
+
         ax.set_ylim([min_y, max_y])
         ax.set_xscale('log')
         ax.set_xlim([1, sweep.plotting.n_runs])
@@ -201,7 +209,8 @@ def make_separate_dataset_plots(sweep: SweepConfig):
 
 
     handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='lower center', ncol=5, fontsize=30)
+    fig.legend(handles, labels, loc='lower center', ncol=4, fontsize=30)
+    fig.tight_layout(pad=2.0, rect=[0, 0.07, 1, 0.92])
     fig.suptitle(f"Test Score for all datasets of size {sweep.dataset_size.name} \n with {sweep.feature_type.name} features on the {sweep.task.name} task", fontsize=40)
     fig.savefig(sweep.sweep_dir / "dataset_plots.png")
 

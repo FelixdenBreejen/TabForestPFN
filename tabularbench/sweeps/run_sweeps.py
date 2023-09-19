@@ -64,6 +64,7 @@ def search_sweep(sweep: SweepConfig, search_type: SearchType):
     
     while True:
 
+        # TODO: because the seed is set everytime a dataset is run, the sweep picks the same dataset and hyperparams over and over again
         datasets_unfinished = get_unfinished_dataset_ids(sweep.openml_dataset_ids, results_path, runs_per_dataset)
 
         if len(datasets_unfinished) == 0:
