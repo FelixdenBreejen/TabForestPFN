@@ -10,7 +10,7 @@ import torch
 import openml
 
 from tabularbench.data.benchmarks import benchmarks, benchmark_names
-from tabularbench.sweeps.writer import Writer
+from tabularbench.sweeps.writer import StandardWriter, Writer
 from tabularbench.core.enums import DatasetSize, ModelName, Task, FeatureType, SearchType
 
 
@@ -48,7 +48,7 @@ class SweepConfig():
         return f"{self.benchmark_name}-{self.model.name}-{self.search_type.name}"
     
 
-def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer, logger: logging.Logger) -> list[SweepConfig]:
+def create_sweep_config_list_from_main_config(cfg: DictConfig, writer: Writer = StandardWriter(), logger: logging.Logger = logging.getLogger()) -> list[SweepConfig]:
 
     sweep_configs = []
 

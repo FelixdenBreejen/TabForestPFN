@@ -4,6 +4,7 @@ import math
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from tabularbench.core.enums import SearchType, Task
 
 from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
@@ -27,6 +28,12 @@ def make_combined_dataset_plot(sweep: SweepConfig):
 
     df = pd.concat([df_bench, df_cur], ignore_index=True)
 
+    fig, ax = make_combined_dataset_plot_(sweep, df)
+
+    fig.savefig(sweep.sweep_dir / "combined_dataset_plot.png")
+
+
+def make_combined_dataset_plot_(sweep: SweepConfig, df: pd.DataFrame, line_color_dict: dict = None):
 
     models = df['model'].unique().tolist()
     if 'HistGradientBoostingTree' in models:
@@ -36,7 +43,7 @@ def make_combined_dataset_plot(sweep: SweepConfig):
 
     for dataset_i, dataset_name in enumerate(sorted(sweep.openml_dataset_names)):
 
-        score_min, score_max = scores_min_max(sweep, df_bench, dataset_name)
+        score_min, score_max = scores_min_max(sweep, dataset_name)
 
         correct_dataset = df['openml_dataset_name'] == dataset_name
         correct_dataset_size = df['dataset_size'] == sweep.dataset_size.name
@@ -55,10 +62,12 @@ def make_combined_dataset_plot(sweep: SweepConfig):
             if len(df_correct[correct_model & pick_default]) == 1:
                 default_value_val = df_correct[correct_model & pick_default]['score_val_mean'].item()
                 default_value_test = df_correct[correct_model & pick_default]['score_test_mean'].item()
-            else:
+            elif len(df_correct[correct_model & pick_default]) == 0:
                 sweep.logger.warning(f"No default value found for model {model} on dataset {dataset_name}. We will assume 0.")
                 default_value_val = 0
                 default_value_test = 0
+            else:
+                raise ValueError(f"More than one default value found for model {model} on dataset {dataset_name}")
             
             random_values_val = df_correct[correct_model & pick_random]['score_val_mean'].values
             random_values_test = df_correct[correct_model & pick_random]['score_test_mean'].values
@@ -82,18 +91,24 @@ def make_combined_dataset_plot(sweep: SweepConfig):
     
     fig, ax = plt.subplots(figsize=(25, 25))
 
+    # color_and_linestyle_for_model_generator = get_color_and_linestyle_for_model_generator()
+
     for model_i, model in enumerate(models):
 
         sequence_mean = np.mean(sequences_all[model_i, :, :], axis=0)
         sequence_lower_bound = np.quantile(sequences_all[model_i, :, :], q=1-sweep.plotting.confidence_bound, axis=0)
         sequence_upper_bound = np.quantile(sequences_all[model_i, :, :], q=sweep.plotting.confidence_bound, axis=0)
 
-        ax.plot(sequence_mean, label=model, linewidth=12)
+        # color_and_linestyle_for_model_generator.send(None)
+        # color, linestyle = color_and_linestyle_for_model_generator.send(model)
+
+        ax.plot(sequence_mean, label=model, linewidth=12, color = line_color_dict[model] if line_color_dict is not None else None)
         ax.fill_between(
             x=np.arange(len(sequence_mean)), 
             y1=sequence_lower_bound, 
             y2=sequence_upper_bound, 
-            alpha=0.2
+            alpha=0.2,
+            color = line_color_dict[model] if line_color_dict is not None else None
         )
 
     ax.set_title(f"Averaged Normalized Test Score for all datasets of size {sweep.dataset_size.name} \n with {sweep.feature_type.name} features on the {sweep.task.name} task", fontsize=40)
@@ -109,10 +124,78 @@ def make_combined_dataset_plot(sweep: SweepConfig):
     ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: int(x)))
 
     handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='lower center', ncol=4, fontsize=30)
-    fig.tight_layout(pad=2.0, rect=[0, 0.07, 1, 0.92])
-    fig.savefig(sweep.sweep_dir / "combined_dataset_plot.png")
+    fig.legend(handles, labels, loc='lower center', ncol=3, fontsize=30, handlelength=7)
+    fig.tight_layout(pad=2.0, rect=[0, 0.12, 1, 0.90])
 
+    return fig, ax
+
+
+def get_color_and_linestyle_for_model_generator():
+
+    colors = sns.color_palette('colorblind', as_cmap=True)
+    linestyle_tree_generator = linestyle_generator()
+    linestyle_nn_generator = linestyle_generator()
+    linestyle_other_generator = linestyle_generator()
+
+    lighten_color_amount_generator_tree = lighten_color_amount_generator()
+    lighten_color_amount_generator_nn = lighten_color_amount_generator()
+    lighten_color_amount_generator_other = lighten_color_amount_generator()
+
+    while True:
+
+        model = yield
+
+        if model in ["RandomForest", "GradientBoostingTree", "XGBoost"]:
+            yield colors[0], next(linestyle_tree_generator)
+        elif model in ["MLP", "Resnet", "SAINT", "FT Transformer"]:
+            yield colors[1], next(linestyle_nn_generator)
+        else:
+            yield colors[2], next(linestyle_other_generator)
+
+
+def linestyle_generator():
+
+    linestyles = [
+        'dashed',
+        'dashdot',
+        'dotted',
+        (0, (5, 10)),
+        (0, (3, 1, 1, 1, 1, 1)),
+        (0, (3, 5, 1, 5)),
+        (5, (10, 3)),
+    ]
+
+    for linestyle in linestyles:
+        yield linestyle
+    
+
+def lighten_color_amount_generator():
+
+    l = [1.4, 1.2, 1.0, 0.8, 0.6, 0.4]
+
+    for a in l:
+        yield a
+
+
+
+def lighten_color(color, amount=0.5):
+    """
+    Lightens the given color by multiplying (1-luminosity) by the given amount.
+    Input can be matplotlib color string, hex string, or RGB tuple.
+
+    Examples:
+    >> lighten_color('g', 0.3)
+    >> lighten_color('#F034A3', 0.6)
+    >> lighten_color((.3,.55,.1), 0.5)
+    """
+    import matplotlib.colors as mc
+    import colorsys
+    try:
+        c = mc.cnames[color]
+    except:
+        c = color
+    c = colorsys.rgb_to_hls(*mc.to_rgb(c))
+    return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
 
 def make_separate_dataset_plots(sweep: SweepConfig):
@@ -216,11 +299,13 @@ def make_separate_dataset_plots(sweep: SweepConfig):
 
 
 
-def scores_min_max(sweep: SweepConfig, df: pd.DataFrame, dataset_name: str) -> tuple[float, float]:
+def scores_min_max(sweep: SweepConfig, dataset_name: str) -> tuple[float, float]:
     """
     Based on the benchmark results, we normalize the scores of the sweep.
     Returns the min and max scores to normalize with
     """
+
+    df = get_benchmark_csv_reformatted()
 
     models = df['model'].unique().tolist()
     models = [model for model in models if model in sweep.plotting.benchmark_models]

@@ -1,3 +1,4 @@
+import functools
 from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
@@ -27,6 +28,7 @@ def reformat_benchmark():
     df_new.to_csv(PATH_TO_ALL_BENCH_CSV_REFORMATTED, index=False)
 
 
+@functools.lru_cache(maxsize=1)
 def get_benchmark_csv_reformatted():
 
     if not Path(PATH_TO_ALL_BENCH_CSV_REFORMATTED).exists():
