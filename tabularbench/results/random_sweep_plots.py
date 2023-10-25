@@ -28,12 +28,13 @@ def make_combined_dataset_plot(sweep: SweepConfig):
 
     df = pd.concat([df_bench, df_cur], ignore_index=True)
 
-    fig, ax = make_combined_dataset_plot_(sweep, df)
+    fig, ax, plot_data = make_combined_dataset_plot_(sweep, df)
 
     fig.savefig(sweep.sweep_dir / "combined_dataset_plot.png")
+    np.save(sweep.sweep_dir / "plot_data.npy", plot_data)
 
 
-def make_combined_dataset_plot_(sweep: SweepConfig, df: pd.DataFrame, line_color_dict: dict = None):
+def make_combined_dataset_plot_(sweep: SweepConfig, df: pd.DataFrame) -> tuple[plt.Figure, plt.Axes, np.ndarray]:
 
     models = df['model'].unique().tolist()
     if 'HistGradientBoostingTree' in models:
@@ -93,41 +94,44 @@ def make_combined_dataset_plot_(sweep: SweepConfig, df: pd.DataFrame, line_color
 
     # color_and_linestyle_for_model_generator = get_color_and_linestyle_for_model_generator()
 
+    plot_data = np.empty((3, len(models), sweep.plotting.n_runs))
+
     for model_i, model in enumerate(models):
 
         sequence_mean = np.mean(sequences_all[model_i, :, :], axis=0)
         sequence_lower_bound = np.quantile(sequences_all[model_i, :, :], q=1-sweep.plotting.confidence_bound, axis=0)
         sequence_upper_bound = np.quantile(sequences_all[model_i, :, :], q=sweep.plotting.confidence_bound, axis=0)
 
+        plot_data[0, model_i, :] = sequence_mean
+        plot_data[1, model_i, :] = sequence_lower_bound
+        plot_data[2, model_i, :] = sequence_upper_bound
+
         # color_and_linestyle_for_model_generator.send(None)
         # color, linestyle = color_and_linestyle_for_model_generator.send(model)
 
-        ax.plot(sequence_mean, label=model, linewidth=12, color = line_color_dict[model] if line_color_dict is not None else None)
+        ax.plot(sequence_mean, label=model, linewidth=12)
         ax.fill_between(
             x=np.arange(len(sequence_mean)), 
             y1=sequence_lower_bound, 
             y2=sequence_upper_bound, 
-            alpha=0.2,
-            color = line_color_dict[model] if line_color_dict is not None else None
+            alpha=0.2
         )
 
-    ax.set_title(f"Averaged Normalized Test Score for all datasets of size {sweep.dataset_size.name} \n with {sweep.feature_type.name} features on the {sweep.task.name} task", fontsize=40)
-    ax.title.set_size(40)
-    ax.set_xlabel("Number of runs")
-    ax.xaxis.label.set_size(40)
-    ax.set_ylabel("Normalized Test score")
-    ax.yaxis.label.set_size(40)
-    ax.tick_params(axis='both', which='major', labelsize=30)
+
+    ax.set_title(f"Averaged Normalized Test Score for all datasets of size {sweep.dataset_size.name} \n with {sweep.feature_type.name} features on the {sweep.task.name} task", fontsize=50)
+    ax.set_xlabel("Number of runs", fontsize=50)
+    ax.set_ylabel("Normalized Test score", fontsize=50)
+    ax.tick_params(axis='both', which='major', labelsize=40)
 
     ax.set_xscale('log')
     ax.set_xlim([1, sweep.plotting.n_runs])
     ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: int(x)))
 
     handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='lower center', ncol=3, fontsize=30, handlelength=7)
-    fig.tight_layout(pad=2.0, rect=[0, 0.12, 1, 0.90])
+    fig.legend(handles, labels, loc='lower center', ncol=3, fontsize=40, handlelength=3)
+    fig.tight_layout(pad=2.0, rect=[0, 0.12, 1, 0.98])
 
-    return fig, ax
+    return fig, ax, plot_data
 
 
 def get_color_and_linestyle_for_model_generator():
@@ -271,11 +275,11 @@ def make_separate_dataset_plots(sweep: SweepConfig):
         sequences_stack = np.stack(sequences_all, axis=0)   # [models, n_shuffles, sequence_length]
 
         ax.set_title(dataset_name)
-        ax.title.set_size(20)
+        ax.title.set_size(30)
         ax.set_xlabel("Number of runs")
-        ax.xaxis.label.set_size(20)
+        ax.xaxis.label.set_size(30)
         ax.set_ylabel("Test score")
-        ax.yaxis.label.set_size(20)
+        ax.yaxis.label.set_size(30)
         ax.tick_params(axis='both', which='major', labelsize=15)
 
         min_y = np.quantile(sequences_stack, q=0.005)
@@ -292,7 +296,7 @@ def make_separate_dataset_plots(sweep: SweepConfig):
 
 
     handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, loc='lower center', ncol=4, fontsize=30)
+    fig.legend(handles, labels, loc='lower center', ncol=3, fontsize=50)
     fig.tight_layout(pad=2.0, rect=[0, 0.07, 1, 0.92])
     fig.suptitle(f"Test Score for all datasets of size {sweep.dataset_size.name} \n with {sweep.feature_type.name} features on the {sweep.task.name} task", fontsize=40)
     fig.savefig(sweep.sweep_dir / "dataset_plots.png")

@@ -5,9 +5,9 @@ hydra:
 
 defaults:
   - hyperparams/ft_transformer: ft_transformer
-  - hyperparams/tabpfn_finetune: tabpfn_zeroshot_10k
+  - hyperparams/tabpfn_finetune: tabpfn_finetune_10k
 
-continue_last_output: False
+continue_last_output: True
 output_dir: ${hydra:run.dir}
 seed: 0
 devices: [6, 7]
@@ -18,7 +18,7 @@ monitor_interval_in_seconds: 10       # plot the results every x seconds
 models:
   - tabpfn_finetune
 model_plot_names:
-  - TabPFN Zeroshot 10k
+  - TabPFN Finetune 10k
 benchmarks:
   - categorical_classification
   - numerical_classification
