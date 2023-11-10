@@ -11,6 +11,7 @@ import torch
 from tabularbench.core.enums import ModelName, SearchType
 from tabularbench.data.benchmarks import Benchmark
 from tabularbench.sweeps.config_dataset_sweep import ConfigDatasetSweep
+from tabularbench.sweeps.sweep_start import get_logger
 
 
 
@@ -30,7 +31,7 @@ class ConfigBenchmarkSweep():
     hyperparams: DictConfig
     
     
-    def generate_configs_dataset_sweep(self, cfg_hydra: DictConfig) -> Generator[ConfigDatasetSweep, None, None]:
+    def generate_configs_dataset_sweep(self) -> Generator[ConfigDatasetSweep, None, None]:
 
         for i in range(len(self.benchmark.openml_dataset_ids)):
 
@@ -42,14 +43,23 @@ class ConfigBenchmarkSweep():
                 self.logger.info(f"Ignoring dataset {openml_dataset_id} because it is in ignore_datasets (config)")
                 continue
 
-            dataset_sweep_config = ConfigDatasetSweep.from_hydra(
-                cfg_hydra = cfg_hydra,
-                output_dir_parent = self.output_dir,
-                model = self.model,
-                search_type = self.search_type,
-                openml_task_id = openml_task_id,
-                openml_dataset_id = openml_dataset_id,
-                openml_dataset_name = openml_dataset_name
+            output_dir_dataset = self.output_dir / f'{openml_dataset_id}'
+            logger_dataset = get_logger(output_dir_dataset / 'log.txt')
+
+            dataset_sweep_config = ConfigDatasetSweep(
+                logger=logger_dataset,
+                output_dir=output_dir_dataset,
+                seed=self.seed,
+                devices=self.devices,
+                model_name=self.model_name,
+                task=self.benchmark.task,
+                feature_type=self.benchmark.feature_type,
+                dataset_size=self.benchmark.dataset_size,
+                openml_task_id=openml_task_id,
+                openml_dataset_id=openml_dataset_id,
+                openml_dataset_name=openml_dataset_name,
+                n_random_runs=self.n_random_runs_per_dataset,
+                hyperparams=self.hyperparams
             )
 
             yield dataset_sweep_config
@@ -62,3 +72,6 @@ class ConfigPlotting():
     n_random_shuffles: int
     confidence_bound: float
     benchmark_models: list[ModelName]
+
+
+

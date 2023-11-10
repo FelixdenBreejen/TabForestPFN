@@ -17,7 +17,7 @@ from tabularbench.sweeps.sweep_start import get_logger
 class ConfigMain():
     logger: logging.Logger
     output_dir: Path
-    benchmark_sweep_configs: list[ConfigBenchmarkSweep]
+    configs_benchmark_sweep: list[ConfigBenchmarkSweep]
 
 
     @classmethod
@@ -26,13 +26,13 @@ class ConfigMain():
         output_dir = Path(cfg_hydra.output_dir)
         logger = get_logger(output_dir / 'log.txt')
         logger.info(f"Start creating main config")
-        benchmark_sweep_configs = cls.create_configs_benchmark_sweep(cfg_hydra, output_dir, logger)
+        configs_benchmark_sweep = cls.create_configs_benchmark_sweep(cfg_hydra, output_dir, logger)
         logger.info(f"Finished creating main config")
 
         return cls(
             logger=logger,
             output_dir=output_dir,
-            benchmark_sweep_configs=benchmark_sweep_configs
+            configs_benchmark_sweep=configs_benchmark_sweep
         )
     
     
@@ -61,9 +61,12 @@ class ConfigMain():
             benchmark = BENCHMARKS[benchmark_name]
             hyperparams = cfg_hydra.hyperparams[model_name.name.lower()]
 
+            output_dir_benchmark = output_dir / f'{benchmark_name.name}-{model_name.name}-{search_type.name}'
+            logger_benchmark = get_logger(output_dir_benchmark / 'log.txt')
+
             bscfg = ConfigBenchmarkSweep(
-                logger=logger,
-                output_dir=output_dir,
+                logger=logger_benchmark,
+                output_dir=output_dir_benchmark,
                 seed=cfg_hydra.seed,
                 devices=cfg_hydra.devices,
                 benchmark=benchmark,

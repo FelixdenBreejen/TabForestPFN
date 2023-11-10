@@ -24,8 +24,19 @@ def main(cfg_hydra: DictConfig):
     check_existence_of_benchmark_results_csv(cfg)
     save_config(cfg)
 
+    for cfg_benchmark_sweep in cfg.configs_benchmark_sweep:
 
-    launch_sweeps(cfg)
+        cfg.logger.info(f"Start benchmark sweep for {cfg_benchmark_sweep.benchmark.name}")
+
+        for cfg_dataset_sweep in cfg_benchmark_sweep.generate_configs_dataset_sweep():
+
+            cfg.logger.info(f"Start dataset sweep for {cfg_dataset_sweep.openml_dataset_name}")
+
+        cfg.logger.info(f"Finished benchmark sweep for {cfg_benchmark_sweep.benchmark.name}")
+    
+    cfg.logger.info("Finished all sweeps")
+
+
 
 
 def save_config(cfg: ConfigMain) -> None:
