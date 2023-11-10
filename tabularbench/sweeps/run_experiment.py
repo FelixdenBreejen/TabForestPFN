@@ -27,11 +27,12 @@ def run_experiment(cfg: RunConfig) -> Optional[RunMetrics]:
 
     if debugger_is_active():
         metrics = run_experiment_(cfg)
-    try:
-        metrics = run_experiment_(cfg)
-    except Exception as e:
-        cfg.logger.exception("Exception occurred while running experiment")        
-        return None
+    else:
+        try:
+            metrics = run_experiment_(cfg)
+        except Exception as e:
+            cfg.logger.exception("Exception occurred while running experiment")        
+            return None
     
     cfg.logger.info(f"Finished experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
     cfg.logger.info(f"Final scores: ")
@@ -73,7 +74,6 @@ def run_experiment_(cfg: RunConfig) -> RunMetrics:
 if __name__ == "__main__":
 
     import logging
-    from tabularbench.sweeps.writer import StandardWriter
     import torch
 
     logging.basicConfig(
@@ -86,7 +86,6 @@ if __name__ == "__main__":
 
     cfg = RunConfig(
         logger = logging.getLogger("run_experiment"),
-        writer = StandardWriter(),
         device = torch.device("cuda:5"),
         model = "ft_transformer",
         seed = 0,

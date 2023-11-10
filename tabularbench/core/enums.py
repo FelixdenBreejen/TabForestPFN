@@ -1,20 +1,20 @@
-from enum import Enum, IntEnum
+from enum import IntEnum, StrEnum
 
 
-class Task(Enum):
-    CLASSIFICATION = 1
-    REGRESSION = 2
+class Task(StrEnum):
+    CLASSIFICATION = "classification"
+    REGRESSION = "regression"
 
 
-class FeatureType(Enum):
-    NUMERICAL = 1
-    CATEGORICAL = 2
-    MIXED = 3
+class FeatureType(StrEnum):
+    NUMERICAL = "numerical"
+    CATEGORICAL = "categorical"
+    MIXED = "mixed"
 
 
-class SearchType(Enum):
-    DEFAULT = 1
-    RANDOM = 2
+class SearchType(StrEnum):
+    DEFAULT = "default"
+    RANDOM = "random"
 
 
 class DatasetSize(IntEnum):
@@ -23,7 +23,19 @@ class DatasetSize(IntEnum):
     LARGE = 50000
 
 
-class ModelName(Enum):
-    FT_TRANSFORMER = 1
-    TABPFN_FINETUNE = 2
+class ModelName(StrEnum):
+    FT_TRANSFORMER = "FT_Transformer"
+    TABPFN_FINETUNE = "TabPFN_Finetune"
+    SAINT = "SAINT"
+    MLP = "MLP"
+    RESNET = "Resnet"
+    RANDOM_FOREST = "RandomForest"
+    XGBOOST = "XGBoost"
+    CATBOOST = "CatBoost"
+    LIGHTGBM = "lightGBM"
+    GRADIENT_BOOSTING_TREE = "GradientBoostingTree"
+    HIST_GRADIENT_BOOSTING_TREE = "HistGradientBoostingTree"
+    LOGISTIC_REGRESSION = "LogisticRegression"
+    LINEAR_REGRESSION = "LinearRegression"
+
 

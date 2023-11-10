@@ -89,13 +89,13 @@ def search_sweep(sweep: SweepConfig, search_type: SearchType):
             sweep.logger.info(f"Results are not being saved.")
             continue
 
-        save_results(config_run, metrics, results_path, search_type)
+        save_results(sweep, config_run, metrics, results_path, search_type)
 
     sweep.logger.info(f"Finished {search_type.name} search for {sweep.model.name} on {sweep.benchmark_name}")
 
     
 
-def save_results(config_run: RunConfig, metrics: RunMetrics, results_path: Path, search_type: SearchType):
+def save_results(config_sweep: SweepConfig, config_run: RunConfig, metrics: RunMetrics, results_path: Path, search_type: SearchType):
 
     results_dict = RunResults.from_run_config(config_run, search_type, metrics).to_dict()
 
@@ -104,9 +104,9 @@ def save_results(config_run: RunConfig, metrics: RunMetrics, results_path: Path,
     if not results_path.exists():
         results_path.parent.mkdir(parents=True, exist_ok=True)
         csv_string = df_new.to_csv(index=False, header=True)
-        config_run.writer.write(results_path, csv_string, mode="w")
+        config_sweep.writer.write(results_path, csv_string, mode="w")
     else:
         df = pd.read_csv(results_path)
         df = pd.concat([df, df_new], ignore_index=True)
         csv_string = df.to_csv(index=False, header=True)
-        config_run.writer.write(results_path, csv_string, mode="w")
+        config_sweep.writer.write(results_path, csv_string, mode="w")

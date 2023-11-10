@@ -126,7 +126,6 @@ class RunResults():
 
         match task:
             case Task.CLASSIFICATION:
-
                 if row['val_scores'] is np.nan or row['test_scores'] is np.nan:
                     train_scores = [row['mean_train_score']]
                     val_scores = [row['mean_val_score']]
@@ -137,7 +136,6 @@ class RunResults():
                     test_scores = [float(score) for score in row['test_scores'].strip('[]').split(',')]
 
             case Task.REGRESSION:
-
                 train_scores = [row['mean_r2_train']]
                 val_scores = [max(row['mean_r2_val'], 0)]
                 test_scores = [max(row['mean_r2_test'], 0)]
@@ -145,13 +143,24 @@ class RunResults():
                 assert np.isfinite(val_scores[0])
                 assert np.isfinite(test_scores[0])
 
+        model_name_dict = {
+            'MLP': ModelName.MLP,
+            'FT Transformer': ModelName.FT_TRANSFORMER,
+            'Resnet': ModelName.RESNET,
+            'SAINT': ModelName.SAINT,
+            'RandomForest': ModelName.RANDOM_FOREST,
+            'XGBoost': ModelName.XGBOOST,
+            'GradientBoostingTree': ModelName.GRADIENT_BOOSTING_TREE,
+            'HistGradientBoostingTree': ModelName.HIST_GRADIENT_BOOSTING_TREE,
+        }
+        model = model_name_dict[row['model_name']]
 
         if any(score > 1 for score in train_scores+val_scores+test_scores):
             print(f"Scores above 1: {row['model_name'], row['data__keyword']}")
 
         
         return cls(
-            model=row['model_name'],
+            model=model,
             openml_task_id=-1,
             openml_dataset_id=-1,
             openml_dataset_name=row['data__keyword'],

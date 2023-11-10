@@ -7,7 +7,7 @@ defaults:
   - hyperparams/ft_transformer: ft_transformer
   - hyperparams/tabpfn_finetune: tabpfn_finetune_10k
 
-continue_last_output: True
+continue_last_output: False
 output_dir: ${hydra:run.dir}
 seed: 0
 devices: [6, 7]
@@ -21,9 +21,9 @@ model_plot_names:
   - TabPFN Finetune 10k
 benchmarks:
   - categorical_classification
-  - numerical_classification
-  - categorical_regression
-  - numerical_regression
+  # - numerical_classification
+  # - categorical_regression
+  # - numerical_regression
   # - categorical_classification_large
   # - numerical_classification_large
   # - categorical_regression_large

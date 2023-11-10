@@ -7,13 +7,11 @@ import torch
 
 from tabularbench.core.enums import FeatureType, ModelName, Task, DatasetSize
 from tabularbench.sweeps.sweep_config import SweepConfig
-from tabularbench.sweeps.writer import Writer
 
 
 @dataclass
 class RunConfig():
     logger: logging.Logger
-    writer: Writer
     device: torch.device
     model: ModelName
     seed: int
@@ -35,7 +33,6 @@ class RunConfig():
 
         return cls(
             logger=sweep_cfg.logger,
-            writer=sweep_cfg.writer,
             model=sweep_cfg.model,
             device=sweep_cfg.device,
             seed=sweep_cfg.seed,
