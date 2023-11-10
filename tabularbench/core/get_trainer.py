@@ -8,7 +8,7 @@ from tabularbench.sweeps.config_run import ConfigRun
 
 def get_trainer(cfg: ConfigRun, model: torch.nn.Module):
 
-    match cfg.model:
+    match cfg.model_name:
         case ModelName.FT_TRANSFORMER:
             return Trainer(cfg, model)
         case ModelName.TABPFN_FINETUNE:

@@ -34,7 +34,7 @@ def run_experiment(cfg: ConfigRun) -> Optional[RunMetrics]:
             cfg.logger.exception("Exception occurred while running experiment")        
             return None
     
-    cfg.logger.info(f"Finished experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
+    cfg.logger.info(f"Finished experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name} doing {cfg.task.name} with {cfg.feature_type.name} features")
     cfg.logger.info(f"Final scores: ")
 
     for i in range(len(metrics)):
@@ -55,7 +55,7 @@ def run_experiment_(cfg: ConfigRun) -> RunMetrics:
 
     for split_i, (x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator) in enumerate(dataset.split_iterator()):
 
-        cfg.logger.info(f"Start split {split_i+1}/{dataset.n_splits} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model.name} doing {cfg.task.name} with {cfg.feature_type.name} features")
+        cfg.logger.info(f"Start split {split_i+1}/{dataset.n_splits} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.name} doing {cfg.task.name} with {cfg.feature_type.name} features")
 
         model = get_model(cfg, x_train, y_train, categorical_indicator)
         trainer = get_trainer(cfg, model)

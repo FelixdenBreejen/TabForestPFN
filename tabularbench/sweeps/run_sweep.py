@@ -21,54 +21,47 @@ def run_sweep(cfg: ConfigDatasetSweep):
     cfg.logger.info(f"Start {cfg.search_type.value} search for {cfg.model_name.value} on openml dataset {cfg.openml_dataset_name} ({cfg.openml_dataset_id})")
 
     results_path = cfg.output_dir / RESULTS_FILE_NAME
-
     runs_per_dataset = cfg.n_random_runs if cfg.search_type == SearchType.RANDOM else 1
 
-    mp.set_start_method('spawn')
     manager = mp.Manager()
     gpu_queue = manager.Queue()
-    results_list = manager.list()
-    completed_runs = manager.Value('i', 0)
+    run_results_list = manager.list()
 
     for device in cfg.devices:
         gpu_queue.put(device)
 
-    while len(results_list) < runs_per_dataset:
+    gpu = gpu_queue.get()
+    processes = []
+    while len(run_results_list) < runs_per_dataset:
+        p = mp.Process(target=run_a_run, args=(cfg, gpu, gpu_queue, run_results_list))
+        p.start()
+        processes.append(p)
         gpu = gpu_queue.get()
-        result = mp.Process(target=run_a_run, args=(cfg, gpu, gpu_queue, results_list, completed_runs)).start()
-    
-    for result in results_list:
-        print(result)
 
-        
+    for p in processes:
+        p.join()
+    
+    for result in run_results_list:
+        print(result)
 
     cfg.logger.info(f"Finished {cfg.search_type.name} search for")
 
 
-def run_a_run(cfg: ConfigDatasetSweep, gpu: torch.device, gpu_queue: mp.Queue, results_list: mp.list, completed_runs: mp.Value):
-
+def run_a_run(cfg: ConfigDatasetSweep, device: torch.device, device_queue: mp.Queue, run_result_list: mp.list):
 
     hyperparam_drawer = HyperparameterDrawer(cfg.hyperparams_object)
     hyperparams = hyperparam_drawer.draw_config(cfg.search_type)
-    config_run = ConfigRun.create(cfg, gpu, hyperparams)
+    config_run = ConfigRun.create(cfg, device, hyperparams)
     metrics = run_experiment(config_run)
 
-    gpu_queue.put(gpu)
+    if metrics is None:
+        cfg.logger.info(f"Run crashed for {cfg.model_name.value} on {cfg.openml_dataset_name} with dataset {cfg.openml_dataset_id}")
+        device_queue.put(device)
+        return
 
-
-    # if metrics is None:
-    #     # This is the error code in case the run crashes
-    #     sweep.logger.info(f"Run crashed for {sweep.model.name} on {sweep.benchmark_name} with dataset {dataset_id}")
-    #     continue
-
-    # if config_run.openml_dataset_id not in get_unfinished_dataset_ids(sweep.openml_dataset_ids, results_path, runs_per_dataset):
-    #     # This is the case where another process finished the dataset while this process was running
-    #     # It is important to check this because otherwise the results default runs will be saved multiple times,
-    #     # which is problematic for computing random search statistics.
-    #     sweep.logger.info(f"Run finished by another process for {sweep.model.name} on {sweep.benchmark_name} with dataset {dataset_id}")
-    #     sweep.logger.info(f"Results are not being saved.")
-    #     continue
-
+    run_result = RunResults.from_run_config(config_run, cfg.search_type, metrics)
+    run_result_list.append(run_result)
+    device_queue.put(device)
 
 
 

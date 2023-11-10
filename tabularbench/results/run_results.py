@@ -13,7 +13,7 @@ from tabularbench.sweeps.config_run import ConfigRun
 
 @dataclass
 class RunResults():
-    model: ModelName
+    model_name: ModelName
     openml_task_id: int
     openml_dataset_id: int
     openml_dataset_name: str
@@ -189,7 +189,7 @@ class RunResults():
     ) -> RunResults:
 
         return cls(
-            model=cfg.model,
+            model_name=cfg.model_name,
             openml_task_id=cfg.openml_task_id,
             openml_dataset_id=cfg.openml_dataset_id,
             openml_dataset_name=cfg.openml_dataset_name,
