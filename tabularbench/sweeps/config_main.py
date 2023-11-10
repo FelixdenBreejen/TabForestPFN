@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 
 from omegaconf import DictConfig
+import torch
 
 
 from tabularbench.core.enums import BenchmarkName, ModelName, SearchType
@@ -17,6 +18,7 @@ from tabularbench.sweeps.sweep_start import get_logger
 class ConfigMain():
     logger: logging.Logger
     output_dir: Path
+    seed: int
     configs_benchmark_sweep: list[ConfigBenchmarkSweep]
 
 
@@ -32,6 +34,7 @@ class ConfigMain():
         return cls(
             logger=logger,
             output_dir=output_dir,
+            seed=cfg_hydra.seed,
             configs_benchmark_sweep=configs_benchmark_sweep
         )
     
@@ -42,6 +45,8 @@ class ConfigMain():
         benchmark_names = [BenchmarkName[benchmark] for benchmark in cfg_hydra.benchmarks]
         models = [ModelName[model] for model in cfg_hydra.models]
         search_types = [SearchType[search_type] for search_type in cfg_hydra.search_types]
+
+        devices = [torch.device(device) for device in cfg_hydra.devices]
 
         assert len(models) == len(cfg_hydra.model_plot_names), f"Please provide a plot name for each model. Got {len(models)} models and {len(cfg_hydra.model_plot_names)} plot names."
         models_with_plot_name = zip(models, cfg_hydra.model_plot_names)
@@ -59,7 +64,7 @@ class ConfigMain():
         for (model_name, model_plot_name), search_type, benchmark_name in sweep_details:
 
             benchmark = BENCHMARKS[benchmark_name]
-            hyperparams = cfg_hydra.hyperparams[model_name.name.lower()]
+            hyperparams_object = cfg_hydra.hyperparams[model_name.name.lower()]
 
             output_dir_benchmark = output_dir / f'{benchmark_name.name}-{model_name.name}-{search_type.name}'
             logger_benchmark = get_logger(output_dir_benchmark / 'log.txt')
@@ -68,7 +73,7 @@ class ConfigMain():
                 logger=logger_benchmark,
                 output_dir=output_dir_benchmark,
                 seed=cfg_hydra.seed,
-                devices=cfg_hydra.devices,
+                devices=devices,
                 benchmark=benchmark,
                 model_name=model_name,
                 model_plot_name=model_plot_name,
@@ -76,7 +81,7 @@ class ConfigMain():
                 config_plotting=config_plotting,
                 n_random_runs_per_dataset=cfg_hydra.n_random_runs_per_dataset,
                 openml_dataset_ids_to_ignore=cfg_hydra.openml_dataset_ids_to_ignore,
-                hyperparams=hyperparams
+                hyperparams_object=hyperparams_object
             )
         
             logger.info(f"Created benchmark sweep config for {bscfg.benchmark.name}-{bscfg.model_name.name}-{bscfg.search_type.name} ")

@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 import torch
 
 
-from tabularbench.core.enums import DatasetSize, FeatureType, ModelName, Task
+from tabularbench.core.enums import DatasetSize, FeatureType, ModelName, SearchType, Task
 
 
 @dataclass
@@ -17,6 +17,7 @@ class ConfigDatasetSweep():
     seed: int
     devices: list[torch.device]
     model_name: ModelName
+    search_type: SearchType
     task: Task
     feature_type: FeatureType
     dataset_size: DatasetSize
@@ -24,4 +25,4 @@ class ConfigDatasetSweep():
     openml_dataset_id: int
     openml_dataset_name: str
     n_random_runs: int
-    hyperparams: DictConfig
+    hyperparams_object: DictConfig

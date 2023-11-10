@@ -15,7 +15,7 @@ from tabularbench.sweeps.sweep_start import set_seed
 
 def run_experiment(cfg: ConfigRun) -> Optional[RunMetrics]:
 
-    cfg.logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
+    cfg.logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.value} doing {cfg.task.value} with {cfg.feature_type.value} features")
 
     set_seed(cfg.seed)
     cfg.logger.info(f"Set seed to {cfg.seed}")

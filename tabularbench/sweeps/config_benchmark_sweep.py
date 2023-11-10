@@ -28,7 +28,7 @@ class ConfigBenchmarkSweep():
     config_plotting: ConfigPlotting
     n_random_runs_per_dataset: int
     openml_dataset_ids_to_ignore: list[int]
-    hyperparams: DictConfig
+    hyperparams_object: DictConfig
     
     
     def generate_configs_dataset_sweep(self) -> Generator[ConfigDatasetSweep, None, None]:
@@ -52,6 +52,7 @@ class ConfigBenchmarkSweep():
                 seed=self.seed,
                 devices=self.devices,
                 model_name=self.model_name,
+                search_type=self.search_type,
                 task=self.benchmark.task,
                 feature_type=self.benchmark.feature_type,
                 dataset_size=self.benchmark.dataset_size,
@@ -59,7 +60,7 @@ class ConfigBenchmarkSweep():
                 openml_dataset_id=openml_dataset_id,
                 openml_dataset_name=openml_dataset_name,
                 n_random_runs=self.n_random_runs_per_dataset,
-                hyperparams=self.hyperparams
+                hyperparams_object=self.hyperparams_object
             )
 
             yield dataset_sweep_config

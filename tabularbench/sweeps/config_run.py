@@ -7,6 +7,7 @@ from omegaconf import DictConfig
 import torch
 
 from tabularbench.core.enums import FeatureType, ModelName, Task, DatasetSize
+from tabularbench.sweeps.config_dataset_sweep import ConfigDatasetSweep
 
 
 @dataclass
@@ -26,23 +27,19 @@ class ConfigRun():
 
 
     @classmethod
-    def create(cls, sweep_cfg, dataset_id: int, hyperparams: DictConfig) -> Self:
-
-        openml_index = sweep_cfg.openml_dataset_ids.index(dataset_id)
-        task_id = sweep_cfg.openml_task_ids[openml_index]
-        dataset_name = sweep_cfg.openml_dataset_names[openml_index]
+    def create(cls, cfg: ConfigDatasetSweep, device: torch.device, hyperparams: DictConfig) -> Self:
 
         return cls(
-            logger=sweep_cfg.logger,
-            model=sweep_cfg.model,
-            device=sweep_cfg.device,
-            seed=sweep_cfg.seed,
-            task=sweep_cfg.task,
-            feature_type=sweep_cfg.feature_type,
-            dataset_size=sweep_cfg.dataset_size,
-            openml_task_id=task_id,
-            openml_dataset_id=dataset_id,
-            openml_dataset_name=dataset_name,
+            logger=cfg.logger,
+            model_name=cfg.model_name,
+            device=device,
+            seed=cfg.seed,
+            task=cfg.task,
+            feature_type=cfg.feature_type,
+            dataset_size=cfg.dataset_size,
+            openml_task_id=cfg.openml_task_id,
+            openml_dataset_id=cfg.openml_dataset_id,
+            openml_dataset_name=cfg.openml_dataset_name,
             hyperparams=hyperparams
         )
     
