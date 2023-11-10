@@ -9,7 +9,6 @@ import logging
 import torch
 import openml
 
-from tabularbench.data.benchmarks import benchmarks, benchmark_names
 from tabularbench.sweeps.writer import StandardWriter, Writer
 from tabularbench.core.enums import DatasetSize, ModelName, Task, FeatureType, SearchType
 

@@ -9,7 +9,7 @@ from tabularbench.core.get_loss import get_loss
 from tabularbench.core.get_optimizer import get_optimizer
 from tabularbench.core.get_scheduler import get_scheduler
 from tabularbench.core.y_transformer import create_y_transformer
-from tabularbench.sweeps.run_config import RunConfig
+from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.data.dataset_tabpfn_finetune import TabPFNFinetuneDataset, TabPFNFinetuneGenerator
 
@@ -18,7 +18,7 @@ class Trainer(BaseEstimator):
 
     def __init__(
             self, 
-            cfg: RunConfig,
+            cfg: ConfigRun,
             model: torch.nn.Module,
         ) -> None:
 

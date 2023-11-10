@@ -3,10 +3,10 @@ from tabularbench.core.enums import ModelName
 from tabularbench.core.trainer import Trainer
 from tabularbench.core.trainer_pfn_finetune import Trainer as TrainerPFN
 
-from tabularbench.sweeps.run_config import RunConfig
+from tabularbench.sweeps.config_run import ConfigRun
 
 
-def get_trainer(cfg: RunConfig, model: torch.nn.Module):
+def get_trainer(cfg: ConfigRun, model: torch.nn.Module):
 
     match cfg.model:
         case ModelName.FT_TRANSFORMER:

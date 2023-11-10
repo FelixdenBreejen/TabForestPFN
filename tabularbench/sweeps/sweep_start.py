@@ -15,8 +15,7 @@ def get_config(output_dir: str) -> DictConfig:
     return OmegaConf.load(Path(output_dir) / CONFIG_DUPLICATE)  # type: ignore
     
 
-def get_logger(cfg: DictConfig, log_file_name) -> logging.Logger:
-
+def get_logger(log_path: Path) -> logging.Logger:
 
     logging.setLogRecordFactory(CustomLogRecord)
     logger = logging.getLogger()
@@ -29,9 +28,8 @@ def get_logger(cfg: DictConfig, log_file_name) -> logging.Logger:
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
-    log_dir = Path(cfg['output_dir']) / 'logs'
-    log_dir.mkdir(parents=True, exist_ok=True)
-    file_handler = logging.FileHandler(log_dir / log_file_name)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    file_handler = logging.FileHandler(log_path)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 

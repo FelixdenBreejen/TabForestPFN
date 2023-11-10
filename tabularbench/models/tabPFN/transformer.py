@@ -10,7 +10,7 @@ from torch.nn import Module, TransformerEncoder
 import tabularbench.models.tabPFN.encoders as encoders
 from tabularbench.models.tabPFN.layer import TransformerEncoderLayer
 from tabularbench.models.tabPFN.utils import SeqBN, bool_mask_to_att_mask
-from tabularbench.sweeps.run_config import RunConfig
+from tabularbench.sweeps.config_run import ConfigRun
 
 
 class TransformerModel(nn.Module):
@@ -235,7 +235,7 @@ class TransformerEncoderDiffInit(Module):
 
 class TabPFN(torch.nn.Module):
     
-    def __init__(self, cfg: RunConfig):
+    def __init__(self, cfg: ConfigRun):
         super().__init__()
 
         self.cfg = cfg

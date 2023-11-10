@@ -8,12 +8,12 @@ from tabularbench.core.get_trainer import get_trainer
 
 from tabularbench.data.dataset_openml import OpenMLDataset
 from tabularbench.results.run_metrics import RunMetrics
-from tabularbench.sweeps.run_config import RunConfig
+from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.sweeps.sweep_start import set_seed
 
 
 
-def run_experiment(cfg: RunConfig) -> Optional[RunMetrics]:
+def run_experiment(cfg: ConfigRun) -> Optional[RunMetrics]:
 
     cfg.logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model} doing {cfg.task.name} with {cfg.feature_type.name} features")
 
@@ -48,7 +48,7 @@ def debugger_is_active() -> bool:
     return hasattr(sys, 'gettrace') and sys.gettrace() is not None
 
 
-def run_experiment_(cfg: RunConfig) -> RunMetrics:
+def run_experiment_(cfg: ConfigRun) -> RunMetrics:
 
     dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size)
     metrics = RunMetrics()
@@ -84,7 +84,7 @@ if __name__ == "__main__":
         ]
     )
 
-    cfg = RunConfig(
+    cfg = ConfigRun(
         logger = logging.getLogger("run_experiment"),
         device = torch.device("cuda:5"),
         model = "ft_transformer",

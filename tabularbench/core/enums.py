@@ -39,3 +39,15 @@ class ModelName(StrEnum):
     LINEAR_REGRESSION = "LinearRegression"
 
 
+class BenchmarkName(StrEnum):
+    CATEGORICAL_CLASSIFICATION = "categorical_classification"
+    NUMERICAL_CLASSIFICATION = "numerical_classification"
+    CATEGORICAL_REGRESSION = "categorical_regression"
+    NUMERICAL_REGRESSION = "numerical_regression"
+    CATEGORICAL_CLASSIFICATION_LARGE = "categorical_classification_large"
+    NUMERICAL_CLASSIFICATION_LARGE = "numerical_classification_large"
+    CATEGORICAL_REGRESSION_LARGE = "categorical_regression_large"
+    NUMERICAL_REGRESSION_LARGE = "numerical_regression_large"
+
+
+

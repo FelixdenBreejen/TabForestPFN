@@ -1,20 +1,21 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import logging
+from typing import Self
 from omegaconf import DictConfig
 
 import torch
 
 from tabularbench.core.enums import FeatureType, ModelName, Task, DatasetSize
-from tabularbench.sweeps.sweep_config import SweepConfig
 
 
 @dataclass
-class RunConfig():
+class ConfigRun():
     logger: logging.Logger
     device: torch.device
-    model: ModelName
     seed: int
+    device: torch.device
+    model_name: ModelName
     task: Task
     feature_type: FeatureType
     dataset_size: DatasetSize
@@ -25,7 +26,7 @@ class RunConfig():
 
 
     @classmethod
-    def create(cls, sweep_cfg: SweepConfig, dataset_id: int, hyperparams: DictConfig) -> RunConfig:
+    def create(cls, sweep_cfg, dataset_id: int, hyperparams: DictConfig) -> Self:
 
         openml_index = sweep_cfg.openml_dataset_ids.index(dataset_id)
         task_id = sweep_cfg.openml_task_ids[openml_index]

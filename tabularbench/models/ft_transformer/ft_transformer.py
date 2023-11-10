@@ -10,7 +10,7 @@ import torch.nn.init as nn_init
 from torch import Tensor
 
 from tabularbench.core.enums import Task
-from tabularbench.sweeps.run_config import RunConfig
+from tabularbench.sweeps.config_run import ConfigRun
 
 
 # %%
@@ -391,7 +391,7 @@ class InputShapeSetterTransformer():
 
 class FTTransformer(nn.Module):
 
-    def __init__(self, cfg: RunConfig, x_train: np.ndarray, y_train: np.ndarray, categorical_indicator: np.ndarray):
+    def __init__(self, cfg: ConfigRun, x_train: np.ndarray, y_train: np.ndarray, categorical_indicator: np.ndarray):
         super().__init__()
 
         input_shape_setter = InputShapeSetterTransformer(

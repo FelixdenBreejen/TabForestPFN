@@ -11,7 +11,7 @@ from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
 from tabularbench.sweeps.sweep_config import SweepConfig, create_sweep_config_list_from_main_config
 from tabularbench.sweeps.datasets import draw_dataset_id, get_unfinished_dataset_ids
 from tabularbench.sweeps.paths_and_filenames import RESULTS_FILE_NAME
-from tabularbench.sweeps.run_config import RunConfig
+from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.sweeps.sweep_start import get_config, get_logger, set_seed, add_device_and_seed_to_cfg
 from tabularbench.sweeps.writer import Writer
 from tabularbench.sweeps.run_experiment import run_experiment
@@ -73,7 +73,7 @@ def search_sweep(sweep: SweepConfig, search_type: SearchType):
         hyperparams = hyperparam_drawer.draw_config(search_type)
         dataset_id = draw_dataset_id(datasets_unfinished, sweep.seed, search_type, first_run=datasets_unfinished == sweep.openml_dataset_ids)
 
-        config_run = RunConfig.create(sweep, dataset_id, hyperparams)
+        config_run = ConfigRun.create(sweep, dataset_id, hyperparams)
         metrics = run_experiment(config_run)
 
         if metrics is None:
@@ -95,7 +95,7 @@ def search_sweep(sweep: SweepConfig, search_type: SearchType):
 
     
 
-def save_results(config_sweep: SweepConfig, config_run: RunConfig, metrics: RunMetrics, results_path: Path, search_type: SearchType):
+def save_results(config_sweep: SweepConfig, config_run: ConfigRun, metrics: RunMetrics, results_path: Path, search_type: SearchType):
 
     results_dict = RunResults.from_run_config(config_run, search_type, metrics).to_dict()
 

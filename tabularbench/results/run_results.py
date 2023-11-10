@@ -8,7 +8,7 @@ import torch
 
 from tabularbench.core.enums import DatasetSize, ModelName, Task, FeatureType, SearchType
 from tabularbench.results.run_metrics import RunMetrics
-from tabularbench.sweeps.run_config import RunConfig
+from tabularbench.sweeps.config_run import ConfigRun
 
 
 @dataclass
@@ -183,7 +183,7 @@ class RunResults():
     @classmethod
     def from_run_config(
         cls,
-        cfg: RunConfig, 
+        cfg: ConfigRun, 
         search_type: SearchType,
         metrics: RunMetrics
     ) -> RunResults:

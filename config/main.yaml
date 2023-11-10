@@ -7,32 +7,30 @@ defaults:
   - hyperparams/ft_transformer: ft_transformer
   - hyperparams/tabpfn_finetune: tabpfn_finetune_10k
 
-continue_last_output: False
 output_dir: ${hydra:run.dir}
 seed: 0
 devices: [6, 7]
-runs_per_device: 1
-runs_per_dataset: 1000                  # suggested: 500, only for random search
-monitor_interval_in_seconds: 10       # plot the results every x seconds
+n_random_runs_per_dataset: 1000                  # suggested: 500 
 
 models:
-  - tabpfn_finetune
+  - TABPFN_FINETUNE
 model_plot_names:
   - TabPFN Finetune 10k
 benchmarks:
-  - categorical_classification
-  # - numerical_classification
-  # - categorical_regression
-  # - numerical_regression
-  # - categorical_classification_large
-  # - numerical_classification_large
-  # - categorical_regression_large
-  # - numerical_regression_large
-search_type:
-  # - random
-  - default
+  - CATEGORICAL_CLASSIFICATION
+  - NUMERICAL_CLASSIFICATION
+  - CATEGORICAL_REGRESSION
+  - NUMERICAL_REGRESSION
+  - CATEGORICAL_CLASSIFICATION_LARGE
+  - NUMERICAL_CLASSIFICATION_LARGE
+  - CATEGORICAL_REGRESSION_LARGE
+  - NUMERICAL_REGRESSION_LARGE
+search_types:
+  # - RANDOM
+  - DEFAULT
 
-ignore_datasets:
+
+openml_dataset_ids_to_ignore:
   # - 44140  # diamonds numerical regression  (missing benchmark values)
   # - 44059  # diamonds categorical regression (missing benchmark values)
   - 44135  # isolet numerical regression (613 features)
@@ -49,9 +47,9 @@ plotting:
 
   benchmark_models:   # Based on which models do we normalize the accuracy and R2
     - MLP
-    - Resnet
+    - RESNET
     - SAINT
-    - FT Transformer
-    - RandomForest
-    - XGBoost
-    - GradientBoostingTree
+    - FT_TRANSFORMER
+    - RANDOM_FOREST
+    - XGBOOST
+    - GRADIENT_BOOSTING_TREE

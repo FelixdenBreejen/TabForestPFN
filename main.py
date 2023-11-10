@@ -2,83 +2,38 @@ from __future__ import annotations
 
 import time
 import hydra
-from datetime import datetime
-from omegaconf import DictConfig, OmegaConf
-import subprocess
+from omegaconf import DictConfig
 from pathlib import Path
 import torch.multiprocessing as mp
+import yaml
+from tabularbench.sweeps.config_main import ConfigMain
 
 from tabularbench.sweeps.monitor_and_make_plots import monitor_and_make_plots
 from tabularbench.sweeps.run_sweeps import run_sweeps
 from tabularbench.sweeps.paths_and_filenames import PATH_TO_ALL_BENCH_CSV, CONFIG_DUPLICATE
 from tabularbench.sweeps.writer import file_writer
 
-import logging
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler("main.log", mode='w'),
-        logging.StreamHandler()
-    ]
-)
-
-logger = logging.getLogger(__name__)
-
 
 
 @hydra.main(version_base=None, config_path="config", config_name="main")
-def main(cfg: DictConfig):
+def main(cfg_hydra: DictConfig):
 
-    if cfg.continue_last_output:
-        delete_current_output_dir(cfg)
-        set_config_dir_to_last_output(cfg)
-        logger.info(f"Continuing last output in directory {cfg.output_dir}")
+    cfg = ConfigMain.from_hydra(cfg_hydra)
+    cfg.logger.info("Finished creating main config")
 
-    check_existence_of_benchmark_results_csv()
+    check_existence_of_benchmark_results_csv(cfg)
     save_config(cfg)
+
+
     launch_sweeps(cfg)
 
 
-def set_config_dir_to_last_output(cfg: DictConfig) -> None:
-
-    all_output_dirs = list(Path('outputs').glob('*/*'))
-    newest_output_dir = max(all_output_dirs, key=output_dir_to_date)
-    cfg.output_dir = newest_output_dir
-
-
-def output_dir_to_date(output_dir: Path) -> datetime:
-    
-    parts = output_dir.parts
-    time_str = "-".join(parts[1:])
-    date = datetime.strptime(time_str, "%Y-%m-%d-%H-%M-%S")
-
-    return date
-
-
-def delete_current_output_dir(cfg: DictConfig) -> None:
-
-    output_dir = Path(cfg.output_dir)
-    if output_dir.exists():
-        subprocess.run(['rm', '-rf', output_dir])
-
-
-
-def save_config(cfg: DictConfig) -> None:
+def save_config(cfg: ConfigMain) -> None:
     
     config_path = Path(cfg.output_dir) / CONFIG_DUPLICATE
 
-    config_to_save = cfg.copy()
-
-    del config_to_save.devices
-    del config_to_save.continue_last_output
-    del config_to_save.monitor_interval_in_seconds
-    del config_to_save.runs_per_device
-    del config_to_save.seed
-
-    OmegaConf.save(config_to_save, config_path, resolve=True)    
-    logger.info(f"Saved config to {config_path}")
+    with open(config_path, 'w') as f:
+        yaml.dump(cfg, f, default_flow_style=False)
 
 
 def launch_sweeps(cfg) -> None:
@@ -108,13 +63,13 @@ def launch_sweeps(cfg) -> None:
     logger.info(f"Monitoring finished, exiting main process")
 
 
-def check_existence_of_benchmark_results_csv() -> None:
+def check_existence_of_benchmark_results_csv(cfg: ConfigMain) -> None:
 
     results_csv = Path(PATH_TO_ALL_BENCH_CSV)
     if not results_csv.exists():
         raise FileNotFoundError(f"Could not find {results_csv}. Please download it from the link in the README.")
     
-    logger.debug(f"Found {results_csv}")
+    cfg.logger.debug(f"Found {results_csv}")
 
 
 if __name__ == "__main__":
