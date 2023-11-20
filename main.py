@@ -26,6 +26,7 @@ def main(cfg_hydra: DictConfig):
     set_seed(cfg.seed)
     # TODO: check how seeding works in subprocesses
 
+
     for cfg_benchmark_sweep in cfg.configs_benchmark_sweep:
 
         cfg.logger.info(f"Start benchmark sweep for {cfg_benchmark_sweep.benchmark.name}")

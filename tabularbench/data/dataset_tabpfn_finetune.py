@@ -2,11 +2,14 @@ import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
 
+from tabularbench.sweeps.config_run import ConfigRun
+
 
 class TabPFNFinetuneDataset(torch.utils.data.Dataset):
 
     def __init__(
         self, 
+        cfg: ConfigRun,
         x_train: np.ndarray, 
         y_train: np.ndarray, 
         x_test: np.ndarray, 
@@ -19,6 +22,7 @@ class TabPFNFinetuneDataset(torch.utils.data.Dataset):
         :param: max_features: number of features the tab pfn model has been trained on
         """
 
+        self.cfg = cfg
         
         self.x_train = x_train
         self.y_train = y_train
@@ -79,7 +83,7 @@ class TabPFNFinetuneDataset(torch.utils.data.Dataset):
     def cutoff_excess_features(self, x: np.ndarray, max_features: int) -> np.ndarray:
 
         if x.shape[1] > max_features:
-            print(f"TabPFN allows {max_features} features, but the dataset has {x.shape[1]} features. Excess features are cut off.")
+            self.cfg.logger.info(f"TabPFN allows {max_features} features, but the dataset has {x.shape[1]} features. Excess features are cut off.")
             x = x[:, :max_features]
 
         return x
@@ -145,6 +149,7 @@ class TabPFNFinetuneDataset(torch.utils.data.Dataset):
 
 
 def TabPFNFinetuneGenerator(
+    cfg: ConfigRun,
     x: np.ndarray, 
     y: np.ndarray, 
     regression: bool,
@@ -169,6 +174,7 @@ def TabPFNFinetuneGenerator(
         )
 
         static_dataset = TabPFNFinetuneDataset(
+            cfg=cfg,
             x_train=x_train,
             y_train=y_train,
             x_test=x_test,

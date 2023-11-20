@@ -42,6 +42,7 @@ class Trainer(BaseEstimator):
         x_train_train, x_train_valid, y_train_train, y_train_valid = a
 
         dataset_train_generator = TabPFNFinetuneGenerator(
+            self.cfg,
             x_train_train,
             self.y_transformer.transform(y_train_train),
             regression=self.cfg.task == Task.REGRESSION,
@@ -49,6 +50,7 @@ class Trainer(BaseEstimator):
         )
 
         dataset_valid = TabPFNFinetuneDataset(
+            self.cfg,
             x_train_train, 
             self.y_transformer.transform(y_train_train), 
             x_train_valid, 
@@ -105,7 +107,7 @@ class Trainer(BaseEstimator):
 
     def predict(self, x_train: np.ndarray, y_train: np.ndarray, x: np.ndarray):
 
-        dataset = TabPFNFinetuneDataset(x_train, y_train, x, batch_size=self.cfg.hyperparams.batch_size)
+        dataset = TabPFNFinetuneDataset(self.cfg, x_train, y_train, x, batch_size=self.cfg.hyperparams.batch_size)
         loader = self.make_loader(dataset, training=False)
 
         y_hat_list = []

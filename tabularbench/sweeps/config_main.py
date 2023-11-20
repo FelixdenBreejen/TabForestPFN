@@ -69,6 +69,8 @@ class ConfigMain():
             output_dir_benchmark = output_dir / f'{benchmark_name.name}-{model_name.name}-{search_type.name}'
             logger_benchmark = get_logger(output_dir_benchmark / 'log.txt')
 
+            dataset_ids_to_ignore = list(set(cfg_hydra.openml_dataset_ids_to_ignore) & set(benchmark.openml_dataset_ids))
+
             bscfg = ConfigBenchmarkSweep(
                 logger=logger_benchmark,
                 output_dir=output_dir_benchmark,
@@ -80,7 +82,7 @@ class ConfigMain():
                 search_type=search_type,
                 config_plotting=config_plotting,
                 n_random_runs_per_dataset=cfg_hydra.n_random_runs_per_dataset,
-                openml_dataset_ids_to_ignore=cfg_hydra.openml_dataset_ids_to_ignore,
+                openml_dataset_ids_to_ignore=dataset_ids_to_ignore,
                 hyperparams_object=hyperparams_object
             )
         
