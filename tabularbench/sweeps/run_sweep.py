@@ -1,5 +1,4 @@
 from __future__ import annotations
-from pathlib import Path
 import random
 
 import pandas as pd
@@ -7,7 +6,6 @@ import torch
 import torch.multiprocessing as mp
 
 from tabularbench.core.enums import SearchType
-from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.results.run_results import RunResults
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
@@ -67,7 +65,10 @@ def run_sweep(cfg: ConfigBenchmarkSweep):
         device = device_queue.get()   # blocks until a gpu is available
         cfg.logger.info(f"A free device {device} is found and grabbed")
 
+        save_results(cfg, run_results_dict)
+
     cfg.logger.info(f"Finished {cfg.search_type.name} search for {cfg.model_name.name} on {cfg.benchmark.name}")
+
 
 
 def log_ignore_datasets(cfg: ConfigBenchmarkSweep) -> None:
@@ -117,13 +118,13 @@ def draw_dataset_id(cfg: ConfigRun, run_results_dict: dict[int, list[RunResults]
 
 
 def run_a_run(
-        cfg: ConfigRun, 
-        device: torch.device, 
-        device_queue: mp.Queue, 
-        run_results_dict: dict[int, list[RunResults]], 
-        runs_busy_dict: dict[int, int], 
-        search_type: SearchType
-    ):
+    cfg: ConfigRun, 
+    device: torch.device, 
+    device_queue: mp.Queue, 
+    run_results_dict: dict[int, list[RunResults]], 
+    runs_busy_dict: dict[int, int], 
+    search_type: SearchType
+):
 
     # logger needs to be reinitialized because of multiprocessing issues
     cfg.logger = get_logger(cfg.output_dir / 'log.txt')
@@ -143,18 +144,22 @@ def run_a_run(
 
 
 
-def save_results(config_sweep: SweepConfig, config_run: ConfigRun, metrics: RunMetrics, results_path: Path, search_type: SearchType):
+def save_results(cfg: ConfigBenchmarkSweep, run_results_dict: dict[int, list[RunResults]]) -> None:
 
-    results_dict = RunResults.from_run_config(config_run, search_type, metrics).to_dict()
+    df = convert_run_results_dict_to_dataframe(run_results_dict)
+    results_path = cfg.output_dir / RESULTS_FILE_NAME
+    df.to_csv(results_path, index=False, header=True)
 
-    df_new = pd.Series(results_dict).to_frame().T
+    cfg.logger.info(f"Saved results ({len(df)} runs total) to {RESULTS_FILE_NAME}")
+    
 
-    if not results_path.exists():
-        results_path.parent.mkdir(parents=True, exist_ok=True)
-        csv_string = df_new.to_csv(index=False, header=True)
-        config_sweep.writer.write(results_path, csv_string, mode="w")
-    else:
-        df = pd.read_csv(results_path)
-        df = pd.concat([df, df_new], ignore_index=True)
-        csv_string = df.to_csv(index=False, header=True)
-        config_sweep.writer.write(results_path, csv_string, mode="w")
+def convert_run_results_dict_to_dataframe(run_results_dict: dict[int, list[RunResults]]) -> pd.DataFrame:
+
+    results = []
+
+    for dataset_id, run_results_list in run_results_dict.items():
+        for run_results in run_results_list:
+            results.append(run_results.to_dict())
+
+    df = pd.DataFrame(results)
+    return df

@@ -53,6 +53,12 @@ class RunResults():
             'search_type': self.search_type.name,
             'seed': self.seed,
             'device': str(self.device),
+        }
+
+        for key, value in self.hyperparams.items():
+            d["hp__"+str(key)] = value
+
+        d |= {
             'score_train_mean': self.score_train_mean,
             'score_val_mean': self.score_val_mean,
             'score_test_mean': self.score_test_mean,
@@ -66,9 +72,6 @@ class RunResults():
             'losses_val': self.losses_val,
             'losses_test': self.losses_test,
         }
-
-        for key, value in self.hyperparams.items():
-            d["hp__"+str(key)] = value
 
         return d
     
