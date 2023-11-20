@@ -20,6 +20,10 @@ def get_logger(log_path: Path) -> logging.Logger:
     logging.setLogRecordFactory(CustomLogRecord)
     logger = logging.getLogger(str(log_path))  # ensures that the logger is unique
     
+    if logger.parent.hasHandlers():
+        # In a multiprocessing process, the parent logger prints to stdout by default????
+        logger.parent.handlers.clear()
+
     if logger.hasHandlers():
         logger.handlers.clear()
 

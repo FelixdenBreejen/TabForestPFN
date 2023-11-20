@@ -46,7 +46,7 @@ class ConfigRun():
         logger = get_logger(output_dir / 'log.txt')
 
         return cls(
-            logger=logger,
+            logger=None,
             output_dir=output_dir,
             model_name=cfg.model_name,
             device=device,
