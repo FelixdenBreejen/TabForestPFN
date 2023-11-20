@@ -24,6 +24,7 @@ class ConfigBenchmarkSweep():
     search_type: SearchType
     config_plotting: ConfigPlotting
     n_random_runs_per_dataset: int
+    n_default_runs_per_dataset: int
     openml_dataset_ids_to_ignore: list[int]
     hyperparams_object: DictConfig
 

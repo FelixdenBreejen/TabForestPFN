@@ -9,6 +9,7 @@ from tabularbench.core.enums import SearchType
 from tabularbench.results.run_results import RunResults
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
+from tabularbench.sweeps.monitor_and_make_plots import plot_results
 from tabularbench.sweeps.paths_and_filenames import RESULTS_FILE_NAME
 from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.sweeps.run_experiment import run_experiment
@@ -21,7 +22,12 @@ def run_sweep(cfg: ConfigBenchmarkSweep):
     log_ignore_datasets(cfg)
 
     results_path = cfg.output_dir / RESULTS_FILE_NAME
-    runs_per_dataset = cfg.n_random_runs_per_dataset if cfg.search_type == SearchType.RANDOM else 1
+
+    match cfg.search_type:
+        case SearchType.RANDOM:
+            runs_per_dataset = cfg.n_random_runs_per_dataset
+        case SearchType.DEFAULT:
+            runs_per_dataset = cfg.n_default_runs_per_dataset
 
     manager = mp.Manager()
     device_queue = manager.Queue()
@@ -46,26 +52,42 @@ def run_sweep(cfg: ConfigBenchmarkSweep):
         if all_runs_almost_finished(cfg, run_results_dict, runs_per_dataset, runs_busy_dict):
             # The last few runs are being executed, so we need to wait for them to finish
             # These last runs might have an error, so we need to be able to redo them if necessary
-            cfg.logger.info(f"Waiting for last {sum(runs_busy_dict.values())} runs to finish...")
-            device = device_queue.get()
+            cfg.logger.info(f"Waiting for last {sum(runs_busy_dict.values())} run(s) to finish...")
+            device = device_queue.get()   # blocks until a gpu is available (run is finished)
+            run_results_df = convert_run_results_dict_to_dataframe(run_results_dict)
+            save_results(cfg, run_results_df)
+            plot_results(cfg, run_results_df)
             continue
 
         cfg.logger.info(f"Currently, {sum(runs_busy_dict.values())} runs are busy and {sum(runs_attempted_dict.values())} runs have been attempted")
 
-        hyperparams = hyperparam_drawer.draw_config(cfg.search_type)
         dataset_id = draw_dataset_id(cfg, run_results_dict, runs_per_dataset, runs_busy_dict)
-        config_run = ConfigRun.create(cfg, device, dataset_id, hyperparams, runs_attempted_dict[dataset_id])
+
+        hyperparam_search_type = cfg.search_type
+        if len(run_results_dict[dataset_id]) == 0 and runs_busy_dict[dataset_id] == 0:
+            # This is the first run for this dataset, so we draw the default hyperaparams
+            hyperparam_search_type = SearchType.DEFAULT
+            seed = cfg.seed
+        elif cfg.search_type == SearchType.DEFAULT:
+            seed = cfg.seed + runs_attempted_dict[dataset_id]
+            
+        hyperparams = hyperparam_drawer.draw_config(hyperparam_search_type)
+        config_run = ConfigRun.create(cfg, seed, device, dataset_id, hyperparams, runs_attempted_dict[dataset_id])
 
         runs_busy_dict[dataset_id] += 1
         runs_attempted_dict[dataset_id] += 1
 
-        cfg.logger.info(f"Start {cfg.search_type.value} run for {cfg.model_name.value} on {cfg.benchmark.name} with dataset {config_run.openml_dataset_id} (id={config_run.openml_dataset_id})")
+        cfg.logger.info(f"Start {cfg.search_type.value} run for {cfg.model_name.value} on {cfg.benchmark.name} with dataset {config_run.openml_dataset_name} (id={config_run.openml_dataset_id})")
 
-        mp.Process(target=run_a_run, args=(config_run, device, device_queue, run_results_dict, runs_busy_dict, cfg.search_type)).start()
+        mp.Process(target=run_a_run, args=(config_run, device, device_queue, run_results_dict, runs_busy_dict, hyperparam_search_type)).start()
+       
+        run_results_df = convert_run_results_dict_to_dataframe(run_results_dict)
+        save_results(cfg, run_results_df)
+        plot_results(cfg, run_results_df)
+
         device = device_queue.get()   # blocks until a gpu is available
         cfg.logger.info(f"A free device {device} is found and grabbed")
 
-        save_results(cfg, run_results_dict)
 
     cfg.logger.info(f"Finished {cfg.search_type.name} search for {cfg.model_name.name} on {cfg.benchmark.name}")
 
@@ -144,13 +166,16 @@ def run_a_run(
 
 
 
-def save_results(cfg: ConfigBenchmarkSweep, run_results_dict: dict[int, list[RunResults]]) -> None:
+def save_results(cfg: ConfigBenchmarkSweep, run_results_df: pd.DataFrame) -> None:
 
-    df = convert_run_results_dict_to_dataframe(run_results_dict)
+    if len(run_results_df) == 0:
+        # no results yet to save
+        return
+
     results_path = cfg.output_dir / RESULTS_FILE_NAME
-    df.to_csv(results_path, index=False, header=True)
+    run_results_df.to_csv(results_path, index=False, header=True)
 
-    cfg.logger.info(f"Saved results ({len(df)} runs total) to {RESULTS_FILE_NAME}")
+    cfg.logger.info(f"Saved results ({len(run_results_df)} runs total) to {RESULTS_FILE_NAME}")
     
 
 def convert_run_results_dict_to_dataframe(run_results_dict: dict[int, list[RunResults]]) -> pd.DataFrame:

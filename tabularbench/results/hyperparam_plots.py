@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import pandas as pd
 
-from tabularbench.sweeps.sweep_config import SweepConfig
 from tabularbench.sweeps.paths_and_filenames import (
     RESULTS_FILE_NAME
 )
 
 
-def make_hyperparam_plots(sweep: SweepConfig):
+def make_hyperparam_plots(sweep):
     
     df = pd.read_csv(sweep.sweep_dir / RESULTS_FILE_NAME)
 

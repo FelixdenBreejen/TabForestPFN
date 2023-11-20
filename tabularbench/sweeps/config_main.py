@@ -82,6 +82,7 @@ class ConfigMain():
                 search_type=search_type,
                 config_plotting=config_plotting,
                 n_random_runs_per_dataset=cfg_hydra.n_random_runs_per_dataset,
+                n_default_runs_per_dataset=cfg_hydra.n_default_runs_per_dataset,
                 openml_dataset_ids_to_ignore=dataset_ids_to_ignore,
                 hyperparams_object=hyperparams_object
             )

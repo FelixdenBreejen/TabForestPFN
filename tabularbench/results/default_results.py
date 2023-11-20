@@ -9,7 +9,7 @@ from tabularbench.sweeps.paths_and_filenames import (
 )
 
 
-def make_default_results(sweep: SweepConfig):
+def make_default_results(sweep):
 
     df_cur = pd.read_csv(sweep.sweep_dir / RESULTS_FILE_NAME)
     df_cur['model'] = sweep.model_plot_name

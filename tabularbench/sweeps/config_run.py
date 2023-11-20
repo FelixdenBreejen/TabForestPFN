@@ -32,6 +32,7 @@ class ConfigRun():
     def create(
             cls, 
             cfg: ConfigBenchmarkSweep, 
+            seed: int,
             device: torch.device, 
             dataset_id: int, 
             hyperparams: DictConfig,
@@ -50,7 +51,7 @@ class ConfigRun():
             output_dir=output_dir,
             model_name=cfg.model_name,
             device=device,
-            seed=cfg.seed,
+            seed=seed,
             task=cfg.benchmark.task,
             dataset_size=cfg.benchmark.dataset_size,
             openml_task_id=openml_task_id,

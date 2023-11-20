@@ -9,17 +9,16 @@ from tabularbench.core.enums import SearchType, Task
 
 from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
 from tabularbench.sweeps.paths_and_filenames import RESULTS_FILE_NAME
-from tabularbench.sweeps.sweep_config import SweepConfig
 
 
-def make_random_sweep_plots(sweep: SweepConfig):
+def make_random_sweep_plots(sweep):
 
     make_separate_dataset_plots(sweep)
     make_combined_dataset_plot(sweep)
 
 
 
-def make_combined_dataset_plot(sweep: SweepConfig):
+def make_combined_dataset_plot(sweep):
 
     df_bench = get_benchmark_csv_reformatted()
 
@@ -34,7 +33,7 @@ def make_combined_dataset_plot(sweep: SweepConfig):
     np.save(sweep.sweep_dir / "plot_data.npy", plot_data)
 
 
-def make_combined_dataset_plot_(sweep: SweepConfig, df: pd.DataFrame) -> tuple[plt.Figure, plt.Axes, np.ndarray]:
+def make_combined_dataset_plot_(sweep, df: pd.DataFrame) -> tuple[plt.Figure, plt.Axes, np.ndarray]:
 
     models = df['model'].unique().tolist()
     if 'HistGradientBoostingTree' in models:
@@ -202,7 +201,7 @@ def lighten_color(color, amount=0.5):
     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
 
-def make_separate_dataset_plots(sweep: SweepConfig):
+def make_separate_dataset_plots(sweep):
 
     df_bench = get_benchmark_csv_reformatted()
     
@@ -303,7 +302,7 @@ def make_separate_dataset_plots(sweep: SweepConfig):
 
 
 
-def scores_min_max(sweep: SweepConfig, dataset_name: str) -> tuple[float, float]:
+def scores_min_max(sweep, dataset_name: str) -> tuple[float, float]:
     """
     Based on the benchmark results, we normalize the scores of the sweep.
     Returns the min and max scores to normalize with
