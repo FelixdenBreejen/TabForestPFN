@@ -30,11 +30,7 @@ def main(cfg_hydra: DictConfig):
 
         cfg.logger.info(f"Start benchmark sweep for {cfg_benchmark_sweep.benchmark.name}")
 
-        for cfg_dataset_sweep in cfg_benchmark_sweep.generate_configs_dataset_sweep():
-
-            cfg.logger.info(f"Start dataset sweep for {cfg_dataset_sweep.openml_dataset_name}")
-            run_sweep(cfg_dataset_sweep)
-            cfg.logger.info(f"Finished dataset sweep for {cfg_dataset_sweep.openml_dataset_name}")
+        run_sweep(cfg_benchmark_sweep)
 
         cfg.logger.info(f"Finished benchmark sweep for {cfg_benchmark_sweep.benchmark.name}")
     

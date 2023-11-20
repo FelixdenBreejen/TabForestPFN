@@ -47,6 +47,8 @@ class OpenMLDataset():
                 categorical_indicator = np.ones(X.shape[1]).astype(bool)
             case FeatureType.MIXED:
                 assert categorical_indicator is not None, "There is no information about the feature types in the dataset"
+                assert np.array(categorical_indicator).astype(bool).any(), "There are no categorical features in the dataset"
+                assert not np.array(categorical_indicator).astype(bool).all(), "There are no numerical features in the dataset"
                 categorical_indicator = np.array(categorical_indicator).astype(bool)
 
         match self.task:

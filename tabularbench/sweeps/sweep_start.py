@@ -18,7 +18,7 @@ def get_config(output_dir: str) -> DictConfig:
 def get_logger(log_path: Path) -> logging.Logger:
 
     logging.setLogRecordFactory(CustomLogRecord)
-    logger = logging.getLogger()
+    logger = logging.getLogger(str(log_path))  # ensures that the logger is unique
     
     if logger.hasHandlers():
         logger.handlers.clear()

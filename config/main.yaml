@@ -2,14 +2,15 @@ hydra:
   run:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
-
 defaults:
   - hyperparams/ft_transformer: ft_transformer
   - hyperparams/tabpfn_finetune: tabpfn_finetune_10k
+  - override hydra/hydra_logging: disabled  
+  - override hydra/job_logging: disabled  
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [6, 7]
+devices: [4, 5, 6, 7]
 n_random_runs_per_dataset: 9                  # suggested: 500 
 
 models:

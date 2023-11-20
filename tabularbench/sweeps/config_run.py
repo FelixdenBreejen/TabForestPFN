@@ -1,18 +1,21 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import logging
+from pathlib import Path
 from typing import Self
 from omegaconf import DictConfig
 
 import torch
 
 from tabularbench.core.enums import FeatureType, ModelName, Task, DatasetSize
-from tabularbench.sweeps.config_dataset_sweep import ConfigDatasetSweep
+from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.sweeps.sweep_start import get_logger
 
 
 @dataclass
 class ConfigRun():
     logger: logging.Logger
+    output_dir: Path
     device: torch.device
     seed: int
     device: torch.device
@@ -27,19 +30,34 @@ class ConfigRun():
 
 
     @classmethod
-    def create(cls, cfg: ConfigDatasetSweep, device: torch.device, hyperparams: DictConfig) -> Self:
+    def create(
+            cls, 
+            cfg: ConfigBenchmarkSweep, 
+            device: torch.device, 
+            dataset_id: int, 
+            hyperparams: DictConfig,
+            run_id: int
+        ) -> Self:
+
+        id_index = cfg.benchmark.openml_dataset_ids.index(dataset_id)
+        openml_task_id = cfg.benchmark.openml_task_ids[id_index]
+        openml_dataset_name = cfg.benchmark.openml_dataset_names[id_index]
+        
+        output_dir = cfg.output_dir / str(dataset_id) / f"#{run_id}"
+        logger = get_logger(output_dir / 'log.txt')
 
         return cls(
-            logger=cfg.logger,
+            logger=logger,
+            output_dir=output_dir,
             model_name=cfg.model_name,
             device=device,
             seed=cfg.seed,
-            task=cfg.task,
-            feature_type=cfg.feature_type,
-            dataset_size=cfg.dataset_size,
-            openml_task_id=cfg.openml_task_id,
-            openml_dataset_id=cfg.openml_dataset_id,
-            openml_dataset_name=cfg.openml_dataset_name,
+            task=cfg.benchmark.task,
+            feature_type=cfg.benchmark.feature_type,
+            dataset_size=cfg.benchmark.dataset_size,
+            openml_task_id=openml_task_id,
+            openml_dataset_id=dataset_id,
+            openml_dataset_name=openml_dataset_name,
             hyperparams=hyperparams
         )
     
