@@ -2,7 +2,7 @@ import sys
 from typing import Optional
 from omegaconf import DictConfig
 
-from tabularbench.core.enums import DatasetSize, FeatureType, Task
+from tabularbench.core.enums import DatasetSize, Task
 from tabularbench.core.get_model import get_model
 from tabularbench.core.get_trainer import get_trainer
 
@@ -15,7 +15,7 @@ from tabularbench.sweeps.sweep_start import set_seed
 
 def run_experiment(cfg: ConfigRun) -> Optional[RunMetrics]:
 
-    cfg.logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.value} doing {cfg.task.value} with {cfg.feature_type.value} features")
+    cfg.logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.value} doing {cfg.task.value}")
 
     set_seed(cfg.seed)
     cfg.logger.info(f"Set seed to {cfg.seed}")
@@ -34,7 +34,7 @@ def run_experiment(cfg: ConfigRun) -> Optional[RunMetrics]:
             cfg.logger.exception("Exception occurred while running experiment")        
             return None
     
-    cfg.logger.info(f"Finished experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name} doing {cfg.task.name} with {cfg.feature_type.name} features")
+    cfg.logger.info(f"Finished experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name} doing {cfg.task.name}")
     cfg.logger.info(f"Final scores: ")
 
     for i in range(len(metrics)):
@@ -50,12 +50,12 @@ def debugger_is_active() -> bool:
 
 def run_experiment_(cfg: ConfigRun) -> RunMetrics:
 
-    dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.feature_type, cfg.dataset_size)
+    dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.dataset_size)
     metrics = RunMetrics()
 
     for split_i, (x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator) in enumerate(dataset.split_iterator()):
 
-        cfg.logger.info(f"Start split {split_i+1}/{dataset.n_splits} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.name} doing {cfg.task.name} with {cfg.feature_type.name} features")
+        cfg.logger.info(f"Start split {split_i+1}/{dataset.n_splits} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.name} doing {cfg.task.name}")
 
         model = get_model(cfg, x_train, y_train, categorical_indicator)
         trainer = get_trainer(cfg, model)
@@ -90,7 +90,6 @@ if __name__ == "__main__":
         model = "ft_transformer",
         seed = 0,
         task = Task.CLASSIFICATION,
-        feature_type = FeatureType.MIXED,
         dataset_size = DatasetSize.MEDIUM,
         openml_task_id = 361111,
         openml_dataset_id = 44157,

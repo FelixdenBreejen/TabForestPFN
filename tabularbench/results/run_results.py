@@ -6,7 +6,7 @@ from omegaconf import DictConfig
 
 import torch
 
-from tabularbench.core.enums import DatasetSize, ModelName, Task, FeatureType, SearchType
+from tabularbench.core.enums import DatasetSize, ModelName, Task, SearchType
 from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.sweeps.config_run import ConfigRun
 
@@ -18,7 +18,6 @@ class RunResults():
     openml_dataset_id: int
     openml_dataset_name: str
     task: Task
-    feature_type: FeatureType
     dataset_size: DatasetSize
     search_type: SearchType
     seed: int
@@ -45,12 +44,11 @@ class RunResults():
     def to_dict(self):
 
         d = {
-            'model': self.model.name,
+            'model': self.model_name.name,
             'openml_task_id': self.openml_task_id,
             'openml_dataset_id': self.openml_dataset_id,
             'openml_dataset_name': self.openml_dataset_name,
             'task': self.task.name,
-            'feature_type': self.feature_type.name,
             'dataset_size': self.dataset_size.name,
             'search_type': self.search_type.name,
             'seed': self.seed,
@@ -91,7 +89,6 @@ class RunResults():
             openml_dataset_id=d['openml_dataset_id'],
             openml_dataset_name=d['openml_dataset_name'],
             task=d['task'],
-            feature_type=d['feature_type'],
             dataset_size=d['dataset_size'],
             search_type=d['search_type'],
             seed=d['seed'],
@@ -119,7 +116,6 @@ class RunResults():
             print("Skipping row because of NaNs")
             return None
 
-        feature_type = FeatureType.MIXED if row['data__categorical'] else FeatureType.NUMERICAL
         task = Task.REGRESSION if row['data__regression'] else Task.CLASSIFICATION
         search_type = SearchType.RANDOM if row['hp'] == 'random' else SearchType.DEFAULT
         dataset_size = DatasetSize(row['max_train_samples'])
@@ -165,7 +161,6 @@ class RunResults():
             openml_dataset_id=-1,
             openml_dataset_name=row['data__keyword'],
             task=task,
-            feature_type=feature_type,
             dataset_size=dataset_size,
             search_type=search_type,
             seed=-1,
@@ -194,7 +189,6 @@ class RunResults():
             openml_dataset_id=cfg.openml_dataset_id,
             openml_dataset_name=cfg.openml_dataset_name,
             task=cfg.task,
-            feature_type=cfg.feature_type,
             dataset_size=cfg.dataset_size,
             search_type=search_type,
             seed=cfg.seed,

@@ -4,7 +4,6 @@ import pandas as pd
 
 from tabularbench.core.enums import SearchType
 from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
-from tabularbench.sweeps.sweep_config import SweepConfig
 from tabularbench.sweeps.paths_and_filenames import (
     RESULTS_FILE_NAME, DEFAULT_RESULTS_FILE_NAME
 )

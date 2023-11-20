@@ -10,10 +10,9 @@ from tabularbench.sweeps.paths_and_filenames import PATH_TO_DATA_SPLIT
 
 class OpenMLDataset():
 
-    def __init__(self, openml_dataset_id: int, task: Task, feature_type: FeatureType, dataset_size: DatasetSize):
+    def __init__(self, openml_dataset_id: int, task: Task, dataset_size: DatasetSize):
         self.openml_dataset_id = openml_dataset_id
         self.task = task
-        self.feature_type = feature_type
         self.dataset_size = dataset_size
 
         dataset = openml.datasets.get_dataset(self.openml_dataset_id, download_data=True, download_qualities=False, download_features_meta_data=False)
@@ -38,18 +37,19 @@ class OpenMLDataset():
         if y.dtype == np.dtype('O'):
             y = LabelEncoder().fit_transform(y)
 
-        match self.feature_type:
-            case FeatureType.NUMERICAL:
-                assert categorical_indicator is None or not np.array(categorical_indicator).astype(bool).any(), "There are categorical features in the dataset"
-                categorical_indicator = np.zeros(X.shape[1]).astype(bool)
-            case FeatureType.CATEGORICAL:
-                assert categorical_indicator is None or np.array(categorical_indicator).astype(bool).all(), "There are numerical features in the dataset"
-                categorical_indicator = np.ones(X.shape[1]).astype(bool)
-            case FeatureType.MIXED:
-                assert categorical_indicator is not None, "There is no information about the feature types in the dataset"
-                assert np.array(categorical_indicator).astype(bool).any(), "There are no categorical features in the dataset"
-                assert not np.array(categorical_indicator).astype(bool).all(), "There are no numerical features in the dataset"
-                categorical_indicator = np.array(categorical_indicator).astype(bool)
+        assert categorical_indicator is not None
+        categorical_indicator = np.array(categorical_indicator).astype(bool)
+        has_categorical_features = categorical_indicator.any()
+        has_numerical_features = (~categorical_indicator).any()
+
+        if has_categorical_features and has_numerical_features:
+            self.feature_type = FeatureType.MIXED
+        elif has_categorical_features:
+            self.feature_type = FeatureType.CATEGORICAL
+        elif has_numerical_features:
+            self.feature_type = FeatureType.NUMERICAL
+        else:
+            raise ValueError("There are neither categorical nor numerical features in the dataset")
 
         match self.task:
             case Task.CLASSIFICATION:

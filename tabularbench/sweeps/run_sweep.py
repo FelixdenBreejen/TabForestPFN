@@ -11,7 +11,6 @@ from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.results.run_results import RunResults
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
-from tabularbench.sweeps.sweep_config import SweepConfig
 from tabularbench.sweeps.paths_and_filenames import RESULTS_FILE_NAME
 from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.sweeps.run_experiment import run_experiment

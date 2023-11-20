@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 
 import torch
 
-from tabularbench.core.enums import FeatureType, ModelName, Task, DatasetSize
+from tabularbench.core.enums import ModelName, Task, DatasetSize
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.sweep_start import get_logger
 
@@ -21,7 +21,6 @@ class ConfigRun():
     device: torch.device
     model_name: ModelName
     task: Task
-    feature_type: FeatureType
     dataset_size: DatasetSize
     openml_task_id: int
     openml_dataset_id: int
@@ -53,7 +52,6 @@ class ConfigRun():
             device=device,
             seed=cfg.seed,
             task=cfg.benchmark.task,
-            feature_type=cfg.benchmark.feature_type,
             dataset_size=cfg.benchmark.dataset_size,
             openml_task_id=openml_task_id,
             openml_dataset_id=dataset_id,
@@ -68,7 +66,6 @@ class ConfigRun():
             'model': self.model,
             'device': str(self.device),
             'task': self.task.name,
-            'feature_type': self.feature_type.name,
             'dataset_size': self.dataset_size.name,
             'openml_task_id': self.openml_task_id,
             'openml_dataset_id': self.openml_dataset_id,

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Self
 
 import openml
-from tabularbench.core.enums import BenchmarkName, DatasetSize, FeatureType, Task
+from tabularbench.core.enums import BenchmarkName, DatasetSize, Task
 
 
 @dataclass
@@ -10,14 +10,13 @@ class Benchmark:
     name: BenchmarkName
     task: Task
     dataset_size: DatasetSize
-    feature_type: FeatureType
     openml_suite_id: int
     openml_task_ids: list[int]
     openml_dataset_ids: list[int]
     openml_dataset_names: list[str]
 
     @classmethod
-    def create(cls, name: BenchmarkName, task: Task, dataset_size: DatasetSize, feature_type: FeatureType, suite_id: int) -> Self:
+    def create(cls, name: BenchmarkName, task: Task, dataset_size: DatasetSize, suite_id: int) -> Self:
 
         openml_suite = openml.study.get_suite(suite_id)
         openml_task_ids = openml_suite.tasks
@@ -36,7 +35,6 @@ class Benchmark:
             name=name,
             task=task,
             dataset_size=dataset_size,
-            feature_type=feature_type,
             openml_suite_id=suite_id,
             openml_task_ids=openml_task_ids,
             openml_dataset_ids=openml_dataset_ids,
@@ -51,56 +49,48 @@ BENCHMARKS = {
         name=BenchmarkName.CATEGORICAL_CLASSIFICATION,
         task=Task.CLASSIFICATION,
         dataset_size=DatasetSize.MEDIUM,
-        feature_type=FeatureType.MIXED,
         suite_id=334
     ),
     BenchmarkName.CATEGORICAL_REGRESSION: Benchmark.create(
         name=BenchmarkName.CATEGORICAL_REGRESSION,
         task=Task.REGRESSION,
         dataset_size=DatasetSize.MEDIUM,
-        feature_type=FeatureType.MIXED,
         suite_id=335
     ),
     BenchmarkName.NUMERICAL_REGRESSION: Benchmark.create(
         name=BenchmarkName.NUMERICAL_REGRESSION,
         task=Task.REGRESSION,
         dataset_size=DatasetSize.MEDIUM,
-        feature_type=FeatureType.NUMERICAL,
         suite_id=336
     ),
     BenchmarkName.NUMERICAL_CLASSIFICATION: Benchmark.create(
         name=BenchmarkName.NUMERICAL_CLASSIFICATION,
         task=Task.CLASSIFICATION,
         dataset_size=DatasetSize.MEDIUM,
-        feature_type=FeatureType.NUMERICAL,
         suite_id=337
     ),
     BenchmarkName.CATEGORICAL_CLASSIFICATION_LARGE: Benchmark.create(
         name=BenchmarkName.CATEGORICAL_CLASSIFICATION_LARGE,
         task=Task.CLASSIFICATION,
         dataset_size=DatasetSize.LARGE,
-        feature_type=FeatureType.MIXED,
         suite_id=334
     ),
     BenchmarkName.CATEGORICAL_REGRESSION_LARGE: Benchmark.create(
         name=BenchmarkName.CATEGORICAL_REGRESSION_LARGE,
         task=Task.REGRESSION,
         dataset_size=DatasetSize.LARGE,
-        feature_type=FeatureType.MIXED,
         suite_id=335
     ),
     BenchmarkName.NUMERICAL_REGRESSION_LARGE: Benchmark.create(
         name=BenchmarkName.NUMERICAL_REGRESSION_LARGE,
         task=Task.REGRESSION,
         dataset_size=DatasetSize.LARGE,
-        feature_type=FeatureType.NUMERICAL,
         suite_id=336
     ),
     BenchmarkName.NUMERICAL_CLASSIFICATION_LARGE: Benchmark.create(
         name=BenchmarkName.NUMERICAL_CLASSIFICATION_LARGE,
         task=Task.CLASSIFICATION,
         dataset_size=DatasetSize.LARGE,
-        feature_type=FeatureType.NUMERICAL,
         suite_id=337
     ),
 }
