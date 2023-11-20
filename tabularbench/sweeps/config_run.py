@@ -9,7 +9,7 @@ import torch
 
 from tabularbench.core.enums import ModelName, Task, DatasetSize
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
-from tabularbench.sweeps.sweep_start import get_logger
+from tabularbench.sweeps.get_logger import get_logger
 
 
 @dataclass
@@ -46,7 +46,7 @@ class ConfigRun():
         logger = get_logger(output_dir / 'log.txt')
 
         return cls(
-            logger=None,
+            logger=logger,
             output_dir=output_dir,
             model_name=cfg.model_name,
             device=device,

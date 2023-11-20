@@ -1,18 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 import sys
-from omegaconf import OmegaConf, DictConfig
 import logging
-
-import random
-import numpy as np
-import torch
-
-from tabularbench.sweeps.paths_and_filenames import CONFIG_DUPLICATE
-
-
-def get_config(output_dir: str) -> DictConfig:
-    return OmegaConf.load(Path(output_dir) / CONFIG_DUPLICATE)  # type: ignore
     
 
 def get_logger(log_path: Path) -> logging.Logger:
@@ -46,12 +35,3 @@ class CustomLogRecord(logging.LogRecord):
         self.funcNameMaxWidth = self.funcName[:12] + '...' if len(self.funcName) > 15 else self.funcName
 
     
-def set_seed(seed: int) -> None:
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-
-
-def add_device_and_seed_to_cfg(cfg: DictConfig, gpu: int, seed: int) -> None:
-    cfg.device = f'cuda:{gpu}' if torch.cuda.is_available() else 'cpu'
-    cfg.seed = seed

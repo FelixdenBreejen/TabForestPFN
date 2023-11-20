@@ -14,7 +14,7 @@ from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
 from tabularbench.sweeps.paths_and_filenames import RESULTS_FILE_NAME
 from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.sweeps.run_experiment import run_experiment
-from tabularbench.sweeps.sweep_start import get_logger
+from tabularbench.sweeps.get_logger import get_logger
 
 
 def run_sweep(cfg: ConfigBenchmarkSweep):
@@ -23,7 +23,7 @@ def run_sweep(cfg: ConfigBenchmarkSweep):
     log_ignore_datasets(cfg)
 
     results_path = cfg.output_dir / RESULTS_FILE_NAME
-    runs_per_dataset = cfg.n_random_runs if cfg.search_type == SearchType.RANDOM else 1
+    runs_per_dataset = cfg.n_random_runs_per_dataset if cfg.search_type == SearchType.RANDOM else 1
 
     manager = mp.Manager()
     device_queue = manager.Queue()

@@ -11,7 +11,7 @@ import torch
 from tabularbench.core.enums import BenchmarkName, ModelName, SearchType
 from tabularbench.data.benchmarks import BENCHMARKS
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep, ConfigPlotting
-from tabularbench.sweeps.sweep_start import get_logger
+from tabularbench.sweeps.get_logger import get_logger
 
 
 @dataclass
@@ -66,7 +66,7 @@ class ConfigMain():
             benchmark = BENCHMARKS[benchmark_name]
             hyperparams_object = cfg_hydra.hyperparams[model_name.name.lower()]
 
-            output_dir_benchmark = output_dir / f'{benchmark_name.name}-{model_name.name}-{search_type.name}'
+            output_dir_benchmark = output_dir / f'{model_name.value.lower()}-{search_type.value}-{benchmark_name.value}'
             logger_benchmark = get_logger(output_dir_benchmark / 'log.txt')
 
             dataset_ids_to_ignore = list(set(cfg_hydra.openml_dataset_ids_to_ignore) & set(benchmark.openml_dataset_ids))

@@ -9,7 +9,7 @@ from tabularbench.sweeps.config_main import ConfigMain
 
 from tabularbench.sweeps.run_sweep import run_sweep
 from tabularbench.sweeps.paths_and_filenames import PATH_TO_ALL_BENCH_CSV, CONFIG_DUPLICATE
-from tabularbench.sweeps.sweep_start import set_seed
+from tabularbench.sweeps.set_seed import set_seed
 
 
 

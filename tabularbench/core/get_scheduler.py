@@ -1,6 +1,6 @@
 from omegaconf import DictConfig
 import torch
-from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
 
@@ -14,9 +14,11 @@ def get_scheduler(hyperparams: DictConfig, optimizer: torch.optim.Optimizer):
             factor=0.2
         )
     else:
-        scheduler = LambdaLR(       # type: ignore
-            optimizer,
-            lambda _: 1
+        scheduler = ReduceLROnPlateau(
+            optimizer, 
+            patience=10000000, 
+            min_lr=2e-5, 
+            factor=0.2
         )
 
     return scheduler

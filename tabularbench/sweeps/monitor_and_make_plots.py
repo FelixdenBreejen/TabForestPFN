@@ -10,7 +10,7 @@ from tabularbench.sweeps.datasets import get_unfinished_dataset_ids
 from tabularbench.sweeps.paths_and_filenames import (
     RESULTS_FILE_NAME
 )
-from tabularbench.sweeps.sweep_start import get_config, get_logger, set_seed
+from tabularbench.sweeps.get_logger import get_config, get_logger, set_seed
 from tabularbench.sweeps.writer import Writer
 from tabularbench.results.default_results import make_default_results
 from tabularbench.results.hyperparam_plots import make_hyperparam_plots

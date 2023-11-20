@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import train_test_split, StratifiedKFold
@@ -7,7 +6,6 @@ import torch
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 import numpy as np
-from transformers.optimization import get_cosine_schedule_with_warmup
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.data.dataset_masked_saint import MaskedSaintDataset, MaskedSaintDatasetGenerator
@@ -103,7 +101,7 @@ class TrainerMaskedSaintFinetune(BaseEstimator):
                 loss = self.loss(y_hat_train[y_label_mask], y_both[y_label_mask])
                 score = self.score(y_hat_train[y_label_mask], y_both[y_label_mask])
 
-                assert torch.isnan(loss) == False
+                assert not torch.isnan(loss)
 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -141,7 +139,8 @@ class TrainerMaskedSaintFinetune(BaseEstimator):
                 print("Early stopping")
                 break
 
-            self.scheduler.step(loss_valid)
+            if self.cfg['lr_scheduler']:
+                self.scheduler.step(loss_valid)
 
 
     def predict(self, x: np.ndarray):

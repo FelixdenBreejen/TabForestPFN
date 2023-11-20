@@ -9,7 +9,7 @@ from tabularbench.core.get_trainer import get_trainer
 from tabularbench.data.dataset_openml import OpenMLDataset
 from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.sweeps.config_run import ConfigRun
-from tabularbench.sweeps.sweep_start import set_seed
+from tabularbench.sweeps.set_seed import set_seed
 
 
 
