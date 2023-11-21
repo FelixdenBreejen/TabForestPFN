@@ -6,7 +6,8 @@ from omegaconf import DictConfig
 
 import torch
 
-from tabularbench.core.enums import DatasetSize, ModelName, Task, SearchType
+from tabularbench.core.enums import BenchmarkName, DatasetSize, FeatureType, ModelName, Task, SearchType
+from tabularbench.data.benchmarks import BENCHMARKS
 from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.sweeps.config_run import ConfigRun
 
@@ -121,6 +122,7 @@ class RunResults():
 
         task = Task.REGRESSION if row['data__regression'] else Task.CLASSIFICATION
         search_type = SearchType.RANDOM if row['hp'] == 'random' else SearchType.DEFAULT
+        feature_type = FeatureType.CATEGORICAL if row['data__categorical'] else FeatureType.NUMERICAL
         dataset_size = DatasetSize(row['max_train_samples'])
 
         match task:
@@ -152,17 +154,45 @@ class RunResults():
             'GradientBoostingTree': ModelName.GRADIENT_BOOSTING_TREE,
             'HistGradientBoostingTree': ModelName.HIST_GRADIENT_BOOSTING_TREE,
         }
-        model = model_name_dict[row['model_name']]
+        model_name = model_name_dict[row['model_name']]
 
         if any(score > 1 for score in train_scores+val_scores+test_scores):
             print(f"Scores above 1: {row['model_name'], row['data__keyword']}")
 
+
+        match (task, dataset_size, feature_type):
+            case (Task.CLASSIFICATION, DatasetSize.LARGE, FeatureType.CATEGORICAL):
+                benchmark_name = BenchmarkName.CATEGORICAL_CLASSIFICATION_LARGE
+            case (Task.CLASSIFICATION, DatasetSize.LARGE, FeatureType.NUMERICAL):
+                benchmark_name = BenchmarkName.NUMERICAL_CLASSIFICATION_LARGE
+            case (Task.CLASSIFICATION, DatasetSize.MEDIUM, FeatureType.CATEGORICAL):
+                benchmark_name = BenchmarkName.CATEGORICAL_CLASSIFICATION
+            case (Task.CLASSIFICATION, DatasetSize.MEDIUM, FeatureType.NUMERICAL):
+                benchmark_name = BenchmarkName.NUMERICAL_CLASSIFICATION
+            case (Task.REGRESSION, DatasetSize.LARGE, FeatureType.CATEGORICAL):
+                benchmark_name = BenchmarkName.CATEGORICAL_REGRESSION_LARGE
+            case (Task.REGRESSION, DatasetSize.LARGE, FeatureType.NUMERICAL):
+                benchmark_name = BenchmarkName.NUMERICAL_REGRESSION_LARGE
+            case (Task.REGRESSION, DatasetSize.MEDIUM, FeatureType.CATEGORICAL):
+                benchmark_name = BenchmarkName.CATEGORICAL_REGRESSION
+            case (Task.REGRESSION, DatasetSize.MEDIUM, FeatureType.NUMERICAL):
+                benchmark_name = BenchmarkName.NUMERICAL_REGRESSION
         
+        benchmark = BENCHMARKS[benchmark_name]
+
+        dataset_name = row['data__keyword']
+
+        assert dataset_name in benchmark.openml_dataset_names, f"Dataset {dataset_name} not in benchmark {benchmark_name}"
+        index = benchmark.openml_dataset_names.index(dataset_name)
+        task_id = benchmark.openml_task_ids[index]
+        dataset_id = benchmark.openml_dataset_ids[index]
+
+
         return cls(
-            model=model,
-            openml_task_id=-1,
-            openml_dataset_id=-1,
-            openml_dataset_name=row['data__keyword'],
+            model_name=model_name,
+            openml_task_id=task_id,
+            openml_dataset_id=dataset_id,
+            openml_dataset_name=dataset_name,
             task=task,
             dataset_size=dataset_size,
             search_type=search_type,
