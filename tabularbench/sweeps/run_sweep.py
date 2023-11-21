@@ -9,7 +9,7 @@ from tabularbench.core.enums import SearchType
 from tabularbench.results.run_results import RunResults
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
-from tabularbench.sweeps.monitor_and_make_plots import plot_results
+from tabularbench.sweeps.make_plots import plot_results
 from tabularbench.sweeps.paths_and_filenames import RESULTS_FILE_NAME
 from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.sweeps.run_experiment import run_experiment
