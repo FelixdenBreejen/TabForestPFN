@@ -10,6 +10,7 @@ from tabularbench.results.random_sweep_plots import make_random_sweep_plots
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.datasets import get_unfinished_dataset_ids
 from tabularbench.sweeps.paths_and_filenames import (
+    DEFAULT_RESULTS_FILE_NAME,
     RESULTS_FILE_NAME
 )
 from tabularbench.sweeps.get_logger import get_logger
@@ -25,13 +26,13 @@ def plot_results(cfg: ConfigBenchmarkSweep, run_results_df: pd.DataFrame) -> Non
         return
 
     cfg.logger.info(f"Start making plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
-    
-    return
 
-    if sweep_default_finished(sweep):
-        logger.info(f"Start making default results for sweep {str(sweep)}")
-        make_default_results(sweep)
-        logger.info(f"Finished making default results for sweep {str(sweep)}")
+    if sweep_default_finished(cfg, run_results_df) and default_results_not_yet_made(cfg):
+        cfg.logger.info(f"Start making default results for model {cfg.model_name.value} on benchmark {cfg.benchmark.name}")
+        make_default_results(cfg, run_results_df)
+        cfg.logger.info(f"Finished making default results for model {cfg.model_name.value} on benchmark {cfg.benchmark.name}")
+
+    return
 
     logger.info(f"Start making result plots for sweep {str(sweep)}")
     make_random_sweep_plots(sweep)
@@ -44,6 +45,8 @@ def plot_results(cfg: ConfigBenchmarkSweep, run_results_df: pd.DataFrame) -> Non
     
     if sweep_random_finished(sweep) or sweep.search_type == SearchType.DEFAULT:
         return
+
+
 
 
 def monitor_and_make_plots(output_dir: str, writer: Writer, delay_in_seconds: int = 10):
@@ -94,11 +97,24 @@ def monitor_and_make_plots(output_dir: str, writer: Writer, delay_in_seconds: in
     logger.info(f"Finished monitoring all sweeps")
 
 
-def sweep_default_finished(sweep) -> bool:
-    
-    # default sweep always finishes before random sweep starts, so we just check if every dataset has one run
-    unfinished_tasks = get_unfinished_dataset_ids(sweep.openml_dataset_ids, sweep.sweep_dir / RESULTS_FILE_NAME, runs_per_dataset=1)
-    return len(unfinished_tasks) == 0
+def sweep_default_finished(cfg: ConfigBenchmarkSweep, run_results_df: pd.DataFrame) -> None:
+
+    df = run_results_df
+    df = df[ df['search_type'] == SearchType.DEFAULT.name ]
+    df = df[ df['seed'] == cfg.seed ]    # when using multiple default runs, the seed changes
+
+    for dataset_id in cfg.openml_dataset_ids_to_use:
+
+        df_id = df[ df['openml_dataset_id'] == dataset_id ]
+        if len(df_id) == 0:
+            return False
+
+    return True
+
+
+def default_results_not_yet_made(cfg: ConfigBenchmarkSweep) -> bool:
+    return not (cfg.output_dir / DEFAULT_RESULTS_FILE_NAME).exists()
+
 
 
 def sweep_random_finished(sweep) -> bool:

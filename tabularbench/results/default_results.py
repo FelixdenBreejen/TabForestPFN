@@ -2,51 +2,33 @@ from __future__ import annotations
 
 import pandas as pd
 
-from tabularbench.core.enums import SearchType
+from tabularbench.core.enums import ModelName, SearchType
 from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
+from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.paths_and_filenames import (
-    RESULTS_FILE_NAME, DEFAULT_RESULTS_FILE_NAME
+    DEFAULT_RESULTS_FILE_NAME
 )
 
 
-def make_default_results(sweep):
+def make_default_results(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame) -> None:
 
-    df_cur = pd.read_csv(sweep.sweep_dir / RESULTS_FILE_NAME)
-    df_cur['model'] = sweep.model_plot_name
+    benchmark_model_names = [model_name.name for model_name in cfg.config_plotting.benchmark_model_names]
 
     df_bench = get_benchmark_csv_reformatted()
-    df = pd.concat([df_bench, df_cur], ignore_index=True)
+    df_bench = df_bench[ df_bench['openml_dataset_id'].isin(cfg.openml_dataset_ids_to_use) ]
+    df_bench = df_bench[ df_bench['model'].isin(benchmark_model_names) ]
+    df_bench = df_bench[ df_bench['search_type'] == SearchType.DEFAULT.name ]
+    df_bench['model_plot_name'] = df_bench.apply(lambda row: ModelName[row['model']].value, axis=1)
+    df_bench.sort_values(by=['model', 'openml_dataset_id'], inplace=True)
 
-    df.sort_values(by=['model', 'openml_dataset_name'], inplace=True)
+    df_run_results = df_run_results[ df_run_results['search_type'] == SearchType.DEFAULT.name ]
+    df_run_results = df_run_results[ df_run_results['seed'] == cfg.seed ] # when using multiple default runs, the seed changes
+    df_run_results['model_plot_name'] = cfg.model_plot_name
+    df_run_results.sort_values(by=['openml_dataset_id'], inplace=True)
 
-    benchmark_plot_names = sweep.plotting.benchmark_models
+    df = pd.concat([df_bench, df_run_results], ignore_index=True)
+    df['openml_dataset_name'] = df.apply(lambda row: row['openml_dataset_name'][:8] + '...' if len(row['openml_dataset_name']) > 11 else row['openml_dataset_name'], axis=1)
+    df['score_test_mean'] = df['score_test_mean'].apply(lambda x: f"{x:.4f}")
 
-    assert sweep.model_plot_name not in benchmark_plot_names, f"Don't use plot name {sweep.model_plot_name}, the benchmark already has a model with that name"
-
-    index = benchmark_plot_names + [sweep.model_plot_name]
-    df_new = pd.DataFrame(columns=sorted(sweep.openml_dataset_names), index=index, dtype=float)
-
-    for model_name in index:
-
-        correct_dataset = df['openml_dataset_name'].isin(sweep.openml_dataset_names)
-        correct_model = df['model'] == model_name
-        correct_search_type = df['search_type'] == SearchType.DEFAULT.name 
-        correct_dataset_size = df['dataset_size'] == sweep.dataset_size.name
-        correct_feature_type = df['feature_type'] == sweep.feature_type.name
-        correct_task = df['task'] == sweep.task.name
-
-        correct_all = correct_model & correct_search_type & correct_dataset_size & correct_feature_type & correct_task & correct_dataset
-
-        default_runs = df.loc[correct_all]
-
-        results = []
-        for dataset_name in sorted(sweep.openml_dataset_names):
-            if dataset_name in default_runs['openml_dataset_name'].tolist():
-                results.append(default_runs.loc[default_runs['openml_dataset_name'] == dataset_name, 'score_test_mean'].item())
-            else:
-                results.append(None)
-
-        df_new.loc[model_name] = results
-    
-    df_new = df_new.applymap("{:.4f}".format)
-    df_new.to_csv(sweep.sweep_dir / DEFAULT_RESULTS_FILE_NAME, mode='w', index=True, header=True)
+    df_results = df.pivot(index='model', columns=['openml_dataset_id', 'openml_dataset_name'], values='score_test_mean')
+    df_results.to_csv(cfg.output_dir / DEFAULT_RESULTS_FILE_NAME, mode='w', index=True, header=True)
