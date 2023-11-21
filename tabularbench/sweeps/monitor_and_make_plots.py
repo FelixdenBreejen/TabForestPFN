@@ -19,32 +19,31 @@ from tabularbench.results.default_results import make_default_results
 from tabularbench.results.hyperparam_plots import make_hyperparam_plots
 
 
-def plot_results(cfg: ConfigBenchmarkSweep, run_results_df: pd.DataFrame) -> None:
+def plot_results(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame) -> None:
 
-    if len(run_results_df) == 0:
+    if len(df_run_results) == 0:
         # no results yet to plot
         return
 
     cfg.logger.info(f"Start making plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
 
-    if sweep_default_finished(cfg, run_results_df) and default_results_not_yet_made(cfg):
+    if sweep_default_finished(cfg, df_run_results) and default_results_not_yet_made(cfg):
         cfg.logger.info(f"Start making default results for model {cfg.model_name.value} on benchmark {cfg.benchmark.name}")
-        make_default_results(cfg, run_results_df)
+        make_default_results(cfg, df_run_results)
         cfg.logger.info(f"Finished making default results for model {cfg.model_name.value} on benchmark {cfg.benchmark.name}")
 
-    return
-
-    logger.info(f"Start making result plots for sweep {str(sweep)}")
-    make_random_sweep_plots(sweep)
-    logger.info(f"Finished making result plots for sweep {str(sweep)}")
-
-    if sweep.search_type == SearchType.RANDOM:
-        logger.info(f"Start making hyperparam plots for sweep {str(sweep)}")
-        make_hyperparam_plots(sweep)
-        logger.info(f"Finished making hyperparam plots for sweep {str(sweep)}")
     
-    if sweep_random_finished(sweep) or sweep.search_type == SearchType.DEFAULT:
-        return
+    if cfg.search_type == SearchType.RANDOM:
+        cfg.logger.info(f"Start making hyperparam plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
+        make_hyperparam_plots(cfg, df_run_results)
+        cfg.logger.info(f"Finished making hyperparam plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
+    
+
+    cfg.logger.info(f"Start making sweep plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
+    # make_sweep_plots(cfg, df_run_results)
+    cfg.logger.info(f"Finished making sweep plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
+    
+    cfg.logger.info(f"Finished making plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
 
 
 
@@ -97,9 +96,9 @@ def monitor_and_make_plots(output_dir: str, writer: Writer, delay_in_seconds: in
     logger.info(f"Finished monitoring all sweeps")
 
 
-def sweep_default_finished(cfg: ConfigBenchmarkSweep, run_results_df: pd.DataFrame) -> None:
+def sweep_default_finished(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame) -> None:
 
-    df = run_results_df
+    df = df_run_results
     df = df[ df['search_type'] == SearchType.DEFAULT.name ]
     df = df[ df['seed'] == cfg.seed ]    # when using multiple default runs, the seed changes
 

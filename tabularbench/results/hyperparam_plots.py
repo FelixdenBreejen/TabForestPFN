@@ -1,32 +1,36 @@
 from __future__ import annotations
 
 import pandas as pd
-
-from tabularbench.sweeps.paths_and_filenames import (
-    RESULTS_FILE_NAME
-)
+from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
-def make_hyperparam_plots(sweep):
-    
-    df = pd.read_csv(sweep.sweep_dir / RESULTS_FILE_NAME)
 
-    for dataset_name in sweep.openml_dataset_names:
-        for random_var, settings in sweep.hyperparams.items():
-                
-            this_dataset = df['openml_dataset_name'] == dataset_name
+def make_hyperparam_plots(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame) -> None:
+
+    for dataset_id in cfg.openml_dataset_ids_to_use:
+
+        df_dataset = df_run_results[ df_run_results['openml_dataset_id'] == dataset_id ]
+        output_dir = cfg.output_dir / f'{dataset_id}'
+
+        if len(df_dataset) == 0:
+            # no results yet for this dataset id
+            continue
+
+        for random_var, settings in cfg.hyperparams_object.items():
+            
             fig = None
             random_var_name = 'hp__' + random_var
 
             match settings:
                 case {'distribution': distribution}:
                     is_log = 'log' in distribution
-                    fig = df[this_dataset].plot(kind='scatter', x=random_var_name, y='score_test_mean', logx=is_log).get_figure()
+                    fig = df_dataset.plot(kind='scatter', x=random_var_name, y='score_val_mean', logx=is_log).get_figure()
                 case {'values': _}:
-                    fig = df[this_dataset].boxplot(column='score_test_mean', by=random_var_name).get_figure()
-                    
+                    fig = df_dataset.boxplot(column='score_val_mean', by=random_var_name).get_figure()
+                case _:
+                    continue
 
-            if fig is not None:
-                png_path = sweep.sweep_dir / 'hyperparam_plots' / f'{dataset_name}_{random_var_name}.png'
-                png_path.parent.mkdir(parents=True, exist_ok=True)
-                fig.savefig(png_path)
+            fig.suptitle(f'Hyperparameter {random_var} vs. validation score for dataset {dataset_id}')
+            png_path = output_dir / f'hyperparam_plot_{random_var}.png'
+            png_path.parent.mkdir(parents=True, exist_ok=True)
+            fig.savefig(png_path)

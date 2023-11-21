@@ -30,5 +30,5 @@ def make_default_results(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame
     df['openml_dataset_name'] = df.apply(lambda row: row['openml_dataset_name'][:8] + '...' if len(row['openml_dataset_name']) > 11 else row['openml_dataset_name'], axis=1)
     df['score_test_mean'] = df['score_test_mean'].apply(lambda x: f"{x:.4f}")
 
-    df_results = df.pivot(index='model', columns=['openml_dataset_id', 'openml_dataset_name'], values='score_test_mean')
+    df_results = df.pivot(index='model_plot_name', columns=['openml_dataset_id', 'openml_dataset_name'], values='score_test_mean')
     df_results.to_csv(cfg.output_dir / DEFAULT_RESULTS_FILE_NAME, mode='w', index=True, header=True)
