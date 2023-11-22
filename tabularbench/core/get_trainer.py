@@ -1,7 +1,7 @@
 import torch
 from tabularbench.core.enums import ModelName
 from tabularbench.core.trainer import Trainer
-from tabularbench.core.trainer_pfn_finetune import Trainer as TrainerPFN
+from tabularbench.core.trainer_pfn_finetune import Trainer as TrainerPFNFineTune
 
 from tabularbench.sweeps.config_run import ConfigRun
 
@@ -12,4 +12,4 @@ def get_trainer(cfg: ConfigRun, model: torch.nn.Module):
         case ModelName.FT_TRANSFORMER:
             return Trainer(cfg, model)
         case ModelName.TABPFN_FINETUNE:
-            return TrainerPFN(cfg, model)
+            return TrainerPFNFineTune(cfg, model)

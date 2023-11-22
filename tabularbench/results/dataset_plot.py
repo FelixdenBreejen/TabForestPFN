@@ -35,6 +35,7 @@ def combine_and_process_run_results_with_benchmark(cfg: ConfigBenchmarkSweep, df
     df_bench['model_plot_name'] = df_bench.apply(lambda row: ModelName[row['model']].value, axis=1)
     df_bench.sort_values(by=['model', 'openml_dataset_id'], inplace=True)
 
+    df_run_results['model'] = ModelName.PLACEHOLDER.name    # The model might be named the same as one of the benchmark models.
     df_run_results['model_plot_name'] = cfg.model_plot_name
     df_run_results.sort_values(by=['openml_dataset_id'], inplace=True)
 

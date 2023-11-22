@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from tabularbench.core.enums import SearchType
+from tabularbench.core.enums import ModelName, SearchType
 from tabularbench.results.scores_min_max import scores_min_max
 
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
@@ -15,9 +15,14 @@ def create_random_sequences_from_df(cfg: ConfigBenchmarkSweep, df: pd.DataFrame)
         sequences_all: np.ndarray of shape (n_models, n_datasets, n_shuffles, n_runs)
     """
     
-    models = df['model'].unique().tolist()
+    models = cfg.config_plotting.benchmark_model_names + [ModelName.PLACEHOLDER]
+
+    n_models = len(models)
+    n_datasets = len(cfg.openml_dataset_ids_to_use)
+    n_shuffles = cfg.config_plotting.n_random_shuffles
+    n_runs = cfg.config_plotting.n_runs
     
-    sequences_all = np.zeros((len(models), len(cfg.openml_dataset_ids_to_use), cfg.config_plotting.n_random_shuffles, cfg.config_plotting.n_runs))
+    sequences_all = np.zeros((n_models, n_datasets, n_shuffles, n_runs))
 
     for dataset_i, openml_dataset_id in enumerate(cfg.openml_dataset_ids_to_use):
 
@@ -25,9 +30,10 @@ def create_random_sequences_from_df(cfg: ConfigBenchmarkSweep, df: pd.DataFrame)
 
         for model_i, model in enumerate(models):
 
-            df_model = df_dataset[ df_dataset['model'] == model ]
+            df_model = df_dataset[ df_dataset['model'] == model.name ]
 
-            if model == cfg.model_name.name and cfg.search_type == SearchType.DEFAULT:
+            if model == ModelName.PLACEHOLDER and cfg.search_type == SearchType.DEFAULT:
+                # make a confidence interval around the default instead of doing hpo
                 sequences_all[model_i, dataset_i, :, :] = compute_default_sequences_for_model(cfg, df_model)
             else:
                 sequences_all[model_i, dataset_i, :, :] = compute_random_sequences_for_model(cfg, df_model, model, openml_dataset_id)

@@ -2,21 +2,13 @@ hydra:
   run:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
+defaults:
+  - hyperparams/ft_transformer: ft_transformer
 
 output_dir: ${hydra:run.dir}
 seed: 0
-device: 6
+devices: [0, 1, 2, 3, 4, 5, 6, 7]
 
-
-max_epochs: 300
-steps_per_epoch: 100
-batch_size: 1
-lr: 5.e-5
-weight_decay: 0.1
-beta1: 0.9
-beta2: 0.99
-
-lr_scheduler: True     # warmup + cosine
 
 model:
   dim: 64
@@ -25,6 +17,16 @@ model:
   attn_dropout: 0.1
   ff_dropout: 0.1
 
+optim:
+  max_epochs: 300
+  steps_per_epoch: 100
+  batch_size: 1
+  lr: 5.e-5
+  weight_decay: 0.1
+  beta1: 0.9
+  beta2: 0.99
+  lr_scheduler: True     # warmup + cosine
+
 data:
   min_samples: 100
   max_samples: 1000
@@ -32,3 +34,18 @@ data:
   max_features: 50
   max_classes: 2
   mask_proportion: 0.2
+
+
+plotting:
+  n_runs: 500                   # Number of runs to consider for plotting
+  n_random_shuffles: 100         # Number of random shuffles for plotting the confidence boundaries
+  confidence_bound: 0.90       # Confidence bounds ratio for plotting the confidence boundaries
+
+  benchmark_models:   # Based on which models do we normalize the accuracy and R2
+    - MLP
+    - RESNET
+    - SAINT
+    - FT_TRANSFORMER
+    - RANDOM_FOREST
+    - XGBOOST
+    - GRADIENT_BOOSTING_TREE

@@ -24,6 +24,7 @@ class DatasetSize(IntEnum):
 
 
 class ModelName(StrEnum):
+    PLACEHOLDER = "_placeholder_"   # This is a placeholder for the current running model
     FT_TRANSFORMER = "FT_Transformer"
     TABPFN_FINETUNE = "TabPFN_Finetune"
     SAINT = "SAINT"

@@ -2,7 +2,7 @@ import sys
 from typing import Optional
 from omegaconf import DictConfig
 
-from tabularbench.core.enums import DatasetSize, Task
+from tabularbench.core.enums import DatasetSize, ModelName, Task
 from tabularbench.core.get_model import get_model
 from tabularbench.core.get_trainer import get_trainer
 
@@ -86,8 +86,9 @@ if __name__ == "__main__":
 
     cfg = ConfigRun(
         logger = logging.getLogger("run_experiment"),
+        output_dir = "output_run_experiment",
         device = torch.device("cuda:5"),
-        model = "ft_transformer",
+        model_name = ModelName.FT_TRANSFORMER,
         seed = 0,
         task = Task.CLASSIFICATION,
         dataset_size = DatasetSize.MEDIUM,
