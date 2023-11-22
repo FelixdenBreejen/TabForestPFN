@@ -4,7 +4,7 @@ import pandas as pd
 
 
 from tabularbench.core.enums import SearchType
-from tabularbench.results.dataset_plot_combined import make_combined_dataset_plot
+from tabularbench.results.dataset_plot import make_dataset_plots
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.paths_and_filenames import (
     DEFAULT_RESULTS_FILE_NAME
@@ -26,17 +26,15 @@ def plot_results(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame) -> Non
         make_default_results(cfg, df_run_results)
         cfg.logger.info(f"Finished making default results for model {cfg.model_name.value} on benchmark {cfg.benchmark.name}")
 
+        cfg.logger.info(f"Start making dataset plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
+        make_dataset_plots(cfg, df_run_results)
+        cfg.logger.info(f"Finished making dataset plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
     
+
     if cfg.search_type == SearchType.RANDOM:
         cfg.logger.info(f"Start making hyperparam plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
         make_hyperparam_plots(cfg, df_run_results)
         cfg.logger.info(f"Finished making hyperparam plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
-    
-
-    cfg.logger.info(f"Start making sweep plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
-    make_combined_dataset_plot(cfg, df_run_results)
-    # make_separate_dataset_plots(cfg, df_run_results)
-    cfg.logger.info(f"Finished making sweep plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
     
     cfg.logger.info(f"Finished making plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
 

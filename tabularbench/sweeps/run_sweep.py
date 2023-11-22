@@ -19,6 +19,8 @@ from tabularbench.sweeps.get_logger import get_logger
 def run_sweep(cfg: ConfigBenchmarkSweep):
 
     cfg.logger.info(f"Start {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
+    cfg.save()
+
     log_ignore_datasets(cfg)
 
     results_path = cfg.output_dir / RESULTS_FILE_NAME
