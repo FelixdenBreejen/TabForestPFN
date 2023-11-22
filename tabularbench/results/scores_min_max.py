@@ -6,6 +6,23 @@ from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatte
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
+def get_combined_normalized_scores(cfg: ConfigBenchmarkSweep, openml_ids: list[int], scores: list[float]) -> float:
+    """
+    Based on a list of scores belonging to dataset ids, we compute the normalized test score.
+    """
+
+    normalized_scores = []
+
+    for openml_dataset_id, score in zip(openml_ids, scores):
+        score_min, score_max = scores_min_max(cfg, openml_dataset_id)
+        normalized_score = (score - score_min) / (score_max - score_min)
+        normalized_score = max(0.0, normalized_score)
+        normalized_scores.append(normalized_score)
+
+    combined_normalized_score = sum(normalized_scores) / len(normalized_scores)
+    return combined_normalized_score
+
+
 def scores_min_max(cfg: ConfigBenchmarkSweep, openml_dataset_id: int) -> tuple[float, float]:
     """
     Based on the benchmark results, we normalize the scores of the sweep.

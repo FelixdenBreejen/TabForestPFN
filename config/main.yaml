@@ -12,12 +12,12 @@ output_dir: ${hydra:run.dir}
 seed: 0
 devices: [0, 1, 2, 3, 4, 5, 6, 7]
 n_random_runs_per_dataset: 500                  # suggested: 500 
-n_default_runs_per_dataset: 10                # on default we also want multiple runs for the confidence bound
+n_default_runs_per_dataset: 10                  # on default we also want multiple runs for the confidence bound
 
 models:
-  - FT_TRANSFORMER
+  - TABPFN_FINETUNE
 model_plot_names:
-  - FtTransformerTryout
+  - TabPFN Finetune 10k
 benchmarks:
   - CATEGORICAL_CLASSIFICATION
   # - NUMERICAL_CLASSIFICATION
@@ -28,8 +28,8 @@ benchmarks:
   # - CATEGORICAL_REGRESSION_LARGE
   # - NUMERICAL_REGRESSION_LARGE
 search_types:
-  # - DEFAULT
-  - RANDOM
+  - DEFAULT
+  # - RANDOM
 
 
 openml_dataset_ids_to_ignore:

@@ -41,14 +41,18 @@ def create_random_sequences_from_df(cfg: ConfigBenchmarkSweep, df: pd.DataFrame)
     return sequences_all
 
 
-def compute_default_sequences_for_model(cfg: ConfigBenchmarkSweep, df_model: pd.DataFrame,) -> np.ndarray:
+def compute_default_sequences_for_model(cfg: ConfigBenchmarkSweep, df_model: pd.DataFrame) -> np.ndarray:
     """
     Fake sequence that is just the default value.
     """
 
+    n_shuffles = cfg.config_plotting.n_random_shuffles
+
     df_model_default = df_model[ df_model['search_type'] == SearchType.DEFAULT.name ]
-    quantiles = np.arange(0, cfg.config_plotting.n_random_shuffles)/cfg.config_plotting.n_random_shuffles
-    sequences = np.quantile(df_model_default['score_test_mean'], q=quantiles)[:, None]
+    results = df_model_default['score_test_mean'].values
+
+    random_index = np.random.randint(0, len(results), size=(n_shuffles,))
+    sequences = results[random_index, None]
     sequences = sequences.clip(min=0)
 
     return sequences
@@ -91,8 +95,6 @@ def compute_random_sequences_for_model(cfg: ConfigBenchmarkSweep, df_model: pd.D
     return sequences
 
 
-
-
 def normalize_sequences(cfg: ConfigBenchmarkSweep, sequences_all: np.ndarray) -> np.ndarray:
     """
     Normalizes the sequences to be normalized test scores between 0 and 1.
@@ -103,7 +105,7 @@ def normalize_sequences(cfg: ConfigBenchmarkSweep, sequences_all: np.ndarray) ->
         score_min, score_max = scores_min_max(cfg, cfg.openml_dataset_ids_to_use[dataset_i])
         normalized = (sequences_all[:, dataset_i, :, :] - score_min).clip(min=0) / (score_max - score_min)
         sequences_normalized[:, dataset_i, :, :] = normalized
-    return sequences_all
+    return sequences_normalized
 
 
 

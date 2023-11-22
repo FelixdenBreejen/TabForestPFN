@@ -4,6 +4,7 @@ import pandas as pd
 
 from tabularbench.core.enums import ModelName, SearchType
 from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
+from tabularbench.results.scores_min_max import get_combined_normalized_scores
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.paths_and_filenames import (
     DEFAULT_RESULTS_FILE_NAME
@@ -27,8 +28,28 @@ def make_default_results(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame
     df_run_results.sort_values(by=['openml_dataset_id'], inplace=True)
 
     df = pd.concat([df_bench, df_run_results], ignore_index=True)
+    normalized_scores = calculate_normalized_scores(cfg, df)
+    
     df['openml_dataset_name'] = df.apply(lambda row: row['openml_dataset_name'][:8] + '...' if len(row['openml_dataset_name']) > 11 else row['openml_dataset_name'], axis=1)
     df['score_test_mean'] = df['score_test_mean'].apply(lambda x: f"{x:.4f}")
 
-    df_results = df.pivot(index='model_plot_name', columns=['openml_dataset_id', 'openml_dataset_name'], values='score_test_mean')
+    df_results = df.pivot(index=['model', 'model_plot_name'], columns=['openml_dataset_id', 'openml_dataset_name'], values='score_test_mean')
+    df_results['Normalized Score'] = df_results.apply(lambda row: normalized_scores[row.name[0]], axis=1)
+    df_results.index = df_results.index.droplevel(0)
+
     df_results.to_csv(cfg.output_dir / DEFAULT_RESULTS_FILE_NAME, mode='w', index=True, header=True)
+
+
+def calculate_normalized_scores(cfg: ConfigBenchmarkSweep, df: pd.DataFrame) -> dict[str, float]:
+
+    benchmark_model_names = [model_name.name for model_name in cfg.config_plotting.benchmark_model_names] + [cfg.model_name.name]
+    
+    normalized_scores = {}
+    for model in benchmark_model_names:
+        df_model = df[ df['model'] == model ]
+        openml_dataset_ids = df_model['openml_dataset_id'].values.tolist()
+        scores = df_model['score_test_mean'].values.tolist()
+        normalized_score = get_combined_normalized_scores(cfg, openml_dataset_ids, scores)
+        normalized_scores[model] = normalized_score
+
+    return normalized_scores
