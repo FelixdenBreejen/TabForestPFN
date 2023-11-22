@@ -60,7 +60,9 @@ class Trainer(BaseEstimator):
             self.scheduler.step(loss_valid)
     
 
-    def test(self, x_test: np.ndarray, y_test: np.ndarray):
+    def test(self, x_train: np.ndarray, y_train: np.ndarray, x_test: np.ndarray, y_test: np.ndarray):
+        # x_train and y_train are not used
+        # they are passed to be consistent with the API of the other trainers
 
         self.load_params(self.checkpoint.path)
 
