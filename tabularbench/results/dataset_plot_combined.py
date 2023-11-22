@@ -31,7 +31,7 @@ def make_combined_dataset_plot(cfg: ConfigBenchmarkSweep, plot_data: np.ndarray)
     
     fig, ax = plt.subplots(figsize=(25, 25))
 
-    models = cfg.config_plotting.benchmark_model_names + [cfg.model_name]
+    models = cfg.config_plotting.benchmark_model_names + [cfg.model_plot_name]
 
     for model_i, model in enumerate(models):
 

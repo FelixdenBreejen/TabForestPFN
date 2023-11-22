@@ -27,40 +27,64 @@ def create_random_sequences_from_df(cfg: ConfigBenchmarkSweep, df: pd.DataFrame)
 
             df_model = df_dataset[ df_dataset['model'] == model ]
 
-            df_model_default = df_model[ df_model['search_type'] == SearchType.DEFAULT.name ]
-            df_model_default_seed_0 = df_model_default[ df_model_default['seed'] == cfg.seed ]
-
-            if len(df_model_default) == 1:
-                # If there is one default value, we use that
-                default_value_val = df_model_default['score_val_mean'].item()
-                default_value_test = df_model_default['score_test_mean'].item()
-            elif len(df_model_default_seed_0) == 1:
-                # If there are multiple default values, we use the one with seed 0
-                default_value_val = df_model_default_seed_0['score_val_mean'].item()
-                default_value_test = df_model_default_seed_0['score_test_mean'].item()
-            elif len(df_model_default) == 0:
-                cfg.logger.warning(f"No default value found for model {model} on dataset {openml_dataset_id}. We will assume 0.")
-                default_value_val = 0
-                default_value_test = 0
+            if model == cfg.model_name.name and cfg.search_type == SearchType.DEFAULT:
+                sequences_all[model_i, dataset_i, :, :] = compute_default_sequences_for_model(cfg, df_model)
             else:
-                raise ValueError(f"More than one default value found for model {model} on dataset {openml_dataset_id}")
-            
-            df_model_random = df_model[ df_model['search_type'] == SearchType.RANDOM.name ]
-            random_values_val = df_model_random['score_val_mean'].values
-            random_values_test = df_model_random['score_test_mean'].values
-
-            sequences = create_random_sequences(
-                default_value_val = default_value_val, 
-                default_value_test = default_value_test,
-                random_values_val = random_values_val,
-                random_values_test = random_values_test,
-                sequence_length = cfg.config_plotting.n_runs,
-                n_shuffles = cfg.config_plotting.n_random_shuffles
-            )
-            sequences = sequences.clip(min=0)
-            sequences_all[model_i, dataset_i, :, :] = sequences
+                sequences_all[model_i, dataset_i, :, :] = compute_random_sequences_for_model(cfg, df_model, model, openml_dataset_id)
 
     return sequences_all
+
+
+def compute_default_sequences_for_model(cfg: ConfigBenchmarkSweep, df_model: pd.DataFrame,) -> np.ndarray:
+    """
+    Fake sequence that is just the default value.
+    """
+
+    df_model_default = df_model[ df_model['search_type'] == SearchType.DEFAULT.name ]
+    quantiles = np.arange(0, cfg.config_plotting.n_random_shuffles)/cfg.config_plotting.n_random_shuffles
+    sequences = np.quantile(df_model_default['score_test_mean'], q=quantiles)[:, None]
+    sequences = sequences.clip(min=0)
+
+    return sequences
+
+
+def compute_random_sequences_for_model(cfg: ConfigBenchmarkSweep, df_model: pd.DataFrame, model: str, openml_dataset_id: int) -> np.ndarray:
+
+    df_model_default = df_model[ df_model['search_type'] == SearchType.DEFAULT.name ]
+    df_model_default_seed_0 = df_model_default[ df_model_default['seed'] == cfg.seed ]
+
+    if len(df_model_default) == 1:
+        # If there is one default value, we use that
+        default_value_val = df_model_default['score_val_mean'].item()
+        default_value_test = df_model_default['score_test_mean'].item()
+    elif len(df_model_default_seed_0) == 1:
+        # If there are multiple default values, we use the one with seed 0
+        default_value_val = df_model_default_seed_0['score_val_mean'].item()
+        default_value_test = df_model_default_seed_0['score_test_mean'].item()
+    elif len(df_model_default) == 0:
+        cfg.logger.warning(f"No default value found for model {model} on dataset {openml_dataset_id}. We will assume 0.")
+        default_value_val = 0
+        default_value_test = 0
+    else:
+        raise ValueError(f"More than one default value found for model {model} on dataset {openml_dataset_id}")
+    
+    df_model_random = df_model[ df_model['search_type'] == SearchType.RANDOM.name ]
+    random_values_val = df_model_random['score_val_mean'].values
+    random_values_test = df_model_random['score_test_mean'].values
+
+    sequences = create_random_sequences(
+        default_value_val = default_value_val, 
+        default_value_test = default_value_test,
+        random_values_val = random_values_val,
+        random_values_test = random_values_test,
+        sequence_length = cfg.config_plotting.n_runs,
+        n_shuffles = cfg.config_plotting.n_random_shuffles
+    )
+    sequences = sequences.clip(min=0)
+
+    return sequences
+
+
 
 
 def normalize_sequences(cfg: ConfigBenchmarkSweep, sequences_all: np.ndarray) -> np.ndarray:

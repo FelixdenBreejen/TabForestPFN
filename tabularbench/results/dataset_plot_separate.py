@@ -29,7 +29,7 @@ def make_separate_dataset_plot_data(cfg: ConfigBenchmarkSweep, sequences_all: np
 
 def make_separate_dataset_plots(cfg: ConfigBenchmarkSweep, plot_data: np.ndarray) -> plt.Figure:
 
-    models = cfg.config_plotting.benchmark_model_names + [cfg.model_name]
+    models = cfg.config_plotting.benchmark_model_names + [cfg.model_plot_name]
     n_dataset_ids = len(cfg.openml_dataset_ids_to_use)
 
     num_horizontal_subplots = math.ceil(math.sqrt(n_dataset_ids))
