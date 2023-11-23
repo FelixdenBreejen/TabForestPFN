@@ -18,10 +18,10 @@ class ConfigPretrain():
     output_dir: Path
     seed: int
     devices: list[torch.device]
-    config_model: DictConfig
-    config_data: DictConfig
-    config_optim: DictConfig
-    config_plotting: ConfigPlotting
+    model: DictConfig
+    data: DictConfig
+    optim: DictConfig
+    plotting: ConfigPlotting
 
 
     @classmethod
@@ -37,13 +37,14 @@ class ConfigPretrain():
             output_dir=output_dir,
             devices=devices,
             seed=cfg_hydra.seed,
-            config_model = cfg_hydra.model,
-            config_data = cfg_hydra.data,
-            config_optim = cfg_hydra.optim,
-            config_plotting = ConfigPlotting(
+            model = cfg_hydra.model,
+            data = cfg_hydra.data,
+            optim = cfg_hydra.optim,
+            plotting = ConfigPlotting(
                 n_runs=cfg_hydra.plotting.n_runs,
                 n_random_shuffles=cfg_hydra.plotting.n_random_shuffles,
                 confidence_bound=cfg_hydra.plotting.confidence_bound,
+                plot_default_value=cfg_hydra.plotting.plot_default_value,
                 benchmark_model_names=[ModelName[model] for model in cfg_hydra.plotting.benchmark_models],
             ),
         )

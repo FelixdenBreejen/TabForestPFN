@@ -1,16 +1,13 @@
 from pathlib import Path
 
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.preprocessing import OneHotEncoder
 import torch
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 import numpy as np
 from transformers.optimization import get_cosine_schedule_with_warmup
 
-from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
-from tabularbench.core.synthetic_dataset import SyntheticDataset
+from tabularbench.core.callbacks import EpochStatistics
+from tabularbench.data.dataset_synthetic import SyntheticDataset
 from tabularbench.models.tabPFN.saint import SAINTadapted
 
 

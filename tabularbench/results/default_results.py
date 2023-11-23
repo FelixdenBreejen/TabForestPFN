@@ -35,7 +35,7 @@ def make_default_results(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame
     df_results = df.pivot(index=['model', 'model_plot_name'], columns=['openml_dataset_id', 'openml_dataset_name'], values='score_test_mean')
     df_results['Normalized Score'] = df_results.apply(lambda row: normalized_scores[row.name[0]], axis=1)
     df_results.index = df_results.index.droplevel(0)
-    df_results = df_results.applymap(lambda x: f"{x:.4f}")
+    df_results = df_results.map(lambda x: f"{x:.4f}")
 
     df_results.to_csv(cfg.output_dir / DEFAULT_RESULTS_FILE_NAME, mode='w', index=True, header=True)
 

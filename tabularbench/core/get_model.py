@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 from tabularbench.core.enums import ModelName
-from tabularbench.models.tabPFN.transformer import TabPFN
+from tabularbench.models.tabPFN.tabpfn import TabPFN
 from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.models.ft_transformer.ft_transformer import FTTransformer
 
@@ -14,6 +14,6 @@ def get_model(cfg: ConfigRun, x_train: np.ndarray, y_train: np.ndarray, categori
         case ModelName.FT_TRANSFORMER:
             return FTTransformer(cfg, x_train, y_train, categorical_indicator)
         case ModelName.TABPFN_FINETUNE:
-            return TabPFN(cfg)
+            return TabPFN(cfg.hyperparams.use_pretrained_weights, path_to_weights=cfg.hyperparams.path_to_weights)
         case _:
             raise NotImplementedError(f"Model {cfg.model_name} not implemented yet")

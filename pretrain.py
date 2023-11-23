@@ -4,6 +4,7 @@ import hydra
 from omegaconf import DictConfig
 import torch.multiprocessing as mp
 from main import check_existence_of_benchmark_results_csv, save_config
+from tabularbench.core.trainer_pfn import TrainerPFN
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
 
 from tabularbench.sweeps.set_seed import set_seed
@@ -22,7 +23,7 @@ def main(cfg_hydra: DictConfig):
     save_config(cfg)
     set_seed(cfg.seed)
     
-    trainer = TrainerMaskedSaint(cfg_dict)
+    trainer = TrainerPFN(cfg)
     trainer.train()
 
 if __name__ == "__main__":

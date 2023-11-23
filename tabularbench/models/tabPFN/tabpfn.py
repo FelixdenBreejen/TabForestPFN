@@ -10,7 +10,8 @@ from torch.nn import Module, TransformerEncoder
 import tabularbench.models.tabPFN.encoders as encoders
 from tabularbench.models.tabPFN.layer import TransformerEncoderLayer
 from tabularbench.models.tabPFN.utils import SeqBN, bool_mask_to_att_mask
-from tabularbench.sweeps.config_run import ConfigRun
+
+PATH_TO_WEIGHTS = 'tabularbench/models/tabPFN/prior_diff_real_checkpoint_n_0_epoch_42.cpkt'
 
 
 class TransformerModel(nn.Module):
@@ -235,12 +236,10 @@ class TransformerEncoderDiffInit(Module):
 
 class TabPFN(torch.nn.Module):
     
-    def __init__(self, cfg: ConfigRun):
+    def __init__(self, use_pretrained_weights: bool, path_to_weights: str = None):
         super().__init__()
 
-        self.cfg = cfg
-
-        model_state, optimizer_state, config_sample = torch.load(cfg.hyperparams.path_to_weights, map_location='cpu')
+        model_state, optimizer_state, config_sample = torch.load(PATH_TO_WEIGHTS, map_location='cpu')
 
         if (('nan_prob_no_reason' in config_sample and config_sample['nan_prob_no_reason'] > 0.0) or
             ('nan_prob_a_reason' in config_sample and config_sample['nan_prob_a_reason'] > 0.0) or
@@ -269,7 +268,16 @@ class TabPFN(torch.nn.Module):
 
         model.criterion = loss
 
-        if cfg.hyperparams.use_pretrained_weights:
+        if use_pretrained_weights:
+            assert path_to_weights is not None
+            checkpoint = torch.load(PATH_TO_WEIGHTS, map_location='cpu')
+
+            match checkpoint:
+                case (model_state, optimizer_state, config_sample):
+                    pass
+                case model_state:
+                    pass
+
             module_prefix = 'module.'
             model_state = {k.replace(module_prefix, ''): v for k, v in model_state.items()}
             model.load_state_dict(model_state)
@@ -277,13 +285,15 @@ class TabPFN(torch.nn.Module):
         self.model = model
 
 
-    def forward(self, x_train: torch.Tensor, y_train: torch.Tensor, x_test: torch.Tensor):
+    def forward(self, x_support: torch.Tensor, y_support: torch.Tensor, x_query: torch.Tensor):
 
-        single_eval_pos = x_train.shape[0]
-        x_full = torch.cat([x_train, x_test], 0)
+        single_eval_pos = x_support.shape[0]
+        x_full = torch.cat([x_support, x_query], 0)
 
-        src = (None, x_full, y_train)
+        # Hehehe wtf tabPFN why do you need float
+        y_support = y_support.to(torch.float)
 
+        src = (None, x_full, y_support)
         pred = self.model(src, single_eval_pos=single_eval_pos)
         
         return pred

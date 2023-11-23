@@ -18,28 +18,31 @@ model:
   ff_dropout: 0.1
 
 optim:
-  max_epochs: 300
-  steps_per_epoch: 100
+  max_steps: 100000
+  log_every_n_steps: 100
+  eval_every_n_steps: 1000
   batch_size: 1
-  lr: 5.e-5
-  weight_decay: 0.1
+  lr: 1.e-5
+  weight_decay: 0.01
   beta1: 0.9
   beta2: 0.99
-  lr_scheduler: True     # warmup + cosine
+  warmup_steps: 1000
+  cosine_scheduler: False  
 
 data:
   min_samples: 100
-  max_samples: 1000
+  max_samples: 1000      # Support + query
   min_features: 3
-  max_features: 50
-  max_classes: 2
-  mask_proportion: 0.2
+  max_features: 100
+  max_classes: 10
+  support_proportion: 0.8   # Proportion of support samples vs query samples
 
 
 plotting:
   n_runs: 500                   # Number of runs to consider for plotting
   n_random_shuffles: 100         # Number of random shuffles for plotting the confidence boundaries
   confidence_bound: 0.90       # Confidence bounds ratio for plotting the confidence boundaries
+  plot_default_value: True     # Plot the default value of the model
 
   benchmark_models:   # Based on which models do we normalize the accuracy and R2
     - MLP

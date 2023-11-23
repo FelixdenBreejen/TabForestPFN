@@ -1,14 +1,13 @@
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import train_test_split, StratifiedKFold
 import torch
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import ReduceLROnPlateau, LambdaLR
 import numpy as np
-from sklearn.preprocessing import OneHotEncoder
+from transformers import get_cosine_schedule_with_warmup, get_constant_schedule_with_warmup
 
-from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
-from tabularbench.models.tabPFN.load_model import load_model
-from tabularbench.data.dataset import TabPFNDataset, TabPFNDatasetGenerator
+from tabularbench.core.callbacks import EpochStatistics
+from tabularbench.data.dataset_synthetic import SyntheticDataset
+from tabularbench.models.tabPFN.tabpfn import TabPFN
+from tabularbench.sweeps.config_pretrain import ConfigPretrain
 
 
 
@@ -16,34 +15,64 @@ class TrainerPFN(BaseEstimator):
 
     def __init__(
             self, 
-            model_config: dict
+            cfg: ConfigPretrain
         ) -> None:
 
+        self.cfg = cfg
+        self.model = TabPFN(use_pretrained_weights=False)
+        self.model.to(self.cfg.devices[0])   # TODO: DDP
+
+        self.synthetic_dataset = SyntheticDataset(
+            min_samples=self.cfg.data['min_samples'],
+            max_samples=self.cfg.data['max_samples'],
+            min_features=self.cfg.data['min_features'],
+            max_features=self.cfg.data['max_features'],
+            max_classes=self.cfg.data['max_classes'],
+            support_prop=self.cfg.data['support_proportion']
+        )
+
+        self.optimizer = self.select_optimizer()
+        self.scheduler = self.select_scheduler()
+        self.loss = self.select_loss()
         
-        self.model_config = model_config
-        self.cfg = model_config
 
-        self.early_stopping = EarlyStopping(patience=self.cfg['es_patience'])
-        self.checkpoint = Checkpoint("temp_weights", self.cfg['id'])
-        
-        if self.cfg['categorical_indicator'] is not None:
-            self.categorical_indicator = self.cfg['categorical_indicator']
+    def train(self):
 
-        self.onehot_encoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
+        self.model.train()
+        generator = self.synthetic_dataset.generator()
+
+        loss_total = 0
+
+        for step in range(1, self.cfg.optim['max_steps']+1):
+            dataset = next(generator)
+
+            x_support = dataset['x_support'].to(self.cfg.devices[0])
+            y_support = dataset['y_support'].to(self.cfg.devices[0])
+            x_query = dataset['x_query'].to(self.cfg.devices[0])
+            y_query = dataset['y_query'].to(self.cfg.devices[0])
+
+            pred = self.model(x_support, y_support, x_query)
+            loss = self.loss(pred, y_query)
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            self.scheduler.step()
+
+            loss = loss.item()
+            loss_total += loss
+
+            if step % self.cfg.optim['log_every_n_steps'] == 0:
+                self.cfg.logger.info(f"Step {step} | Loss: {loss_total / self.cfg.optim['log_every_n_steps']:.4f}")
+                loss_total = 0
 
 
-
-    def fit(self, x_train: np.ndarray, y_train: np.ndarray):
-
-        self.model, pretrain_config = load_model(use_pretrained_weights=self.cfg['use_pretrained_weights'])
-
+    
         if self.cfg['regression']:  
             self.model.decoder[2].reset_parameters()
         
         self.model.to(self.cfg['device'])
 
-        self.optimizer = self.select_optimizer()
-        self.scheduler = self.select_scheduler()
 
         self.x_train = x_train
         self.y_train = y_train
@@ -73,7 +102,6 @@ class TrainerPFN(BaseEstimator):
 
         loader_valid = self.make_loader(dataset_valid, training=False)
 
-        self.loss = self.select_loss()
         self.optimizer = self.select_optimizer()
 
         self.train(dataset_train_generator, dataset_valid, loader_valid)
@@ -81,7 +109,7 @@ class TrainerPFN(BaseEstimator):
         return self
 
 
-    def train(self, dataset_train_generator, dataset_valid, loader_valid):
+    def train_old(self, dataset_train_generator, dataset_valid, loader_valid):
 
         for epoch in range(self.cfg['max_epochs']):
 
@@ -238,9 +266,9 @@ class TrainerPFN(BaseEstimator):
 
         optimizer = AdamW(
             self.model.parameters(), 
-            lr=self.cfg['lr'],
-            betas=(0.9, 0.999),
-            weight_decay=self.cfg['optimizer__weight_decay']
+            lr=self.cfg.optim['lr'],
+            betas=(self.cfg.optim['beta1'], self.cfg.optim['beta2']),
+            weight_decay=self.cfg.optim['weight_decay']
         )
         
         return optimizer
@@ -248,61 +276,20 @@ class TrainerPFN(BaseEstimator):
 
     def select_scheduler(self):
 
-        if self.cfg['lr_scheduler']:                
-            scheduler = ReduceLROnPlateau(
-                self.optimizer, 
-                patience=self.cfg['lr_patience'],
-                factor=0.2
-            )
-        else:
-            scheduler = LambdaLR(
+        if self.cfg.optim['cosine_scheduler']:
+            schedule = get_cosine_schedule_with_warmup(
                 self.optimizer,
-                lambda _: 1
-            )
-
-        return scheduler
-    
-
-    def make_dataset_split(self, x_train, y_train):
-
-        if self.cfg['regression']:
-            x_t_train, x_t_valid, y_t_train, y_t_valid = train_test_split(
-                x_train, y_train, test_size=0.2
+                num_warmup_steps=self.cfg.optim['warmup_steps'],
+                num_training_steps=self.cfg.optim['max_steps']
             )
         else:
-            skf = StratifiedKFold(n_splits=5)
-            indices = next(skf.split(x_train, y_train))
-            x_t_train, x_t_valid = x_train[indices[0]], x_train[indices[1]]
-            y_t_train, y_t_valid = y_train[indices[0]], y_train[indices[1]]
-
-        return x_t_train, x_t_valid, y_t_train, y_t_valid
-        
-
-    def make_loader(self, dataset, training):
-
-        if isinstance(dataset, torch.utils.data.IterableDataset):
-            return torch.utils.data.DataLoader(
-                dataset,
-                batch_size=1,
-                pin_memory=True,
-                collate_fn=lambda x: x[0]
-            )
-        else:
-            # dataloader should not make a batch
-            return torch.utils.data.DataLoader(
-                dataset,
-                batch_size=1,
-                shuffle=training,
-                pin_memory=True,
-                collate_fn=lambda x: x[0]
+            schedule = get_constant_schedule_with_warmup(
+                self.optimizer,
+                num_warmup_steps=self.cfg.optim['warmup_steps']
             )
 
+        return schedule
     
+
     def select_loss(self):
-
-        if self.cfg['regression']:
-            loss = torch.nn.MSELoss()
-        else:
-            loss = torch.nn.CrossEntropyLoss()
-
-        return loss
+        return torch.nn.CrossEntropyLoss()

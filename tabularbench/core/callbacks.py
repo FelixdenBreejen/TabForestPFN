@@ -38,7 +38,7 @@ class EarlyStopping():
 
 class Checkpoint():
 
-    def __init__(self, dirname, id):
+    def __init__(self, dirname: Path, id: str):
         self.dirname = dirname
         self.id = id
         self.curr_best_loss = np.inf

@@ -34,7 +34,7 @@ def get_benchmark_csv_reformatted():
     if not Path(PATH_TO_ALL_BENCH_CSV_REFORMATTED).exists():
         reformat_benchmark()
 
-    df = pd.read_csv(PATH_TO_ALL_BENCH_CSV_REFORMATTED)
+    df = pd.read_csv(PATH_TO_ALL_BENCH_CSV_REFORMATTED, low_memory=False)
     return df
     
 
