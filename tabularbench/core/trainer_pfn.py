@@ -5,6 +5,7 @@ import numpy as np
 from transformers import get_cosine_schedule_with_warmup, get_constant_schedule_with_warmup
 
 from tabularbench.core.callbacks import EpochStatistics
+from tabularbench.core.losses import CrossEntropyLossExtraBatch
 from tabularbench.data.dataset_synthetic import SyntheticDataset
 from tabularbench.models.tabPFN.tabpfn import TabPFN
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
@@ -46,10 +47,10 @@ class TrainerPFN(BaseEstimator):
         for step in range(1, self.cfg.optim['max_steps']+1):
             dataset = next(generator)
 
-            x_support = dataset['x_support'].to(self.cfg.devices[0])
-            y_support = dataset['y_support'].to(self.cfg.devices[0])
-            x_query = dataset['x_query'].to(self.cfg.devices[0])
-            y_query = dataset['y_query'].to(self.cfg.devices[0])
+            x_support = dataset['x_support'].to(self.cfg.devices[0])[None, :]
+            y_support = dataset['y_support'].to(self.cfg.devices[0])[None, :]
+            x_query = dataset['x_query'].to(self.cfg.devices[0])[None, :]
+            y_query = dataset['y_query'].to(self.cfg.devices[0])[None, :]
 
             pred = self.model(x_support, y_support, x_query)
             loss = self.loss(pred, y_query)
@@ -65,6 +66,11 @@ class TrainerPFN(BaseEstimator):
             if step % self.cfg.optim['log_every_n_steps'] == 0:
                 self.cfg.logger.info(f"Step {step} | Loss: {loss_total / self.cfg.optim['log_every_n_steps']:.4f}")
                 loss_total = 0
+
+            # if step % self.cfg.optim['eval_every_n_steps'] == 0:
+                
+            
+
 
 
     
@@ -292,4 +298,4 @@ class TrainerPFN(BaseEstimator):
     
 
     def select_loss(self):
-        return torch.nn.CrossEntropyLoss()
+        return CrossEntropyLossExtraBatch()

@@ -131,8 +131,8 @@ class TransformerModel(nn.Module):
                             self.generate_global_att_trainset_matrix(*src_mask_args).to(x_src.device),
                             self.generate_global_att_query_matrix(*src_mask_args).to(x_src.device))
 
-        train_x = x_src[:single_eval_pos] + y_src[:single_eval_pos]
-        src = torch.cat([global_src, style_src, train_x, x_src[single_eval_pos:]], 0)
+        train_x = x_src[:, :single_eval_pos] + y_src[:, :single_eval_pos]
+        src = torch.cat([global_src, style_src, train_x, x_src[:, single_eval_pos:]], 1)
 
         if self.input_ln is not None:
             src = self.input_ln(src)
@@ -142,7 +142,7 @@ class TransformerModel(nn.Module):
 
         output = self.transformer_encoder(src, src_mask)
         output = self.decoder(output)
-        return output[single_eval_pos+len(style_src)+(self.global_att_embeddings.num_embeddings if self.global_att_embeddings else 0):]
+        return output[:, single_eval_pos+len(style_src)+(self.global_att_embeddings.num_embeddings if self.global_att_embeddings else 0):]
 
     @torch.no_grad()
     def init_from_small_model(self, small_model):
@@ -287,8 +287,8 @@ class TabPFN(torch.nn.Module):
 
     def forward(self, x_support: torch.Tensor, y_support: torch.Tensor, x_query: torch.Tensor):
 
-        single_eval_pos = x_support.shape[0]
-        x_full = torch.cat([x_support, x_query], 0)
+        single_eval_pos = x_support.shape[1]
+        x_full = torch.cat([x_support, x_query], 1)
 
         # Hehehe wtf tabPFN why do you need float
         y_support = y_support.to(torch.float)

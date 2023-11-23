@@ -1,6 +1,6 @@
 from functools import partial
+import einops
 
-from torch import nn
 import torch
 import torch.nn.functional as F
 from torch.nn.modules.transformer import _get_activation_fn, Module, Tensor, Optional, MultiheadAttention, Linear, Dropout, LayerNorm
@@ -106,9 +106,15 @@ class TransformerEncoderLayer(Module):
         elif isinstance(src_mask, int):
             assert src_key_padding_mask is None
             single_eval_position = src_mask
+
+            batch_size = src_.shape[0]
+            src_ = einops.rearrange(src_, 'b s d -> (b s) d')
             src_left = self.self_attn(src_[:single_eval_position], src_[:single_eval_position], src_[:single_eval_position])[0]
+            src_left = einops.rearrange(src_left, '(b s) d -> b s d', b=batch_size)
             src_right = self.self_attn(src_[single_eval_position:], src_[:single_eval_position], src_[:single_eval_position])[0]
-            src2 = torch.cat([src_left, src_right], dim=0)
+            src_right = einops.rearrange(src_right, '(b s) d -> b s d', b=batch_size)
+
+            src2 = torch.cat([src_left, src_right], dim=1)
         else:
             if self.recompute_attn:
                 src2 = checkpoint(self.self_attn, src_, src_, src_, src_key_padding_mask, True, src_mask)[0]
