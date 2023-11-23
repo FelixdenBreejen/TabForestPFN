@@ -54,6 +54,7 @@ class ConfigPlotting():
     n_runs: int
     n_random_shuffles: int
     confidence_bound: float
+    plot_default_value: bool
     benchmark_model_names: list[ModelName]
 
 

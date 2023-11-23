@@ -47,9 +47,11 @@ def make_separate_dataset_plots(cfg: ConfigBenchmarkSweep, plot_data: np.ndarray
             sequence_lower_bound = plot_data[1, model_i, dataset_i, :]
             sequence_upper_bound = plot_data[2, model_i, dataset_i, :]
 
-            ax.plot(sequence_mean, label=model, linewidth=6)
+            epochs = np.arange(len(sequence_mean)) + cfg.config_plotting.plot_default_value
+
+            ax.plot(epochs, sequence_mean, label=model, linewidth=6)
             ax.fill_between(
-                x=np.arange(len(sequence_mean)), 
+                x=epochs, 
                 y1=sequence_lower_bound, 
                 y2=sequence_upper_bound, 
                 alpha=0.2

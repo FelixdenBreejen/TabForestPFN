@@ -101,10 +101,12 @@ def normalize_sequences(cfg: ConfigBenchmarkSweep, sequences_all: np.ndarray) ->
     """
 
     sequences_normalized = np.zeros_like(sequences_all)
+    
     for dataset_i in range(sequences_all.shape[1]):
         score_min, score_max = scores_min_max(cfg, cfg.openml_dataset_ids_to_use[dataset_i])
         normalized = (sequences_all[:, dataset_i, :, :] - score_min).clip(min=0) / (score_max - score_min)
         sequences_normalized[:, dataset_i, :, :] = normalized
+
     return sequences_normalized
 
 
@@ -131,18 +133,20 @@ def create_random_sequences(
 
     
     assert len(random_values_val) == len(random_values_test), "The number of random values for val and test must be the same"
-
-    if len(random_values_val) == 0:
-        # We consider default runs (no random values) as a drawn horizontal line
-        return np.tile(default_value_test, (n_shuffles, sequence_length))
+    assert len(random_values_val) > 0
 
     random_values = np.concatenate([random_values_val[None, :], random_values_test[None, :]], axis=0)
     default_values = np.array([default_value_val, default_value_test])
 
     random_index = np.random.randint(0, len(random_values_val), size=(n_shuffles, sequence_length-1))
-
     random_sequences = random_values[:, random_index]
-    sequences = np.concatenate([np.tile(default_values[:, None], (1, n_shuffles))[:, :, None], random_sequences], axis=2)
+    
+    default_start = np.tile(default_values[:, None], (1, n_shuffles))[:, :, None]
+    sequences = np.concatenate([default_start, random_sequences], axis=2)
+
+    # sequences are now and array of shape (2, n_shuffles, n_runs),
+    # where the first dimension is val and test, and the second dimension is the shuffles,
+    # and the third dimension is the runs. Every run starts with the default value, and then has random HPO values.
 
     best_validation_score = np.maximum.accumulate(sequences[0, :, :], axis=1)
     diff = best_validation_score[:, :-1] < best_validation_score[:, 1:]

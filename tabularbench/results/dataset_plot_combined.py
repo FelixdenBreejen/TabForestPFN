@@ -16,9 +16,11 @@ def make_combined_dataset_plot_data(cfg: ConfigBenchmarkSweep, sequences_all: np
 
     for model_i in range(n_models):
 
-        sequence_mean = np.mean(sequences_all[model_i, :, :], axis=0)
-        sequence_lower_bound = np.quantile(sequences_all[model_i, :, :], q=1-cfg.config_plotting.confidence_bound, axis=0)
-        sequence_upper_bound = np.quantile(sequences_all[model_i, :, :], q=cfg.config_plotting.confidence_bound, axis=0)
+        sequences_model = sequences_all[model_i, :, :]
+
+        sequence_mean = np.mean(sequences_model, axis=0)
+        sequence_lower_bound = np.quantile(sequences_model, q=1-cfg.config_plotting.confidence_bound, axis=0)
+        sequence_upper_bound = np.quantile(sequences_model, q=cfg.config_plotting.confidence_bound, axis=0)
 
         plot_data[0, model_i, :] = sequence_mean
         plot_data[1, model_i, :] = sequence_lower_bound
@@ -39,13 +41,10 @@ def make_combined_dataset_plot(cfg: ConfigBenchmarkSweep, plot_data: np.ndarray)
         sequence_lower_bound = plot_data[1, model_i, :]
         sequence_upper_bound = plot_data[2, model_i, :]
 
-        ax.plot(sequence_mean, label=model, linewidth=12)
-        ax.fill_between(
-            x=np.arange(len(sequence_mean)), 
-            y1=sequence_lower_bound, 
-            y2=sequence_upper_bound, 
-            alpha=0.2
-        )
+        epochs = np.arange(len(sequence_mean)) + cfg.config_plotting.plot_default_value
+
+        ax.plot(epochs, sequence_mean, label=model, linewidth=12)
+        ax.fill_between(x=epochs, y1=sequence_lower_bound, y2=sequence_upper_bound, alpha=0.2)
 
 
     ax.set_title(f"Averaged Normalized Test Score \n for all datasets of benchmark {cfg.benchmark.name}", fontsize=50)
