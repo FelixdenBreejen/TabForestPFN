@@ -1,6 +1,7 @@
 from typing import Generator, Iterator
 
 import torch
+from tabularbench.models.tabPFN.preprocessor import TabPFNPreprocessor
 
 from tabularbench.models.tabPFN.synthetic_data import synthetic_dataset_generator
 
@@ -46,10 +47,14 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
 
             y = self.randomize_classes(y)
             x_support, y_support, x_query, y_query = self.split_into_support_and_query(x, y)
-            y_support = self.scale_y_support(y_support)
-            x_support, x_query = self.normalize_features(x_support, x_query)
-            x_support, x_query = self.expand_feature_dimension_to_max_features(x_support, x_query)
-            
+
+            tab_pfn_preprocessor = TabPFNPreprocessor()
+            x_support = tab_pfn_preprocessor.fit_transform(x_support)
+            x_query = tab_pfn_preprocessor.transform(x_query)
+
+            x_support, x_query = self.randomize_feature_order(x_support, x_query)
+
+
             assert torch.all(torch.isfinite(x))
 
             yield {
@@ -68,14 +73,6 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         y = torch.tensor([mapping[i.item()] for i in y], dtype=torch.long)
 
         return y
-    
-
-    def scale_y_support(self, y_support: torch.Tensor) -> torch.Tensor:
-
-        y_support = y_support.float()
-        y_support = y_support / self.max_classes
-        
-        return y_support
 
 
     def split_into_support_and_query(self, x: torch.Tensor, y: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -96,32 +93,13 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         return x_support, y_support, x_query, y_query
     
 
-    def normalize_features(self, x_support: torch.Tensor, x_query: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-
-        x_mean = x_support.mean(dim=0)
-        x_std = x_support.std(dim=0)
-
-        x_support = (x_support - x_mean[None, :]) / x_std[None, :]
-        x_query = (x_query - x_mean[None, :]) / x_std[None, :]
-
-        # for singular values (features with one unique value), set it to zero
-        x_support[:, x_std == 0] = 0
-        x_query[:, x_std == 0] = 0
-
-        return x_support, x_query
-    
-
-    def expand_feature_dimension_to_max_features(self, x_support: torch.Tensor, x_query: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def randomize_feature_order(self, x_support: torch.Tensor, x_query: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
 
         curr_features = x_support.shape[1]
-        curr_samples_support = x_support.shape[0]
-        curr_samples_query = x_query.shape[0]
+        new_feature_order = torch.randperm(curr_features)
 
-        x_support_expanded = torch.zeros((curr_samples_support, self.max_features), dtype=torch.float)
-        x_support_expanded[:, :curr_features] = x_support
+        x_support = x_support[:, new_feature_order]
+        x_query = x_query[:, new_feature_order]
 
-        x_query_expanded = torch.zeros((curr_samples_query, self.max_features), dtype=torch.float)
-        x_query_expanded[:, :curr_features] = x_query
-
-        return x_support_expanded, x_query_expanded
+        return x_support, x_query
     

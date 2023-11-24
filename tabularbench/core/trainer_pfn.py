@@ -85,7 +85,6 @@ class TrainerPFN(BaseEstimator):
                 self.model = self.model.to('cpu')
                 torch.cuda.empty_cache()
 
-
                 output_dir = self.cfg.output_dir / f"step_{step}"
                 output_dir.mkdir(parents=True, exist_ok=True)
 

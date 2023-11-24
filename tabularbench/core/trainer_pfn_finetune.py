@@ -9,6 +9,7 @@ from tabularbench.core.get_loss import get_loss
 from tabularbench.core.get_optimizer import get_optimizer
 from tabularbench.core.get_scheduler import get_scheduler
 from tabularbench.core.y_transformer import create_y_transformer
+from tabularbench.models.tabPFN.preprocessor import TabPFNPreprocessor
 from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.data.dataset_tabpfn_finetune import TabPFNFinetuneDataset, TabPFNFinetuneGenerator
@@ -32,10 +33,12 @@ class Trainer(BaseEstimator):
 
         self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams.early_stopping_patience)
         self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
+        self.tab_pfn_preprocessor = TabPFNPreprocessor(cfg)
 
 
     def train(self, x_train: np.ndarray, y_train: np.ndarray):
         
+        x_train = self.tab_pfn_preprocessor.fit_transform(x_train)        
         self.y_transformer = create_y_transformer(y_train, self.cfg.task)
 
         a = self.make_dataset_split(x_train=x_train, y_train=y_train)
@@ -105,9 +108,12 @@ class Trainer(BaseEstimator):
         return loss_test, score_test
     
 
-    def predict(self, x_train: np.ndarray, y_train: np.ndarray, x: np.ndarray):
+    def predict(self, x_support: np.ndarray, y_support: np.ndarray, x_query: np.ndarray):
 
-        dataset = TabPFNFinetuneDataset(self.cfg, x_train, y_train, x, batch_size=self.cfg.hyperparams.batch_size)
+        x_support = self.tab_pfn_preprocessor.transform(x_support)
+        x_query = self.tab_pfn_preprocessor.transform(x_query)
+
+        dataset = TabPFNFinetuneDataset(self.cfg, x_support, y_support, x_query, batch_size=self.cfg.hyperparams.batch_size)
         loader = self.make_loader(dataset, training=False)
 
         y_hat_list = []
