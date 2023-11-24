@@ -12,10 +12,10 @@ def collate_with_padding(batch: list[dict[str, torch.Tensor]]) -> dict[str, torc
     batch_size = len(batch)
 
     tensor_dict = {
-        'x_support': torch.zeros(batch_size, max_support_samples, n_support_features, dtype=batch[0]['x_support'].dtype),
-        'y_support': torch.zeros(batch_size, max_support_samples, dtype=batch[0]['y_support'].dtype) - 100,
-        'x_query': torch.zeros(batch_size, max_query_samples, n_query_features, dtype=batch[0]['x_query'].dtype),
-        'y_query': torch.zeros(batch_size, max_query_samples, dtype=batch[0]['y_query'].dtype) - 100
+        'x_support': torch.zeros((batch_size, max_support_samples, n_support_features), dtype=torch.float32),
+        'y_support': torch.zeros((batch_size, max_support_samples), dtype=torch.int64) - 100,
+        'x_query': torch.zeros((batch_size, max_query_samples, n_query_features), dtype=torch.float32),
+        'y_query': torch.zeros((batch_size, max_query_samples), dtype=torch.int64) - 100
     }
 
     for i, dataset in enumerate(batch):

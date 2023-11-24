@@ -4,6 +4,7 @@ import torch
 from tabularbench.models.tabPFN.preprocessor import TabPFNPreprocessor
 
 from tabularbench.models.tabPFN.synthetic_data import synthetic_dataset_generator
+from tabularbench.sweeps.config_pretrain import ConfigPretrain
 
 
 
@@ -11,6 +12,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
 
     def __init__(
         self, 
+        cfg: ConfigPretrain,
         min_samples: int,
         max_samples: int,
         min_features: int,
@@ -19,6 +21,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         support_prop: float = 0.8
     ) -> None:
         
+        self.cfg = cfg
         self.max_samples = max_samples
         self.max_features = max_features
         self.max_classes = max_classes
@@ -42,20 +45,17 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         while True:
             x, y = next(self.synthetic_dataset_generator)
 
-            assert torch.all(y >= 0)
-            assert torch.all(torch.isfinite(x))
-
             y = self.randomize_classes(y)
             x_support, y_support, x_query, y_query = self.split_into_support_and_query(x, y)
 
-            tab_pfn_preprocessor = TabPFNPreprocessor()
+            tab_pfn_preprocessor = TabPFNPreprocessor(self.cfg.logger)
             x_support = tab_pfn_preprocessor.fit_transform(x_support)
             x_query = tab_pfn_preprocessor.transform(x_query)
+            
+            x_support = torch.tensor(x_support, dtype=torch.float32)
+            x_query = torch.tensor(x_query, dtype=torch.float32)
 
             x_support, x_query = self.randomize_feature_order(x_support, x_query)
-
-
-            assert torch.all(torch.isfinite(x))
 
             yield {
                 'x_support': x_support,

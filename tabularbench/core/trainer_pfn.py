@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 import torch
@@ -30,6 +29,7 @@ class TrainerPFN(BaseEstimator):
         self.model.to(self.cfg.devices[0])   # TODO: DDP
 
         self.synthetic_dataset = SyntheticDataset(
+            cfg=self.cfg,
             min_samples=self.cfg.data.min_samples,
             max_samples=self.cfg.data.max_samples,
             min_features=self.cfg.data.min_features,
@@ -119,91 +119,6 @@ class TrainerPFN(BaseEstimator):
                 self.cfg.logger.info(f"Step {step} | Normalized Validation Accuracy: {normalized_accuracy:.4f}")
 
                 self.model = self.model.to(self.cfg.devices[0])
-                
-            
-
-
-
-    def predict(self, x: np.ndarray):
-
-        self.model.eval()
-
-        # if sum(self.cfg['categorical_indicator']) > 0:
-            # x = self.onehot_encode(x, max_features=100)
-
-        y_hat_list = []
-
-        dataset = TabPFNDataset(
-            self.x_train, 
-            self.y_train, 
-            x, 
-            regression=self.cfg['regression'],
-            batch_size=self.cfg['batch_size']
-        )
-        loader = self.make_loader(dataset, training=False)
-
-        with torch.no_grad():
-            for _ in range(self.cfg['n_ensembles']):
-                y_hat_pieces = []
-
-                for batch in loader:
-                    
-                    batch = tuple(x.to(self.cfg['device']) for x in batch)
-                    x_full, y_train, _ = batch
-
-                    output = self.model((x_full, y_train), single_eval_pos=dataset.single_eval_pos)
-
-                    if self.cfg['regression']:
-                        output = output[:, 0]
-                    else:
-                        output = output[:, :2]
-                    # output = torch.nn.functional.softmax(output, dim=1)
-                    output = output.cpu().numpy()
-
-                    y_hat_pieces.append(output)
-
-                y_hat_list.append(np.concatenate(y_hat_pieces))
-
-        y_hat = sum(y_hat_list) / len(y_hat_list)
-
-        if self.cfg['regression']:
-            return y_hat
-        else:
-            return y_hat.argmax(axis=1)
-
-
-    def score(self, y_hat, y):
-
-        with torch.no_grad():
-            y_hat = y_hat.cpu().numpy()
-            y = y.cpu().numpy()
-
-            if self.cfg['regression']:  
-                # R2 formula
-                ss_res = np.sum((y - y_hat) ** 2, axis=0)
-                ss_tot = np.sum((y - np.mean(y, axis=0)) ** 2, axis=0)
-                r2 = 1 - ss_res / (ss_tot + 1e-8)
-                return r2
-            else:
-                return np.mean((y_hat.argmax(axis=1) == y))
-            
-
-    def load_params(self, path):
-        self.model.load_state_dict(torch.load(path))
-
-    
-    def onehot_encode(self, x: np.ndarray, max_features: int):
-
-        x_categorical = self.onehot_encoder.transform(x[:, self.categorical_indicator])
-        x_numerical = x[:, ~self.categorical_indicator]
-
-        x_new = np.concatenate([x_numerical, x_categorical], axis=1)
-
-        if x_new.shape[1] < max_features:
-            return x_new
-        else:
-            print("Warning: onehot-encoded features exceed max_features. Returning original features.")
-            return x
 
 
     def select_optimizer(self):

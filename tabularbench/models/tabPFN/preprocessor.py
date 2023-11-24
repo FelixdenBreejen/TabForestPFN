@@ -1,3 +1,4 @@
+from logging import Logger
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import QuantileTransformer
@@ -5,8 +6,8 @@ from sklearn.preprocessing import QuantileTransformer
 
 class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
 
-    def __init__(self, cfg):
-        self.cfg = cfg
+    def __init__(self, logger: Logger):
+        self.logger = logger
         self.max_features = 100      # pretrained tab pfn model has been trained on 100 features
 
     
@@ -14,8 +15,9 @@ class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
 
         X = self.cutoff_excess_features(X, self.max_features)
 
-        self.quantile_transformer = QuantileTransformer(n_quantiles=1000, output_distribution='normal')
-        X = self.quantile_transformer.fit_transform(X)
+        n_quantiles = min(X.shape[0], 1000)
+        self.quantile_transformer = QuantileTransformer(n_quantiles=n_quantiles, output_distribution='normal')
+        # X = self.quantile_transformer.fit_transform(X)
         
         self.mean, self.std = self.calc_mean_std(X)
 
@@ -25,7 +27,7 @@ class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
     def transform(self, X: np.ndarray, y: np.ndarray = None):
 
         X = self.cutoff_excess_features(X, self.max_features)
-        X = self.quantile_transformer.transform(X)
+        # X = self.quantile_transformer.transform(X)
         X = self.normalize_by_mean_std(X, self.mean, self.std)
         X = self.normalize_by_feature_count(X, self.max_features)
         X = self.extend_features(X, self.max_features)
@@ -39,7 +41,7 @@ class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
     def cutoff_excess_features(self, x: np.ndarray, max_features: int) -> np.ndarray:
 
         if x.shape[1] > max_features:
-            self.cfg.logger.info(f"TabPFN allows {max_features} features, but the dataset has {x.shape[1]} features. Excess features are cut off.")
+            self.logger.info(f"TabPFN allows {max_features} features, but the dataset has {x.shape[1]} features. Excess features are cut off.")
             x = x[:, :max_features]
 
         return x
