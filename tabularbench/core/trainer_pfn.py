@@ -1,10 +1,9 @@
+import numpy as np
 from sklearn.base import BaseEstimator
 import torch
-from torch.optim import AdamW
-import numpy as np
 from transformers import get_cosine_schedule_with_warmup, get_constant_schedule_with_warmup
+from tabularbench.core.collator import collate_with_padding
 
-from tabularbench.core.callbacks import EpochStatistics
 from tabularbench.core.losses import CrossEntropyLossExtraBatch
 from tabularbench.data.dataset_synthetic import SyntheticDataset
 from tabularbench.models.tabPFN.tabpfn import TabPFN
@@ -24,13 +23,20 @@ class TrainerPFN(BaseEstimator):
         self.model.to(self.cfg.devices[0])   # TODO: DDP
 
         self.synthetic_dataset = SyntheticDataset(
-            min_samples=self.cfg.data['min_samples'],
-            max_samples=self.cfg.data['max_samples'],
-            min_features=self.cfg.data['min_features'],
-            max_features=self.cfg.data['max_features'],
-            max_classes=self.cfg.data['max_classes'],
-            support_prop=self.cfg.data['support_proportion']
+            min_samples=self.cfg.data.min_samples,
+            max_samples=self.cfg.data.max_samples,
+            min_features=self.cfg.data.min_features,
+            max_features=self.cfg.data.max_features,
+            max_classes=self.cfg.data.max_classes,
+            support_prop=self.cfg.data.support_proportion
         )
+        self.synthetic_dataloader = torch.utils.data.DataLoader(
+            self.synthetic_dataset,
+            batch_size=self.cfg.optim.batch_size,
+            collate_fn=collate_with_padding,
+            pin_memory=True
+        )
+
 
         self.optimizer = self.select_optimizer()
         self.scheduler = self.select_scheduler()
@@ -40,17 +46,17 @@ class TrainerPFN(BaseEstimator):
     def train(self):
 
         self.model.train()
-        generator = self.synthetic_dataset.generator()
+        dataloader = iter(self.synthetic_dataloader)
 
         loss_total = 0
 
-        for step in range(1, self.cfg.optim['max_steps']+1):
-            dataset = next(generator)
+        for step in range(1, self.cfg.optim.max_steps+1):
+            dataset = next(dataloader)
 
-            x_support = dataset['x_support'].to(self.cfg.devices[0])[None, :]
-            y_support = dataset['y_support'].to(self.cfg.devices[0])[None, :]
-            x_query = dataset['x_query'].to(self.cfg.devices[0])[None, :]
-            y_query = dataset['y_query'].to(self.cfg.devices[0])[None, :]
+            x_support = dataset['x_support'].to(self.cfg.devices[0])
+            y_support = dataset['y_support'].to(self.cfg.devices[0])
+            x_query = dataset['x_query'].to(self.cfg.devices[0])
+            y_query = dataset['y_query'].to(self.cfg.devices[0])
 
             pred = self.model(x_support, y_support, x_query)
             loss = self.loss(pred, y_query)
@@ -63,8 +69,8 @@ class TrainerPFN(BaseEstimator):
             loss = loss.item()
             loss_total += loss
 
-            if step % self.cfg.optim['log_every_n_steps'] == 0:
-                self.cfg.logger.info(f"Step {step} | Loss: {loss_total / self.cfg.optim['log_every_n_steps']:.4f}")
+            if step % self.cfg.optim.log_every_n_steps == 0:
+                self.cfg.logger.info(f"Step {step} | Loss: {loss_total / self.cfg.optim.log_every_n_steps:.4f}")
                 loss_total = 0
 
             # if step % self.cfg.optim['eval_every_n_steps'] == 0:
@@ -270,11 +276,11 @@ class TrainerPFN(BaseEstimator):
 
     def select_optimizer(self):
 
-        optimizer = AdamW(
+        optimizer = torch.optim.Adam(
             self.model.parameters(), 
-            lr=self.cfg.optim['lr'],
-            betas=(self.cfg.optim['beta1'], self.cfg.optim['beta2']),
-            weight_decay=self.cfg.optim['weight_decay']
+            lr=self.cfg.optim.lr,
+            betas=(self.cfg.optim.beta1, self.cfg.optim.beta2),
+            weight_decay=self.cfg.optim.weight_decay
         )
         
         return optimizer
@@ -282,16 +288,16 @@ class TrainerPFN(BaseEstimator):
 
     def select_scheduler(self):
 
-        if self.cfg.optim['cosine_scheduler']:
+        if self.cfg.optim.cosine_scheduler:
             schedule = get_cosine_schedule_with_warmup(
                 self.optimizer,
-                num_warmup_steps=self.cfg.optim['warmup_steps'],
-                num_training_steps=self.cfg.optim['max_steps']
+                num_warmup_steps=self.cfg.optim.warmup_steps,
+                num_training_steps=self.cfg.optim.max_steps
             )
         else:
             schedule = get_constant_schedule_with_warmup(
                 self.optimizer,
-                num_warmup_steps=self.cfg.optim['warmup_steps']
+                num_warmup_steps=self.cfg.optim.warmup_steps
             )
 
         return schedule

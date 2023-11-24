@@ -38,7 +38,7 @@ class TransformerEncoderLayer(Module):
     __constants__ = ['batch_first']
 
     def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation="relu",
-                 layer_norm_eps=1e-5, batch_first=False, pre_norm=False,
+                 layer_norm_eps=1e-5, batch_first=True, pre_norm=False,
                  device=None, dtype=None, recompute_attn=False) -> None:
         factory_kwargs = {'device': device, 'dtype': dtype}
         super().__init__()
@@ -108,11 +108,11 @@ class TransformerEncoderLayer(Module):
             single_eval_position = src_mask
 
             batch_size = src_.shape[0]
-            src_ = einops.rearrange(src_, 'b s d -> (b s) d')
-            src_left = self.self_attn(src_[:single_eval_position], src_[:single_eval_position], src_[:single_eval_position])[0]
-            src_left = einops.rearrange(src_left, '(b s) d -> b s d', b=batch_size)
-            src_right = self.self_attn(src_[single_eval_position:], src_[:single_eval_position], src_[:single_eval_position])[0]
-            src_right = einops.rearrange(src_right, '(b s) d -> b s d', b=batch_size)
+            src_support = src_[:, :single_eval_position]
+            src_query = src_[:, single_eval_position:]
+
+            src_left = self.self_attn(src_support, src_support, src_support)[0]
+            src_right = self.self_attn(src_query, src_support, src_support)[0]
 
             src2 = torch.cat([src_left, src_right], dim=1)
         else:

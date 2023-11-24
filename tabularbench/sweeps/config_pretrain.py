@@ -19,8 +19,8 @@ class ConfigPretrain():
     seed: int
     devices: list[torch.device]
     model: DictConfig
-    data: DictConfig
-    optim: DictConfig
+    data: ConfigData
+    optim: ConfigOptim
     plotting: ConfigPlotting
 
 
@@ -38,8 +38,26 @@ class ConfigPretrain():
             devices=devices,
             seed=cfg_hydra.seed,
             model = cfg_hydra.model,
-            data = cfg_hydra.data,
-            optim = cfg_hydra.optim,
+            data = ConfigData(
+                min_samples=cfg_hydra.data.min_samples,
+                max_samples=cfg_hydra.data.max_samples,
+                min_features=cfg_hydra.data.min_features,
+                max_features=cfg_hydra.data.max_features,
+                max_classes=cfg_hydra.data.max_classes,
+                support_proportion=cfg_hydra.data.support_proportion,
+            ),
+            optim = ConfigOptim(
+                max_steps=cfg_hydra.optim.max_steps,
+                log_every_n_steps=cfg_hydra.optim.log_every_n_steps,
+                eval_every_n_steps=cfg_hydra.optim.eval_every_n_steps,
+                batch_size=cfg_hydra.optim.batch_size,
+                lr=cfg_hydra.optim.lr,
+                weight_decay=cfg_hydra.optim.weight_decay,
+                beta1=cfg_hydra.optim.beta1,
+                beta2=cfg_hydra.optim.beta2,
+                warmup_steps=cfg_hydra.optim.warmup_steps,
+                cosine_scheduler=cfg_hydra.optim.cosine_scheduler,
+            ),
             plotting = ConfigPlotting(
                 n_runs=cfg_hydra.plotting.n_runs,
                 n_random_shuffles=cfg_hydra.plotting.n_random_shuffles,
@@ -49,6 +67,30 @@ class ConfigPretrain():
             ),
         )
     
+
+@dataclass
+class ConfigOptim():
+    max_steps: int
+    log_every_n_steps: int
+    eval_every_n_steps: int
+    batch_size: int
+    lr: float
+    weight_decay: float
+    beta1: float
+    beta2: float
+    warmup_steps: int
+    cosine_scheduler: bool
+
+
+@dataclass
+class ConfigData():
+    min_samples: int
+    max_samples: int
+    min_features: int
+    max_features: int
+    max_classes: int
+    support_proportion: float
+
 
 
 
