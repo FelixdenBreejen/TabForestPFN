@@ -57,6 +57,7 @@ class ConfigMain():
             n_random_shuffles=cfg_hydra.plotting.n_random_shuffles,
             confidence_bound=cfg_hydra.plotting.confidence_bound,
             plot_default_value=cfg_hydra.plotting.plot_default_value,
+            
             benchmark_model_names=[ModelName[model] for model in cfg_hydra.plotting.benchmark_models],
         )
 

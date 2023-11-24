@@ -22,6 +22,7 @@ class ConfigPretrain():
     data: ConfigData
     optim: ConfigOptim
     plotting: ConfigPlotting
+    hyperparams_finetuning: DictConfig
 
 
     @classmethod
@@ -65,6 +66,7 @@ class ConfigPretrain():
                 plot_default_value=cfg_hydra.plotting.plot_default_value,
                 benchmark_model_names=[ModelName[model] for model in cfg_hydra.plotting.benchmark_models],
             ),
+            hyperparams_finetuning = cfg_hydra.hyperparams.tabpfn_finetune
         )
     
 

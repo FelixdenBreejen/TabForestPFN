@@ -1,14 +1,20 @@
 import numpy as np
+import pandas as pd
 from sklearn.base import BaseEstimator
 import torch
 from transformers import get_cosine_schedule_with_warmup, get_constant_schedule_with_warmup
 from tabularbench.core.collator import collate_with_padding
+from tabularbench.core.enums import BenchmarkName, ModelName, SearchType
 
 from tabularbench.core.losses import CrossEntropyLossExtraBatch
 from tabularbench.core.metrics import Metrics
+from tabularbench.data.benchmarks import BENCHMARKS
 from tabularbench.data.dataset_synthetic import SyntheticDataset
 from tabularbench.models.tabPFN.tabpfn import TabPFN
+from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
+from tabularbench.sweeps.get_logger import get_logger
+from tabularbench.sweeps.run_sweep import run_sweep
 
 
 
@@ -74,123 +80,49 @@ class TrainerPFN(BaseEstimator):
                 self.cfg.logger.info(f"Step {step} | Loss: {metrics.loss:.4f} | Accuracy: {metrics.accuracy:.4f}")
                 metrics.reset()
 
-            # if step % self.cfg.optim['eval_every_n_steps'] == 0:
+            if step % self.cfg.optim.eval_every_n_steps == 0:
+
+                self.model = self.model.to('cpu')
+                torch.cuda.empty_cache()
+
+
+                output_dir = self.cfg.output_dir / f"step_{step}"
+                output_dir.mkdir(parents=True, exist_ok=True)
+
+                torch.save(self.model.state_dict(), output_dir / 'model.pt')
+
+                hyperparams_finetuning = self.cfg.hyperparams_finetuning
+                hyperparams_finetuning['path_to_weights'] = str(output_dir / 'model.pt')
+
+                model_plot_name = f'TabPFN Reproduction Step {step}'
+
+                cfg_sweep = ConfigBenchmarkSweep(
+                    logger=get_logger(output_dir / 'log.txt'),
+                    output_dir=output_dir,
+                    seed=self.cfg.seed,
+                    devices=self.cfg.devices,
+                    benchmark=BENCHMARKS[BenchmarkName.CATEGORICAL_CLASSIFICATION],
+                    model_name=ModelName.TABPFN_FINETUNE,
+                    model_plot_name=model_plot_name,
+                    search_type=SearchType.DEFAULT,
+                    config_plotting=self.cfg.plotting,
+                    n_random_runs_per_dataset=1,
+                    n_default_runs_per_dataset=1,
+                    openml_dataset_ids_to_ignore=[],
+                    hyperparams_object=self.cfg.hyperparams_finetuning
+                )
+                run_sweep(cfg_sweep)
+
+                default_results = pd.read_csv(output_dir / 'default_results.csv', index_col=0)
+                normalized_accuracy = default_results.loc[model_plot_name].iloc[-1]
+
+                self.cfg.logger.info(f"Validation sweep finished")
+                self.cfg.logger.info(f"Step {step} | Normalized Validation Accuracy: {normalized_accuracy:.4f}")
+
+                self.model = self.model.to(self.cfg.devices[0])
                 
             
 
-
-
-    
-        if self.cfg['regression']:  
-            self.model.decoder[2].reset_parameters()
-        
-        self.model.to(self.cfg['device'])
-
-
-        self.x_train = x_train
-        self.y_train = y_train
-
-        # if sum(self.cfg['categorical_indicator']) > 0:
-            # self.onehot_encoder.fit(self.x_train[:, self.categorical_indicator])
-            # self.x_train = self.onehot_encode(self.x_train, max_features=100)
-
-        a = self.make_dataset_split(x_train=x_train, y_train=y_train)
-        self.x_train_train, self.x_train_valid, self.y_train_train, self.y_train_valid = a
-
-        dataset_train_generator = TabPFNDatasetGenerator(
-            self.x_train_train,
-            self.y_train_train,
-            regression = self.cfg['regression'],
-            batch_size=self.cfg['batch_size'],
-        )
-
-        dataset_valid = TabPFNDataset(
-            self.x_train_train, 
-            self.y_train_train, 
-            self.x_train_valid, 
-            self.y_train_valid,
-            regression = self.cfg['regression'],
-            batch_size=self.cfg['batch_size']
-        )
-
-        loader_valid = self.make_loader(dataset_valid, training=False)
-
-        self.optimizer = self.select_optimizer()
-
-        self.train(dataset_train_generator, dataset_valid, loader_valid)
-
-        return self
-
-
-    def train_old(self, dataset_train_generator, dataset_valid, loader_valid):
-
-        for epoch in range(self.cfg['max_epochs']):
-
-            dataset_train = next(dataset_train_generator)            
-            loader_train = self.make_loader(dataset_train, training=True)
-            
-            self.model.train()
-        
-            epoch_statistics_train = EpochStatistics()
-
-            for batch in loader_train:
-
-                batch = tuple(x.to(self.cfg['device']) for x in batch)
-                x_full, y_train, y_test = batch
-
-                y_hat_train = self.model((x_full, y_train), single_eval_pos=dataset_train.single_eval_pos)
-
-                if self.cfg['regression']:
-                    y_hat_train = y_hat_train[:, 0]
-                else:
-                    y_hat_train = y_hat_train[:, :2]
-                
-                loss = self.loss(y_hat_train, y_test)
-                score = self.score(y_hat_train, y_test)
-
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
-
-                epoch_statistics_train.update(loss.item(), score, len(y_test))
-
-            loss_train, score_train = epoch_statistics_train.get()
-
-            self.model.eval()
-
-            epoch_statistics_valid = EpochStatistics()
-            
-            with torch.no_grad():
-
-                for batch in loader_valid:
-
-                    batch = tuple(x.to(self.cfg['device']) for x in batch)
-                    x_full, y_train, y_test = batch
-                    
-                    y_hat_valid = self.model((x_full, y_train), single_eval_pos=dataset_valid.single_eval_pos)
-
-                    if self.cfg['regression']:
-                        y_hat_valid = y_hat_valid[:, 0]
-                    else:
-                        y_hat_valid = y_hat_valid[:, :2]
-
-                    loss_valid = self.loss(y_hat_valid, y_test)
-                    score_valid = self.score(y_hat_valid, y_test)
-                    
-                    epoch_statistics_valid.update(loss_valid.item(), score_valid, len(y_test))
-
-            loss_valid, score_valid = epoch_statistics_valid.get()
-
-            print(f"Epoch {epoch} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Valid loss: {loss_valid:.4f} | Valid score: {score_valid:.4f}")
-
-            self.checkpoint(self.model, loss_valid)
-            
-            self.early_stopping(loss_valid)
-            if self.early_stopping.we_should_stop():
-                print("Early stopping")
-                break
-
-            self.scheduler.step(loss_valid)
 
 
     def predict(self, x: np.ndarray):

@@ -97,7 +97,7 @@ class Trainer(BaseEstimator):
 
     def test_epoch(self, dataloader: torch.utils.data.DataLoader, y_test: np.ndarray):
         
-        y_hat = self.predict_epoch(dataloader)  
+        y_hat = self.predict_epoch(dataloader)
         y_hat_finish = self.y_transformer.inverse_transform(y_hat)
 
         loss_test = self.loss(torch.as_tensor(y_hat_finish), torch.as_tensor(y_test)).item()
@@ -141,9 +141,11 @@ class Trainer(BaseEstimator):
 
             match self.cfg.task:
                 case Task.REGRESSION:
-                    y_hat = y_hat[:, 0]
+                    y_hat = y_hat[0, :, 0]
                 case Task.CLASSIFICATION:
-                    y_hat = y_hat[:, :2]
+                    y_hat = y_hat[0, :, :2]
+
+            y_test = y_test[0, :]
 
             loss = self.loss(y_hat, y_test)
             score = self.score(y_hat, y_test)
@@ -177,9 +179,9 @@ class Trainer(BaseEstimator):
 
                 match self.cfg.task:
                     case Task.REGRESSION:
-                        y_hat = y_hat[:, 0]
+                        y_hat = y_hat[0, :, 0]
                     case Task.CLASSIFICATION:
-                        y_hat = y_hat[:, :2]
+                        y_hat = y_hat[0, :, :2]
 
                 y_hat_list.append(y_hat.cpu().numpy())
 
@@ -252,16 +254,14 @@ class Trainer(BaseEstimator):
             return torch.utils.data.DataLoader(
                 dataset,
                 batch_size=1,
-                pin_memory=True,
-                collate_fn=lambda x: x[0]
+                pin_memory=True
             )
         else:
             return torch.utils.data.DataLoader(
                 dataset,
                 batch_size=1,
                 shuffle=training,
-                pin_memory=True,
-                collate_fn=lambda x: x[0]   # dataloader should not make a batch
+                pin_memory=True
             )
 
     

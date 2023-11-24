@@ -270,15 +270,14 @@ class TabPFN(torch.nn.Module):
 
         if use_pretrained_weights:
             assert path_to_weights is not None
-            checkpoint = torch.load(PATH_TO_WEIGHTS, map_location='cpu')
+            checkpoint = torch.load(path_to_weights, map_location='cpu')
 
             match checkpoint:
                 case (model_state, optimizer_state, config_sample):
-                    pass
+                    module_prefix = 'module.'
                 case model_state:
-                    pass
+                    module_prefix = 'model.'
 
-            module_prefix = 'module.'
             model_state = {k.replace(module_prefix, ''): v for k, v in model_state.items()}
             model.load_state_dict(model_state)
 
