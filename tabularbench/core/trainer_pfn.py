@@ -5,6 +5,7 @@ from transformers import get_cosine_schedule_with_warmup, get_constant_schedule_
 from tabularbench.core.collator import collate_with_padding
 
 from tabularbench.core.losses import CrossEntropyLossExtraBatch
+from tabularbench.core.metrics import Metrics
 from tabularbench.data.dataset_synthetic import SyntheticDataset
 from tabularbench.models.tabPFN.tabpfn import TabPFN
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
@@ -48,7 +49,7 @@ class TrainerPFN(BaseEstimator):
         self.model.train()
         dataloader = iter(self.synthetic_dataloader)
 
-        loss_total = 0
+        metrics = Metrics()
 
         for step in range(1, self.cfg.optim.max_steps+1):
             dataset = next(dataloader)
@@ -66,12 +67,12 @@ class TrainerPFN(BaseEstimator):
             self.optimizer.step()
             self.scheduler.step()
 
-            loss = loss.item()
-            loss_total += loss
+            with torch.no_grad():
+                metrics.update(pred, y_query)
 
             if step % self.cfg.optim.log_every_n_steps == 0:
-                self.cfg.logger.info(f"Step {step} | Loss: {loss_total / self.cfg.optim.log_every_n_steps:.4f}")
-                loss_total = 0
+                self.cfg.logger.info(f"Step {step} | Loss: {metrics.loss:.4f} | Accuracy: {metrics.accuracy:.4f}")
+                metrics.reset()
 
             # if step % self.cfg.optim['eval_every_n_steps'] == 0:
                 
