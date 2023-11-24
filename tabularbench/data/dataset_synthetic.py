@@ -22,21 +22,24 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
     ) -> None:
         
         self.cfg = cfg
+        self.min_samples = min_samples
         self.max_samples = max_samples
+        self.min_features = min_features
         self.max_features = max_features
         self.max_classes = max_classes
         self.support_prop = support_prop
-        
-        self.synthetic_dataset_generator = synthetic_dataset_generator(
-            min_samples=min_samples,
-            max_samples=max_samples,
-            min_features=min_features,
-            max_features=max_features,
-            max_classes=max_classes
-        )
 
 
     def __iter__(self) -> Iterator:
+
+        self.synthetic_dataset_generator = synthetic_dataset_generator(
+            min_samples=self.min_samples,
+            max_samples=self.max_samples,
+            min_features=self.min_features,
+            max_features=self.max_features,
+            max_classes=self.max_classes
+        )
+
         return self.generator()
     
 

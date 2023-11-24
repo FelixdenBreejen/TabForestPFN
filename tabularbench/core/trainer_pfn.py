@@ -9,11 +9,12 @@ from tabularbench.core.losses import CrossEntropyLossExtraBatch
 from tabularbench.core.metrics import Metrics
 from tabularbench.data.benchmarks import BENCHMARKS
 from tabularbench.data.dataset_synthetic import SyntheticDataset
-from tabularbench.models.tabPFN.tabpfn import TabPFN
+from tabularbench.models.tabPFN.tabpfn_transformer import TabPFN
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
 from tabularbench.sweeps.get_logger import get_logger
 from tabularbench.sweeps.run_sweep import run_sweep
+from tabularbench.sweeps.set_seed import seed_worker
 
 
 
@@ -37,11 +38,15 @@ class TrainerPFN(BaseEstimator):
             max_classes=self.cfg.data.max_classes,
             support_prop=self.cfg.data.support_proportion
         )
+
         self.synthetic_dataloader = torch.utils.data.DataLoader(
             self.synthetic_dataset,
             batch_size=self.cfg.optim.batch_size,
             collate_fn=collate_with_padding,
-            pin_memory=True
+            pin_memory=True,
+            num_workers=self.cfg.workers_per_gpu,
+            persistent_workers=True,
+            worker_init_fn=seed_worker,
         )
 
 

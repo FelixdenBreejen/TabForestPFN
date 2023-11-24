@@ -18,6 +18,7 @@ class ConfigPretrain():
     output_dir: Path
     seed: int
     devices: list[torch.device]
+    workers_per_gpu: int
     model: DictConfig
     data: ConfigData
     optim: ConfigOptim
@@ -38,6 +39,7 @@ class ConfigPretrain():
             output_dir=output_dir,
             devices=devices,
             seed=cfg_hydra.seed,
+            workers_per_gpu=cfg_hydra.workers_per_gpu,
             model = cfg_hydra.model,
             data = ConfigData(
                 min_samples=cfg_hydra.data.min_samples,

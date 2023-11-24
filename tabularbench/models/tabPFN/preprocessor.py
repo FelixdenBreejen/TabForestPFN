@@ -17,7 +17,7 @@ class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
 
         n_quantiles = min(X.shape[0], 1000)
         self.quantile_transformer = QuantileTransformer(n_quantiles=n_quantiles, output_distribution='normal')
-        # X = self.quantile_transformer.fit_transform(X)
+        X = self.quantile_transformer.fit_transform(X)
         
         self.mean, self.std = self.calc_mean_std(X)
 
@@ -27,7 +27,7 @@ class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
     def transform(self, X: np.ndarray, y: np.ndarray = None):
 
         X = self.cutoff_excess_features(X, self.max_features)
-        # X = self.quantile_transformer.transform(X)
+        X = self.quantile_transformer.transform(X)
         X = self.normalize_by_mean_std(X, self.mean, self.std)
         X = self.normalize_by_feature_count(X, self.max_features)
         X = self.extend_features(X, self.max_features)

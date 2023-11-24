@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 from tabularbench.core.enums import ModelName
-from tabularbench.models.tabPFN.tabpfn import TabPFN
+from tabularbench.models.tabPFN.tabpfn_transformer import TabPFN
 from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.models.ft_transformer.ft_transformer import FTTransformer
 
