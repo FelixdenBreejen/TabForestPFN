@@ -51,7 +51,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
             y = self.randomize_classes(y)
             x_support, y_support, x_query, y_query = self.split_into_support_and_query(x, y)
 
-            tab_pfn_preprocessor = TabPFNPreprocessor(self.cfg.logger)
+            tab_pfn_preprocessor = TabPFNPreprocessor(self.cfg.logger, use_quantile_transformer=True)
             x_support = tab_pfn_preprocessor.fit_transform(x_support)
             x_query = tab_pfn_preprocessor.transform(x_query)
             

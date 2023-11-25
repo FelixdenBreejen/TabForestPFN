@@ -78,11 +78,12 @@ class TrainerPFN(BaseEstimator):
 
             pred = self.model(x_support, y_support, x_query)
             loss = self.loss(pred, y_query)
-
+            
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
             self.scheduler.step()
+
 
             with torch.no_grad():
                 metrics.update(pred, y_query)

@@ -111,12 +111,18 @@ def synthetic_dataset_generator(
             # the generator returns -100 as a label for all observations in this case
             continue
 
-        # remove all zero columns
-        x = x[:, x.sum(dim=0) != 0]
-
         curr_samples = uniform_int_sampler_f(min_samples, max_samples)()
         x = x[:curr_samples, :]
         y = y[:curr_samples, :]
+        
+        # remove all zero columns
+        x = x[:, x.sum(dim=0) != 0]
+
+        if x.shape[1] < min_features:
+            continue
+
+        if torch.isnan(x).sum() or torch.isnan(y).sum():
+            continue
 
         yield x, y
 

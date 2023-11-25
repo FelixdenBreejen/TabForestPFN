@@ -6,18 +6,24 @@ from sklearn.preprocessing import QuantileTransformer
 
 class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
 
-    def __init__(self, logger: Logger):
+    def __init__(self, logger: Logger, use_quantile_transformer: bool=False):
         self.logger = logger
+        self.use_quantile_transformer = use_quantile_transformer
         self.max_features = 100      # pretrained tab pfn model has been trained on 100 features
 
     
     def fit(self, X: np.ndarray, y: np.ndarray = None):
 
         X = self.cutoff_excess_features(X, self.max_features)
+        
+        self.singular_features = X.std(axis=0) == 0
+        X = self.cutoff_singular_features(X, self.singular_features)
 
-        n_quantiles = min(X.shape[0], 1000)
-        self.quantile_transformer = QuantileTransformer(n_quantiles=n_quantiles, output_distribution='normal')
-        X = self.quantile_transformer.fit_transform(X)
+
+        if self.use_quantile_transformer:
+            n_quantiles = min(X.shape[0], 1000)
+            self.quantile_transformer = QuantileTransformer(n_quantiles=n_quantiles, output_distribution='normal')
+            X = self.quantile_transformer.fit_transform(X)
         
         self.mean, self.std = self.calc_mean_std(X)
 
@@ -27,7 +33,11 @@ class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
     def transform(self, X: np.ndarray, y: np.ndarray = None):
 
         X = self.cutoff_excess_features(X, self.max_features)
-        X = self.quantile_transformer.transform(X)
+        X = self.cutoff_singular_features(X, self.singular_features)
+
+        if self.use_quantile_transformer:
+            X = self.quantile_transformer.transform(X)
+        
         X = self.normalize_by_mean_std(X, self.mean, self.std)
         X = self.normalize_by_feature_count(X, self.max_features)
         X = self.extend_features(X, self.max_features)
@@ -45,6 +55,14 @@ class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
             x = x[:, :max_features]
 
         return x
+    
+
+    def cutoff_singular_features(self, x: np.ndarray, singular_features: np.ndarray) -> np.ndarray:
+
+        if singular_features.any():
+            x = x[:, ~singular_features]
+
+        return x
 
 
     def calc_mean_std(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -60,9 +78,6 @@ class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
         """
         Normalizes the data by the mean and std
         """
-
-        # singular values are set to 1 to avoid division by zero
-        std[std == 0] = 1
 
         x = (x - mean) / std
         return x

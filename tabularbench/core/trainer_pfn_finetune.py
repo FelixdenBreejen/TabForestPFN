@@ -33,7 +33,7 @@ class Trainer(BaseEstimator):
 
         self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams.early_stopping_patience)
         self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
-        self.tab_pfn_preprocessor = TabPFNPreprocessor(cfg)
+        self.tab_pfn_preprocessor = TabPFNPreprocessor(cfg, use_quantile_transformer=True)
 
 
     def train(self, x_train: np.ndarray, y_train: np.ndarray):

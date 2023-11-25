@@ -8,7 +8,7 @@ defaults:
 output_dir: ${hydra:run.dir}
 seed: 0
 devices: [0, 1, 2, 3, 4, 5, 6, 7]
-workers_per_gpu: 4
+workers_per_gpu: 8
 
 model: null
 
@@ -18,14 +18,14 @@ optim:
   eval_every_n_steps: 1_000
   batch_size: 256     # total batch size (not per device)
   lr: 1.e-4
-  weight_decay: 0.00
+  weight_decay: 0.000
   beta1: 0.9
-  beta2: 0.99
-  warmup_steps: 1000
-  cosine_scheduler: False  
+  beta2: 0.999
+  warmup_steps: 1_000
+  cosine_scheduler: True  
 
 data:
-  min_samples: 100
+  min_samples: 1000
   max_samples: 1000      # Support + query
   min_features: 3
   max_features: 100
