@@ -1,10 +1,11 @@
 import pandas as pd
 from sklearn.base import BaseEstimator
 import torch
+import torch.multiprocessing as mp
 from transformers import get_cosine_schedule_with_warmup, get_constant_schedule_with_warmup
+
 from tabularbench.core.collator import collate_with_padding
 from tabularbench.core.enums import BenchmarkName, ModelName, SearchType
-
 from tabularbench.core.losses import CrossEntropyLossExtraBatch
 from tabularbench.core.metrics import Metrics
 from tabularbench.data.benchmarks import BENCHMARKS
@@ -22,12 +23,17 @@ class TrainerPFN(BaseEstimator):
 
     def __init__(
             self, 
-            cfg: ConfigPretrain
+            cfg: ConfigPretrain,
+            barrier: mp.Barrier
         ) -> None:
 
         self.cfg = cfg
+        self.barrier = barrier
         self.model = TabPFN(use_pretrained_weights=False)
-        self.model.to(self.cfg.devices[0])   # TODO: DDP
+        self.model.to(self.cfg.device)   # TODO: DDP
+
+        if cfg.use_ddp:
+            self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=[cfg.device], find_unused_parameters=False)
 
         self.synthetic_dataset = SyntheticDataset(
             cfg=self.cfg,
@@ -65,10 +71,10 @@ class TrainerPFN(BaseEstimator):
         for step in range(1, self.cfg.optim.max_steps+1):
             dataset = next(dataloader)
 
-            x_support = dataset['x_support'].to(self.cfg.devices[0])
-            y_support = dataset['y_support'].to(self.cfg.devices[0])
-            x_query = dataset['x_query'].to(self.cfg.devices[0])
-            y_query = dataset['y_query'].to(self.cfg.devices[0])
+            x_support = dataset['x_support'].to(self.cfg.device)
+            y_support = dataset['y_support'].to(self.cfg.device)
+            x_query = dataset['x_query'].to(self.cfg.device)
+            y_query = dataset['y_query'].to(self.cfg.device)
 
             pred = self.model(x_support, y_support, x_query)
             loss = self.loss(pred, y_query)
@@ -81,49 +87,58 @@ class TrainerPFN(BaseEstimator):
             with torch.no_grad():
                 metrics.update(pred, y_query)
 
-            if step % self.cfg.optim.log_every_n_steps == 0:
+            if step % self.cfg.optim.log_every_n_steps == 0 and self.cfg.is_main_process:
                 self.cfg.logger.info(f"Step {step} | Loss: {metrics.loss:.4f} | Accuracy: {metrics.accuracy:.4f}")
                 metrics.reset()
 
             if step % self.cfg.optim.eval_every_n_steps == 0:
-
                 self.model = self.model.to('cpu')
                 torch.cuda.empty_cache()
 
-                output_dir = self.cfg.output_dir / f"step_{step}"
-                output_dir.mkdir(parents=True, exist_ok=True)
+                torch.distributed.barrier()
 
-                torch.save(self.model.state_dict(), output_dir / 'model.pt')
+                if self.cfg.is_main_process:
 
-                hyperparams_finetuning = self.cfg.hyperparams_finetuning
-                hyperparams_finetuning['path_to_weights'] = str(output_dir / 'model.pt')
+                    self.cfg.logger.info(f"Starting validation sweep")
 
-                model_plot_name = f'TabPFN Reproduction Step {step}'
+                    output_dir = self.cfg.output_dir / f"step_{step}"
+                    output_dir.mkdir(parents=True, exist_ok=True)
 
-                cfg_sweep = ConfigBenchmarkSweep(
-                    logger=get_logger(output_dir / 'log.txt'),
-                    output_dir=output_dir,
-                    seed=self.cfg.seed,
-                    devices=self.cfg.devices,
-                    benchmark=BENCHMARKS[BenchmarkName.CATEGORICAL_CLASSIFICATION],
-                    model_name=ModelName.TABPFN_FINETUNE,
-                    model_plot_name=model_plot_name,
-                    search_type=SearchType.DEFAULT,
-                    config_plotting=self.cfg.plotting,
-                    n_random_runs_per_dataset=1,
-                    n_default_runs_per_dataset=1,
-                    openml_dataset_ids_to_ignore=[],
-                    hyperparams_object=self.cfg.hyperparams_finetuning
-                )
-                run_sweep(cfg_sweep)
+                    state_dict = { k.replace('module.', ''): v for k, v in self.model.state_dict().items()  }
+                    torch.save(state_dict, output_dir / 'model.pt')
 
-                default_results = pd.read_csv(output_dir / 'default_results.csv', index_col=0)
-                normalized_accuracy = default_results.loc[model_plot_name].iloc[-1]
+                    hyperparams_finetuning = self.cfg.hyperparams_finetuning
+                    hyperparams_finetuning['path_to_weights'] = str(output_dir / 'model.pt')
 
-                self.cfg.logger.info(f"Validation sweep finished")
-                self.cfg.logger.info(f"Step {step} | Normalized Validation Accuracy: {normalized_accuracy:.4f}")
+                    model_plot_name = f'TabPFN Reproduction Step {step}'
 
-                self.model = self.model.to(self.cfg.devices[0])
+                    cfg_sweep = ConfigBenchmarkSweep(
+                        logger=get_logger(output_dir / 'log.txt'),
+                        output_dir=output_dir,
+                        seed=self.cfg.seed,
+                        devices=self.cfg.devices,
+                        benchmark=BENCHMARKS[BenchmarkName.CATEGORICAL_CLASSIFICATION],
+                        model_name=ModelName.TABPFN_FINETUNE,
+                        model_plot_name=model_plot_name,
+                        search_type=SearchType.DEFAULT,
+                        config_plotting=self.cfg.plotting,
+                        n_random_runs_per_dataset=1,
+                        n_default_runs_per_dataset=1,
+                        openml_dataset_ids_to_ignore=[],
+                        hyperparams_object=self.cfg.hyperparams_finetuning
+                    )
+                    run_sweep(cfg_sweep)
+
+                    default_results = pd.read_csv(output_dir / 'default_results.csv', index_col=0)
+                    normalized_accuracy = default_results.loc[model_plot_name].iloc[-1]
+
+                    self.cfg.logger.info(f"Finished validation sweep")
+                    self.cfg.logger.info(f"Step {step} | Normalized Validation Accuracy: {normalized_accuracy:.4f}")
+
+                # we cannot use the torch distributed barrier here, because that block the execution on the gpus
+                self.barrier.wait()
+
+                self.model = self.model.to(self.cfg.device)
 
 
     def select_optimizer(self):

@@ -1,4 +1,5 @@
 
+import sys
 import torch
 
 
@@ -94,9 +95,8 @@ def synthetic_dataset_generator(
 
     config_sample['batch_size'] = 1
 
-    print("IGNORE THE TRANSFORMER PARAMETER TEXT BELOW, ITS FROM LOADING TABPFN DATA GENERATOR")
-    model = get_model(config_sample, 'cpu', should_train=False, verbose=0)
-    print("IGNORE THE TRANSFORMER PARAMETER TEXT ABOVE, ITS FROM LOADING TABPFN DATA GENERATOR")
+    with DisablePrinting():
+        model = get_model(config_sample, 'cpu', should_train=False, verbose=0)
 
     data_iter = iter(model[3])
 
@@ -120,6 +120,16 @@ def synthetic_dataset_generator(
 
         yield x, y
 
+
+class DisablePrinting:
+
+    def __enter__(self):
+        self.original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self.original_stdout
 
 
 if __name__  == '__main__':

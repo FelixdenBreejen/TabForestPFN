@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 from pathlib import Path
+from typing import Optional
 
 from omegaconf import DictConfig
 import torch
@@ -18,12 +19,16 @@ class ConfigPretrain():
     output_dir: Path
     seed: int
     devices: list[torch.device]
+    use_ddp: bool
     workers_per_gpu: int
     model: DictConfig
     data: ConfigData
     optim: ConfigOptim
     plotting: ConfigPlotting
     hyperparams_finetuning: DictConfig
+
+    device: Optional[torch.device] = None   # initialized later by ddp
+    is_main_process: bool = True            # initialized later by ddp
 
 
     @classmethod
@@ -38,6 +43,7 @@ class ConfigPretrain():
             logger=logger,
             output_dir=output_dir,
             devices=devices,
+            use_ddp=len(devices) > 1,
             seed=cfg_hydra.seed,
             workers_per_gpu=cfg_hydra.workers_per_gpu,
             model = cfg_hydra.model,
