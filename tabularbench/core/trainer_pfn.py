@@ -51,7 +51,7 @@ class TrainerPFN(BaseEstimator):
             collate_fn=collate_with_padding,
             pin_memory=True,
             num_workers=self.cfg.workers_per_gpu,
-            persistent_workers=True,
+            persistent_workers=self.cfg.workers_per_gpu > 0,
             worker_init_fn=seed_worker,
         )
 
@@ -69,20 +69,25 @@ class TrainerPFN(BaseEstimator):
         metrics = Metrics()
 
         for step in range(1, self.cfg.optim.max_steps+1):
-            dataset = next(dataloader)
-
-            x_support = dataset['x_support'].to(self.cfg.device)
-            y_support = dataset['y_support'].to(self.cfg.device)
-            x_query = dataset['x_query'].to(self.cfg.device)
-            y_query = dataset['y_query'].to(self.cfg.device)
-
-            pred = self.model(x_support, y_support, x_query)
-            loss = self.loss(pred, y_query)
             
-            self.optimizer.zero_grad()
-            loss.backward()
+            for _ in range(self.cfg.optim.gradient_accumulation_steps):
+
+                dataset = next(dataloader)
+
+                x_support = dataset['x_support'].to(self.cfg.device)
+                y_support = dataset['y_support'].to(self.cfg.device)
+                x_query = dataset['x_query'].to(self.cfg.device)
+                y_query = dataset['y_query'].to(self.cfg.device)
+
+                pred = self.model(x_support, y_support, x_query)
+                loss = self.loss(pred, y_query)
+                
+                loss = loss / self.cfg.optim.gradient_accumulation_steps
+                loss.backward()
+
             self.optimizer.step()
             self.scheduler.step()
+            self.optimizer.zero_grad()
 
 
             with torch.no_grad():
@@ -134,13 +139,16 @@ class TrainerPFN(BaseEstimator):
                     normalized_accuracy = default_results.loc[model_plot_name].iloc[-1]
 
                     self.cfg.logger.info(f"Finished validation sweep")
-                    self.cfg.logger.info(f"Step {step} | Normalized Validation Accuracy: {normalized_accuracy:.4f}")
+                    self.cfg.logger.info(f"Normalized Validation Accuracy: {normalized_accuracy:.4f}")
 
-                # we cannot use the torch distributed barrier here, because that block the execution on the gpus
+                # We cannot use the torch distributed barrier here, because that blocks the execution on the gpus.
+                # This barrier only blocks execution on the cpu of the current process, which doesn't interfere with the validation sweep.
                 self.barrier.wait()
 
                 self.model = self.model.to(self.cfg.device)
 
+
+    # TODO add test
 
     def select_optimizer(self):
 

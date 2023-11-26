@@ -60,6 +60,7 @@ class ConfigPretrain():
                 log_every_n_steps=cfg_hydra.optim.log_every_n_steps,
                 eval_every_n_steps=cfg_hydra.optim.eval_every_n_steps,
                 batch_size=cfg_hydra.optim.batch_size,
+                gradient_accumulation_steps=cfg_hydra.optim.gradient_accumulation_steps,
                 lr=cfg_hydra.optim.lr,
                 weight_decay=cfg_hydra.optim.weight_decay,
                 beta1=cfg_hydra.optim.beta1,
@@ -84,6 +85,7 @@ class ConfigOptim():
     log_every_n_steps: int
     eval_every_n_steps: int
     batch_size: int
+    gradient_accumulation_steps: int
     lr: float
     weight_decay: float
     beta1: float

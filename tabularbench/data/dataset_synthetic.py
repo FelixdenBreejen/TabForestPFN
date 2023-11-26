@@ -19,6 +19,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         max_features: int,
         max_classes: int,
         support_prop: float = 0.8
+        # TODO: change to uniform random
     ) -> None:
         
         self.cfg = cfg
