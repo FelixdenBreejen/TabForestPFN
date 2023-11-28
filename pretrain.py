@@ -46,6 +46,9 @@ def main_experiment(gpu: int, cfg: ConfigPretrain, barrier: mp.Barrier) -> None:
     trainer = TrainerPFN(cfg, barrier)
     trainer.train()
 
+    if cfg.is_main_process:
+        trainer.test()
+
 
 def setup_gpus(cfg: ConfigPretrain) -> None:
 
@@ -61,7 +64,8 @@ def setup_gpus(cfg: ConfigPretrain) -> None:
         cfg.optim.batch_size = batch_size // num_gpus if cfg.use_ddp else batch_size
 
         cfg.logger.info(f"Using GPUs {[d.index for d in cfg.devices]} for distributed training")
-        cfg.logger.info(f"Batch size changed from {batch_size} to {cfg.optim.batch_size}")
+        cfg.logger.info(f"Batch size per device set to {cfg.optim.batch_size}")
+        cfg.logger.info(f"With gradient accumulation steps {cfg.optim.gradient_accumulation_steps}, total batch size is {cfg.optim.batch_size * cfg.optim.gradient_accumulation_steps * num_gpus}")
 
     else:
         assert num_gpus == 1, "Cannot use more than one GPU without distributed training"
