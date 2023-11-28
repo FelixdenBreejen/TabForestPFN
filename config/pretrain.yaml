@@ -8,15 +8,15 @@ defaults:
 output_dir: ${hydra:run.dir}
 seed: 0
 devices: [0, 1, 2, 3]
-workers_per_gpu: 4
+workers_per_gpu: 0
 
 model: null
 
 optim:
-  max_steps: 380
+  max_steps: 18_000
   log_every_n_steps: 10
-  eval_every_n_steps: 100
-  batch_size: 128     # total batch size (not per device)
+  eval_every_n_steps: 1_000
+  batch_size: 64     # total batch size (not per device)
   gradient_accumulation_steps: 1    # Accumulation steps are not counted towards max_steps
   lr: 1.e-4
   weight_decay: 0.000
@@ -26,12 +26,12 @@ optim:
   cosine_scheduler: True  
 
 data:
-  min_samples: 1024
-  max_samples: 1024      # Support + query
+  min_samples_support: 128
+  max_samples_support: 1024            
+  n_samples_query: 256
   min_features: 3
   max_features: 100
   max_classes: 10
-  support_proportion: 0.8   # Proportion of support samples vs query samples
 
 # Make loss plot
 plotting:

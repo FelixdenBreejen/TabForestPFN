@@ -48,12 +48,12 @@ class ConfigPretrain():
             workers_per_gpu=cfg_hydra.workers_per_gpu,
             model = cfg_hydra.model,
             data = ConfigData(
-                min_samples=cfg_hydra.data.min_samples,
-                max_samples=cfg_hydra.data.max_samples,
+                min_samples_support=cfg_hydra.data.min_samples_support,
+                max_samples_support=cfg_hydra.data.max_samples_support,
+                n_samples_query=cfg_hydra.data.n_samples_query,
                 min_features=cfg_hydra.data.min_features,
                 max_features=cfg_hydra.data.max_features,
                 max_classes=cfg_hydra.data.max_classes,
-                support_proportion=cfg_hydra.data.support_proportion,
             ),
             optim = ConfigOptim(
                 max_steps=cfg_hydra.optim.max_steps,
@@ -96,12 +96,12 @@ class ConfigOptim():
 
 @dataclass
 class ConfigData():
-    min_samples: int
-    max_samples: int
+    min_samples_support: int
+    max_samples_support: int
+    n_samples_query: int
     min_features: int
     max_features: int
     max_classes: int
-    support_proportion: float
 
 
 

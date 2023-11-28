@@ -13,8 +13,7 @@ from tabpfn.notebook_utils import *
 
 
 def synthetic_dataset_generator(
-        min_samples: int,
-        max_samples: int,
+        n_samples: int,
         min_features: int,
         max_features: int,
         max_classes: int
@@ -73,7 +72,7 @@ def synthetic_dataset_generator(
 
     config['emsize'] = 512
     config['nhead'] = config['emsize'] // 128
-    config['bptt'] = max_samples
+    config['bptt'] = n_samples
     config['canonical_y_encoder'] = False
 
     config['aggregate_k_gradients'] = 1
@@ -87,8 +86,8 @@ def synthetic_dataset_generator(
 
     config['normalize_by_used_features'] = False
 
-    config['min_eval_pos'] = max_samples // 2
-    config['max_eval_pos'] = max_samples // 2 + 1
+    config['min_eval_pos'] = n_samples // 2
+    config['max_eval_pos'] = n_samples // 2 + 1
 
 
     config_sample = evaluate_hypers(config)
@@ -110,10 +109,6 @@ def synthetic_dataset_generator(
             # in a way that the training and validation set have the same number of classes
             # the generator returns -100 as a label for all observations in this case
             continue
-
-        curr_samples = uniform_int_sampler_f(min_samples, max_samples)()
-        x = x[:curr_samples, :]
-        y = y[:curr_samples, :]
         
         # remove all zero columns
         x = x[:, x.sum(dim=0) != 0]

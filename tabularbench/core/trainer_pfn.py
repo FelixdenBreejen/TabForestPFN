@@ -38,12 +38,12 @@ class TrainerPFN(BaseEstimator):
 
         self.synthetic_dataset = SyntheticDataset(
             cfg=self.cfg,
-            min_samples=self.cfg.data.min_samples,
-            max_samples=self.cfg.data.max_samples,
+            min_samples_support=self.cfg.data.min_samples_support,
+            max_samples_support=self.cfg.data.max_samples_support,
+            n_samples_query=self.cfg.data.n_samples_query,
             min_features=self.cfg.data.min_features,
             max_features=self.cfg.data.max_features,
-            max_classes=self.cfg.data.max_classes,
-            support_prop=self.cfg.data.support_proportion
+            max_classes=self.cfg.data.max_classes
         )
 
         self.synthetic_dataloader = torch.utils.data.DataLoader(

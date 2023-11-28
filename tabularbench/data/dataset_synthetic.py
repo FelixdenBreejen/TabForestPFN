@@ -13,29 +13,28 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
     def __init__(
         self, 
         cfg: ConfigPretrain,
-        min_samples: int,
-        max_samples: int,
+        min_samples_support: int,
+        max_samples_support: int,
+        n_samples_query: int,
         min_features: int,
         max_features: int,
         max_classes: int,
-        support_prop: float = 0.8
         # TODO: change to uniform random
     ) -> None:
         
         self.cfg = cfg
-        self.min_samples = min_samples
-        self.max_samples = max_samples
+        self.min_samples_support = min_samples_support
+        self.max_samples_support = max_samples_support
+        self.n_samples_query = n_samples_query
+        self.n_samples = max_samples_support + n_samples_query
         self.min_features = min_features
         self.max_features = max_features
         self.max_classes = max_classes
-        self.support_prop = support_prop
-
 
     def __iter__(self) -> Iterator:
 
         self.synthetic_dataset_generator = synthetic_dataset_generator(
-            min_samples=self.min_samples,
-            max_samples=self.max_samples,
+            n_samples=self.n_samples,
             min_features=self.min_features,
             max_features=self.max_features,
             max_classes=self.max_classes
@@ -83,11 +82,11 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
 
         curr_samples = x.shape[0]
 
-        curr_samples_support = int(curr_samples*self.support_prop)
+        curr_samples_support = torch.randint(low=self.min_samples_support, high=curr_samples, size=(1,)).item()
 
         rand_index = torch.randperm(curr_samples)
         rand_support_index = rand_index[:curr_samples_support]
-        rand_query_index = rand_index[curr_samples_support:]
+        rand_query_index = rand_index[curr_samples_support:curr_samples_support+self.n_samples_query]
 
         x_support = x[rand_support_index]
         y_support = y[rand_support_index]
