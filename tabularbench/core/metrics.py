@@ -62,8 +62,10 @@ class MetricsValidation():
         self._correct.append(correct / total)
 
 
-    def update_val(self, norm_acc: float, step: int):
-        self._norm_acc.append(norm_acc)
+    def update_val(self, norm_acc_val: float, norm_acc_test: float, step: int):
+        self._norm_acc_val.append(norm_acc_val)
+        self._norm_acc_test.append(norm_acc_test)
+
         self._val_step.append(step)
 
 
@@ -71,7 +73,8 @@ class MetricsValidation():
     def reset(self):
         self._loss = []
         self._correct = []
-        self._norm_acc = []
+        self._norm_acc_val = []
+        self._norm_acc_test = []
         self._val_step = []
 
     
@@ -79,23 +82,27 @@ class MetricsValidation():
 
         fig, ax = plt.subplots(figsize=(15, 6))
 
-        ax.plot(range(len(self._loss)), self._loss, color='red', label='Cross Entropy Loss (training)')
+        ax.plot(range(len(self._loss)), self._loss, color='blue', label='Cross Entropy Loss (training)')
+        mov_avg = np.convolve(self._loss, np.ones(100)/100, mode='valid')
+        ax.plot(range(99, len(self._loss)), mov_avg, color='darkblue', label='Moving Average (window=100)')
         ax.set_ylabel('Cross Entropy Loss')
+        ax.legend()
 
         ax2 = ax.twinx()
-        ax2.plot(self._val_step, self._norm_acc, color='blue', label='Normalized Accuracy (validation)')
+        ax2.plot(self._val_step, self._norm_acc_val, color='darkred', label='Normalized Accuracy (validation)', linewidth=2)
+        ax2.plot(self._val_step, self._norm_acc_test, color='red', label='Normalized Accuracy (test)', linewidth=2)
         ax2.set_ylabel('Normalized accuracy')
-
         ax2.set_xlabel('Step')
+        ax2.legend()
 
-        fig.legend()
         fig.suptitle('PreTraining', fontsize=16)
         
         fig.savefig(output_dir / 'train_plot.png')
 
         np_dict = {
             'loss': np.array(self._loss),
-            'norm_acc': np.array(self._norm_acc),
+            'norm_acc_val': np.array(self._norm_acc_val),
+            'norm_acc_test': np.array(self._norm_acc_test),
             'val_step': np.array(self._val_step)
         }
         np.savez(output_dir / 'train_plot.npz', **np_dict)

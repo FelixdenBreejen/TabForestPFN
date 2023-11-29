@@ -6,7 +6,7 @@ import torch.multiprocessing as mp
 from transformers import get_cosine_schedule_with_warmup, get_constant_schedule_with_warmup
 
 from tabularbench.core.collator import collate_with_padding
-from tabularbench.core.enums import BenchmarkName, ModelName, SearchType
+from tabularbench.core.enums import BenchmarkName, DataSplit, ModelName, SearchType
 from tabularbench.core.losses import CrossEntropyLossExtraBatch
 from tabularbench.core.metrics import MetricsTraining, MetricsValidation
 from tabularbench.data.benchmarks import BENCHMARKS
@@ -15,6 +15,7 @@ from tabularbench.models.tabPFN.tabpfn_transformer import TabPFN
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
 from tabularbench.sweeps.get_logger import get_logger
+from tabularbench.sweeps.paths_and_filenames import DEFAULT_RESULTS_TEST_FILE_NAME, DEFAULT_RESULTS_VAL_FILE_NAME
 from tabularbench.sweeps.run_sweep import run_sweep
 from tabularbench.sweeps.set_seed import seed_worker
 
@@ -120,12 +121,13 @@ class TrainerPFN(BaseEstimator):
                     state_dict = { k.replace('module.', ''): v for k, v in self.model.state_dict().items()  }
                     torch.save(state_dict, weights_path)
 
-                    normalized_accuracy = self.validate(output_dir, weights_path, plot_name=f"TabPFN Reproduction Step {step}")
+                    normalized_accuracies = self.validate(output_dir, weights_path, plot_name=f"TabPFN Reproduction Step {step}")
 
                     self.cfg.logger.info(f"Finished validation sweep")
-                    self.cfg.logger.info(f"Normalized Validation Accuracy: {normalized_accuracy:.4f}")
+                    self.cfg.logger.info(f"Normalized Validation Accuracy: {normalized_accuracies[DataSplit.VALID]:.4f}")
+                    self.cfg.logger.info(f"Normalized Test Accuracy: {normalized_accuracies[DataSplit.TEST]:.4f}")
 
-                    metrics_val.update_val(normalized_accuracy, step)
+                    metrics_val.update_val(normalized_accuracies[DataSplit.VALID], normalized_accuracies[DataSplit.TEST], step)
                     metrics_val.plot(self.cfg.output_dir)
 
 
@@ -136,7 +138,7 @@ class TrainerPFN(BaseEstimator):
                 self.model = self.model.to(self.cfg.device)
 
 
-    def validate(self, output_dir: Path, weights_path: Path, plot_name: str) -> float:
+    def validate(self, output_dir: Path, weights_path: Path, plot_name: str) -> dict[DataSplit, float]:
 
         hyperparams_finetuning = self.cfg.hyperparams_finetuning
         hyperparams_finetuning['path_to_weights'] = str(weights_path)
@@ -158,10 +160,16 @@ class TrainerPFN(BaseEstimator):
         )
         run_sweep(cfg_sweep)
 
-        default_results = pd.read_csv(output_dir / 'default_results.csv', index_col=0)
-        normalized_accuracy = default_results.loc[plot_name].iloc[-1]
+        default_results_val = pd.read_csv(output_dir / DEFAULT_RESULTS_VAL_FILE_NAME, index_col=0)
+        normalized_accuracy_val = default_results_val.loc[plot_name].iloc[-1]
 
-        return normalized_accuracy
+        default_results_test = pd.read_csv(output_dir / DEFAULT_RESULTS_TEST_FILE_NAME, index_col=0)
+        normalized_accuracy_test = default_results_test.loc[plot_name].iloc[-1]
+
+        return {
+            DataSplit.VALID: normalized_accuracy_val,
+            DataSplit.TEST: normalized_accuracy_test
+        }
     
 
     def test(self):
