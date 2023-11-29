@@ -86,16 +86,15 @@ class MetricsValidation():
         mov_avg = np.convolve(self._loss, np.ones(100)/100, mode='valid')
         ax.plot(range(99, len(self._loss)), mov_avg, color='darkblue', label='Moving Average (window=100)')
         ax.set_ylabel('Cross Entropy Loss')
-        ax.legend()
 
         ax2 = ax.twinx()
         ax2.plot(self._val_step, self._norm_acc_val, color='darkred', label='Normalized Accuracy (validation)', linewidth=2)
         ax2.plot(self._val_step, self._norm_acc_test, color='red', label='Normalized Accuracy (test)', linewidth=2)
         ax2.set_ylabel('Normalized accuracy')
         ax2.set_xlabel('Step')
-        ax2.legend()
 
         fig.suptitle('PreTraining', fontsize=16)
+        fig.legend(loc='lower center', ncol=4)
         
         fig.savefig(output_dir / 'train_plot.png')
 
