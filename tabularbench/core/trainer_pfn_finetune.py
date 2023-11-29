@@ -260,14 +260,16 @@ class Trainer(BaseEstimator):
             return torch.utils.data.DataLoader(
                 dataset,
                 batch_size=1,
-                pin_memory=True
+                pin_memory=True,
+                num_workers=0,
             )
         else:
             return torch.utils.data.DataLoader(
                 dataset,
                 batch_size=1,
                 shuffle=training,
-                pin_memory=True
+                pin_memory=True,
+                num_workers=0,
             )
 
     

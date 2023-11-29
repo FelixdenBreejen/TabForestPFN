@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from tabularbench.core.enums import ModelName, SearchType
+from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.results.scores_min_max import scores_min_max
 
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
@@ -103,7 +103,7 @@ def normalize_sequences(cfg: ConfigBenchmarkSweep, sequences_all: np.ndarray) ->
     sequences_normalized = np.zeros_like(sequences_all)
     
     for dataset_i in range(sequences_all.shape[1]):
-        score_min, score_max = scores_min_max(cfg, cfg.openml_dataset_ids_to_use[dataset_i])
+        score_min, score_max = scores_min_max(cfg, cfg.openml_dataset_ids_to_use[dataset_i], DataSplit.TEST)
         normalized = (sequences_all[:, dataset_i, :, :] - score_min).clip(min=0) / (score_max - score_min)
         sequences_normalized[:, dataset_i, :, :] = normalized
 

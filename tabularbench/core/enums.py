@@ -23,6 +23,12 @@ class DatasetSize(IntEnum):
     LARGE = 50000
 
 
+class DataSplit(StrEnum):
+    TRAIN = "train"
+    VALID = "valid"
+    TEST = "test"
+
+
 class ModelName(StrEnum):
     PLACEHOLDER = "_placeholder_"   # This is a placeholder for the current running model
     FT_TRANSFORMER = "FT_Transformer"

@@ -7,7 +7,7 @@ from tabularbench.core.enums import SearchType
 from tabularbench.results.dataset_plot import make_dataset_plots
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.paths_and_filenames import (
-    DEFAULT_RESULTS_FILE_NAME
+    DEFAULT_RESULTS_TEST_FILE_NAME
 )
 from tabularbench.results.default_results import make_default_results
 from tabularbench.results.hyperparam_plots import make_hyperparam_plots
@@ -58,6 +58,6 @@ def sweep_default_finished(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFra
 
 
 def default_results_not_yet_made(cfg: ConfigBenchmarkSweep) -> bool:
-    return not (cfg.output_dir / DEFAULT_RESULTS_FILE_NAME).exists()
+    return not (cfg.output_dir / DEFAULT_RESULTS_TEST_FILE_NAME).exists()
 
 
