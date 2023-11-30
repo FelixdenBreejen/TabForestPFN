@@ -210,8 +210,24 @@ class TrainerPFN(BaseEstimator):
 
     def select_optimizer(self):
 
+        parameters = [(name, param) for name, param in self.model.named_parameters()]
+
+        parameters_with_weight_decay = []
+        parameters_without_weight_decay = []
+
+        for name, param in parameters:
+            if name.endswith(".bias") or '.norm' in name:
+                parameters_without_weight_decay.append(param)
+            else:
+                parameters_with_weight_decay.append(param)
+
+        optimizer_parameters = [
+            {"params": parameters_with_weight_decay, "weight_decay": self.cfg.optim.weight_decay},
+            {"params": parameters_without_weight_decay, "weight_decay": 0.0},
+        ]
+    
         optimizer = torch.optim.Adam(
-            self.model.parameters(), 
+            optimizer_parameters, 
             lr=self.cfg.optim.lr,
             betas=(self.cfg.optim.beta1, self.cfg.optim.beta2),
             weight_decay=self.cfg.optim.weight_decay
