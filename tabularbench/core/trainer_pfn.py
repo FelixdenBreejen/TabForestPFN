@@ -88,6 +88,7 @@ class TrainerPFN(BaseEstimator):
                 loss = loss / self.cfg.optim.gradient_accumulation_steps
                 loss.backward()
 
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.optim.max_grad_norm)
             self.optimizer.step()
             self.scheduler.step()
             self.optimizer.zero_grad()

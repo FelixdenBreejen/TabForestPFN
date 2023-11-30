@@ -92,6 +92,7 @@ class ConfigOptim():
     beta2: float
     warmup_steps: int
     cosine_scheduler: bool
+    max_grad_norm: float
 
 
 @dataclass
