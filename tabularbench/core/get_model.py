@@ -25,9 +25,12 @@ def get_model(cfg: ConfigRun, x_train: np.ndarray, y_train: np.ndarray, categori
                 n_layers=cfg.hyperparams.n_layers,
                 heads=cfg.hyperparams.heads,
                 attn_dropout=cfg.hyperparams.attn_dropout,
+                use_pretrained_weights=cfg.hyperparams.use_pretrained_weights,
+                path_to_weights=cfg.hyperparams.path_to_weights,
             )
         case _:
             raise NotImplementedError(f"Model {cfg.model_name} not implemented yet")
+            
         
 
 

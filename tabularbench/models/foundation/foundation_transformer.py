@@ -14,6 +14,8 @@ class FoundationTransformer(nn.Module):
             n_layers: int,
             heads: int,
             attn_dropout: float,
+            use_pretrained_weights: bool = False,
+            path_to_weights: str = None,
         ) -> None:
         
         super().__init__()
@@ -43,6 +45,9 @@ class FoundationTransformer(nn.Module):
 
         self.final_layer1 = nn.Linear(dim, dim)
         self.final_layer2 = nn.Linear(dim, n_classes)
+
+        if use_pretrained_weights:
+            self.load_state_dict(torch.load(path_to_weights))
 
 
     def embedding_x(self, x_support: torch.Tensor, x_query: torch.Tensor) -> torch.Tensor:

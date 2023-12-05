@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
-from tabularbench.models.tabPFN.preprocessor import TabPFNPreprocessor
 
 from tabularbench.sweeps.config_run import ConfigRun
 
@@ -61,7 +60,7 @@ class TabPFNFinetuneDataset(torch.utils.data.Dataset):
         y_train = self.y_train[train_indices]
 
         x_train_tensor = torch.as_tensor(x_train)
-        y_train_tensor = torch.FloatTensor(y_train)
+        y_train_tensor = torch.as_tensor(y_train)
         x_test_tensor = torch.as_tensor(self.x_tests[idx])
         y_test_tensor = torch.as_tensor(self.y_tests[idx])
 

@@ -1,4 +1,5 @@
 from pathlib import Path
+from omegaconf import open_dict
 import pandas as pd
 from sklearn.base import BaseEstimator
 import torch
@@ -122,7 +123,7 @@ class TrainerPretrain(BaseEstimator):
                     state_dict = { k.replace('module.', ''): v for k, v in self.model.state_dict().items()  }
                     torch.save(state_dict, weights_path)
 
-                    normalized_accuracies = self.validate(output_dir, weights_path, plot_name=f"TabPFN Reproduction Step {step}")
+                    normalized_accuracies = self.validate(output_dir, weights_path, plot_name=f"{self.cfg.model.name.value} Pretrain Step {step}")
 
                     self.cfg.logger.info(f"Finished validation sweep")
                     self.cfg.logger.info(f"Normalized Validation Accuracy: {normalized_accuracies[DataSplit.VALID]:.4f}")
@@ -142,7 +143,18 @@ class TrainerPretrain(BaseEstimator):
     def validate(self, output_dir: Path, weights_path: Path, plot_name: str) -> dict[DataSplit, float]:
 
         hyperparams_finetuning = self.cfg.hyperparams_finetuning
+        hyperparams_finetuning['use_pretrained_weights'] = True
         hyperparams_finetuning['path_to_weights'] = str(weights_path)
+
+        if self.cfg.model.name == ModelName.FOUNDATION:
+            with open_dict(hyperparams_finetuning):
+                hyperparams_finetuning['n_features'] = self.cfg.data.max_features
+                hyperparams_finetuning['n_classes'] = self.cfg.data.max_classes
+                hyperparams_finetuning['dim'] = self.cfg.model.dim
+                hyperparams_finetuning['n_layers'] = self.cfg.model.n_layers
+                hyperparams_finetuning['heads'] = self.cfg.model.n_heads
+                hyperparams_finetuning['attn_dropout'] = self.cfg.model.attn_dropout
+
 
         cfg_sweep = ConfigBenchmarkSweep(
             logger=get_logger(output_dir / 'log.txt'),
@@ -150,7 +162,7 @@ class TrainerPretrain(BaseEstimator):
             seed=self.cfg.seed,
             devices=self.cfg.devices,
             benchmark=BENCHMARKS[BenchmarkName.CATEGORICAL_CLASSIFICATION],
-            model_name=ModelName.TABPFN,
+            model_name=self.cfg.model.name,
             model_plot_name=plot_name,
             search_type=SearchType.DEFAULT,
             config_plotting=self.cfg.plotting,
@@ -174,13 +186,26 @@ class TrainerPretrain(BaseEstimator):
     
 
     def test(self):
+        
+        self.model = self.model.to('cpu')
+        torch.cuda.empty_cache()
 
         weights_path = self.last_weights_path
         output_dir = self.cfg.output_dir / 'test'
-        plot_name = f"TabPFN Reproduction Test"
+        plot_name = f"{self.cfg.model.name.value} Pretrain Test"
 
         hyperparams_finetuning = self.cfg.hyperparams_finetuning
+        hyperparams_finetuning['use_pretrained_weights'] = True
         hyperparams_finetuning['path_to_weights'] = str(weights_path)
+
+        if self.cfg.model.name == ModelName.FOUNDATION:
+            with open_dict(hyperparams_finetuning):
+                hyperparams_finetuning['n_features'] = self.cfg.data.max_features
+                hyperparams_finetuning['n_classes'] = self.cfg.data.max_classes
+                hyperparams_finetuning['dim'] = self.cfg.model.dim
+                hyperparams_finetuning['n_layers'] = self.cfg.model.n_layers
+                hyperparams_finetuning['heads'] = self.cfg.model.n_heads
+                hyperparams_finetuning['attn_dropout'] = self.cfg.model.attn_dropout
 
         cfg_sweep = ConfigBenchmarkSweep(
             logger=get_logger(output_dir / 'log.txt'),
@@ -188,7 +213,7 @@ class TrainerPretrain(BaseEstimator):
             seed=self.cfg.seed,
             devices=self.cfg.devices,
             benchmark=BENCHMARKS[BenchmarkName.CATEGORICAL_CLASSIFICATION],
-            model_name=ModelName.TABPFN,
+            model_name=self.cfg.model.name,
             model_plot_name=plot_name,
             search_type=SearchType.DEFAULT,
             config_plotting=self.cfg.plotting,
@@ -198,15 +223,6 @@ class TrainerPretrain(BaseEstimator):
             hyperparams_object=self.cfg.hyperparams_finetuning
         )
         run_sweep(cfg_sweep)
-
-
-
-
-
-
-
-
-
 
 
     def select_optimizer(self):
