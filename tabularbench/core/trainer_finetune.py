@@ -15,7 +15,7 @@ from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatisti
 from tabularbench.data.dataset_tabpfn_finetune import TabPFNFinetuneDataset, TabPFNFinetuneGenerator
 
 
-class Trainer(BaseEstimator):
+class TrainerFinetune(BaseEstimator):
 
     def __init__(
             self, 

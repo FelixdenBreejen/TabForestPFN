@@ -38,6 +38,11 @@ class ConfigPretrain():
         logger = get_logger(output_dir / 'log.txt')
 
         devices = [torch.device(device) for device in cfg_hydra.devices]
+        pretrain_model_name = ModelName[cfg_hydra.pretrain_model.name]
+        hyperparams_finetuning = cfg_hydra.hyperparams[pretrain_model_name.name.lower()]
+        model_settings = cfg_hydra.pretrain_model
+        model_settings.name = pretrain_model_name
+
 
         return cls(
             logger=logger,
@@ -46,7 +51,8 @@ class ConfigPretrain():
             use_ddp=len(devices) > 1,
             seed=cfg_hydra.seed,
             workers_per_gpu=cfg_hydra.workers_per_gpu,
-            model = cfg_hydra.model,
+            model = model_settings,
+            hyperparams_finetuning = hyperparams_finetuning,
             data = ConfigData(
                 min_samples_support=cfg_hydra.data.min_samples_support,
                 max_samples_support=cfg_hydra.data.max_samples_support,
@@ -67,6 +73,7 @@ class ConfigPretrain():
                 beta2=cfg_hydra.optim.beta2,
                 warmup_steps=cfg_hydra.optim.warmup_steps,
                 cosine_scheduler=cfg_hydra.optim.cosine_scheduler,
+                max_grad_norm=cfg_hydra.optim.max_grad_norm,
             ),
             plotting = ConfigPlotting(
                 n_runs=cfg_hydra.plotting.n_runs,
@@ -75,7 +82,6 @@ class ConfigPretrain():
                 plot_default_value=cfg_hydra.plotting.plot_default_value,
                 benchmark_model_names=[ModelName[model] for model in cfg_hydra.plotting.benchmark_models],
             ),
-            hyperparams_finetuning = cfg_hydra.hyperparams.tabpfn_finetune
         )
     
 

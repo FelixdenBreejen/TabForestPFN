@@ -32,7 +32,8 @@ class DataSplit(StrEnum):
 class ModelName(StrEnum):
     PLACEHOLDER = "_placeholder_"   # This is a placeholder for the current running model
     FT_TRANSFORMER = "FT_Transformer"
-    TABPFN_FINETUNE = "TabPFN_Finetune"
+    TABPFN = "TabPFN"
+    FOUNDATION = "Foundation"
     SAINT = "SAINT"
     MLP = "MLP"
     RESNET = "Resnet"

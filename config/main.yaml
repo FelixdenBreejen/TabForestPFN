@@ -4,7 +4,8 @@ hydra:
 
 defaults:
   - hyperparams/ft_transformer: ft_transformer
-  - hyperparams/tabpfn_finetune: tabpfn_finetune_10k
+  - hyperparams/tabpfn: finetune_10k
+  - hyperparams/foundation: finetune_10k
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
@@ -15,7 +16,7 @@ n_random_runs_per_dataset: 500                  # suggested: 500
 n_default_runs_per_dataset: 1                   # on default we also want multiple runs for the confidence bound
 
 models:
-  - TABPFN_FINETUNE
+  - TABPFN
 model_plot_names:
   - TabPFN-Finetune 10k
 benchmarks:

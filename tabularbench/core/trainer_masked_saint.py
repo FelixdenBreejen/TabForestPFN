@@ -8,7 +8,7 @@ from transformers.optimization import get_cosine_schedule_with_warmup
 
 from tabularbench.core.callbacks import EpochStatistics
 from tabularbench.data.dataset_synthetic import SyntheticDataset
-from tabularbench.models.tabPFN.saint import SAINTadapted
+from tabularbench.models.tab_transformer.saint import SAINTadapted
 
 
 class TrainerMaskedSaint(BaseEstimator):

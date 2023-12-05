@@ -3,7 +3,9 @@ import torch
 import numpy as np
 
 from tabularbench.core.enums import ModelName
+from tabularbench.models.foundation.foundation_transformer import FoundationTransformer
 from tabularbench.models.tabPFN.tabpfn_transformer import TabPFN
+from tabularbench.sweeps.config_pretrain import ConfigPretrain
 from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.models.ft_transformer.ft_transformer import FTTransformer
 
@@ -13,7 +15,35 @@ def get_model(cfg: ConfigRun, x_train: np.ndarray, y_train: np.ndarray, categori
     match cfg.model_name:
         case ModelName.FT_TRANSFORMER:
             return FTTransformer(cfg, x_train, y_train, categorical_indicator)
-        case ModelName.TABPFN_FINETUNE:
+        case ModelName.TABPFN:
             return TabPFN(cfg.hyperparams.use_pretrained_weights, path_to_weights=cfg.hyperparams.path_to_weights)
+        case ModelName.FOUNDATION:
+            return FoundationTransformer(
+                n_features=cfg.hyperparams.n_features,
+                n_classes=cfg.hyperparams.n_classes,
+                dim=cfg.hyperparams.dim,
+                n_layers=cfg.hyperparams.n_layers,
+                heads=cfg.hyperparams.heads,
+                attn_dropout=cfg.hyperparams.attn_dropout,
+            )
         case _:
             raise NotImplementedError(f"Model {cfg.model_name} not implemented yet")
+        
+
+
+def get_model_pretrain(cfg: ConfigPretrain) -> torch.nn.Module:
+
+    match cfg.model.name:
+        case ModelName.TABPFN:
+            return TabPFN(cfg.hyperparams_finetuning.use_pretrained_weights, path_to_weights=cfg.hyperparams_finetuning.path_to_weights)
+        case ModelName.FOUNDATION:
+            return FoundationTransformer(
+                n_features=cfg.data.max_features,
+                n_classes=cfg.data.max_classes,
+                dim=cfg.model.dim,
+                n_layers=cfg.model.n_layers,
+                heads=cfg.model.n_heads,
+                attn_dropout=cfg.model.attn_dropout,
+            )
+        case _:
+            raise NotImplementedError(f"Model {cfg.model.name} not implemented yet")

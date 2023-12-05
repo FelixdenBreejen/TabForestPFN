@@ -7,11 +7,11 @@ from transformers import get_cosine_schedule_with_warmup, get_constant_schedule_
 
 from tabularbench.core.collator import collate_with_padding
 from tabularbench.core.enums import BenchmarkName, DataSplit, ModelName, SearchType
+from tabularbench.core.get_model import get_model_pretrain
 from tabularbench.core.losses import CrossEntropyLossExtraBatch
 from tabularbench.core.metrics import MetricsTraining, MetricsValidation
 from tabularbench.data.benchmarks import BENCHMARKS
 from tabularbench.data.dataset_synthetic import SyntheticDataset
-from tabularbench.models.tabPFN.tabpfn_transformer import TabPFN
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
 from tabularbench.sweeps.get_logger import get_logger
@@ -21,7 +21,7 @@ from tabularbench.sweeps.set_seed import seed_worker
 
 
 
-class TrainerPFN(BaseEstimator):
+class TrainerPretrain(BaseEstimator):
 
     def __init__(
             self, 
@@ -31,7 +31,7 @@ class TrainerPFN(BaseEstimator):
 
         self.cfg = cfg
         self.barrier = barrier
-        self.model = TabPFN(use_pretrained_weights=False)
+        self.model = get_model_pretrain(cfg)
         self.model.to(self.cfg.device)
 
         if cfg.use_ddp:
@@ -150,7 +150,7 @@ class TrainerPFN(BaseEstimator):
             seed=self.cfg.seed,
             devices=self.cfg.devices,
             benchmark=BENCHMARKS[BenchmarkName.CATEGORICAL_CLASSIFICATION],
-            model_name=ModelName.TABPFN_FINETUNE,
+            model_name=ModelName.TABPFN,
             model_plot_name=plot_name,
             search_type=SearchType.DEFAULT,
             config_plotting=self.cfg.plotting,
@@ -188,7 +188,7 @@ class TrainerPFN(BaseEstimator):
             seed=self.cfg.seed,
             devices=self.cfg.devices,
             benchmark=BENCHMARKS[BenchmarkName.CATEGORICAL_CLASSIFICATION],
-            model_name=ModelName.TABPFN_FINETUNE,
+            model_name=ModelName.TABPFN,
             model_plot_name=plot_name,
             search_type=SearchType.DEFAULT,
             config_plotting=self.cfg.plotting,

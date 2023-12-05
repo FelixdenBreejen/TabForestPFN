@@ -9,7 +9,7 @@ import numpy as np
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.data.dataset_masked_saint import MaskedSaintDataset, MaskedSaintDatasetGenerator
-from tabularbench.models.tabPFN.saint import SAINTadapted
+from tabularbench.models.tab_transformer.saint import SAINTadapted
 
 
 

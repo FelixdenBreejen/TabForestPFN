@@ -1,13 +1,14 @@
 from __future__ import annotations
 import os
 from pathlib import Path
+import sys
 
 import hydra
 from omegaconf import DictConfig
 import torch
 import torch.multiprocessing as mp
 from main import check_existence_of_benchmark_results_csv, save_config
-from tabularbench.core.trainer_pfn import TrainerPFN
+from tabularbench.core.trainer_pretrain import TrainerPretrain
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
 from tabularbench.sweeps.get_logger import get_logger
 
@@ -19,6 +20,9 @@ from tabularbench.sweeps.set_seed import set_seed
 def main(cfg_hydra: DictConfig):
     
     mp.set_start_method('spawn')
+
+    if debugger_is_active():
+        os.environ['CUDA_LAUNCH_BLOCKING']='1'
 
     cfg = ConfigPretrain.from_hydra(cfg_hydra)
     cfg.logger.info("Finished creating pretrain config")
@@ -43,7 +47,7 @@ def main_experiment(gpu: int, cfg: ConfigPretrain, barrier: mp.Barrier) -> None:
 
     setup_gpus_of_experiment(cfg, gpu)
     
-    trainer = TrainerPFN(cfg, barrier)
+    trainer = TrainerPretrain(cfg, barrier)
     trainer.train()
 
     if cfg.is_main_process:
@@ -90,6 +94,11 @@ def setup_gpus_of_experiment(cfg: ConfigPretrain, gpu: int) -> torch.device:
         torch.distributed.init_process_group(backend="nccl", world_size = len(cfg.devices), rank=gpu)
 
     return device
+
+
+def debugger_is_active() -> bool:
+    """Return if the debugger is currently active"""
+    return hasattr(sys, 'gettrace') and sys.gettrace() is not None
 
 
 if __name__ == "__main__":

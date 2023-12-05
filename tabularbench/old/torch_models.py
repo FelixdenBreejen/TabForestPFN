@@ -2,7 +2,7 @@
 from tabularbench.models.tabular.bin.ft_transformer import Transformer, InputShapeSetterTransformer
 
 from tabularbench.core.trainer_old import Trainer
-from tabularbench.core.trainer_pfn import TrainerPFN
+from tabularbench.core.trainer_pretrain import TrainerPFN
 from tabularbench.core.trainer_masked_saint_finetune import TrainerMaskedSaintFinetune
 
 
