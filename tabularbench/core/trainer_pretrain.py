@@ -142,19 +142,7 @@ class TrainerPretrain(BaseEstimator):
 
     def validate(self, output_dir: Path, weights_path: Path, plot_name: str) -> dict[DataSplit, float]:
 
-        hyperparams_finetuning = self.cfg.hyperparams_finetuning
-        hyperparams_finetuning['use_pretrained_weights'] = True
-        hyperparams_finetuning['path_to_weights'] = str(weights_path)
-
-        if self.cfg.model.name == ModelName.FOUNDATION:
-            with open_dict(hyperparams_finetuning):
-                hyperparams_finetuning['n_features'] = self.cfg.data.max_features
-                hyperparams_finetuning['n_classes'] = self.cfg.data.max_classes
-                hyperparams_finetuning['dim'] = self.cfg.model.dim
-                hyperparams_finetuning['n_layers'] = self.cfg.model.n_layers
-                hyperparams_finetuning['heads'] = self.cfg.model.n_heads
-                hyperparams_finetuning['attn_dropout'] = self.cfg.model.attn_dropout
-
+        hyperparams_finetuning = self.make_hyperparams_finetuning_dict(weights_path)
 
         cfg_sweep = ConfigBenchmarkSweep(
             logger=get_logger(output_dir / 'log.txt'),
@@ -194,18 +182,7 @@ class TrainerPretrain(BaseEstimator):
         output_dir = self.cfg.output_dir / 'test'
         plot_name = f"{self.cfg.model.name.value} Pretrain Test"
 
-        hyperparams_finetuning = self.cfg.hyperparams_finetuning
-        hyperparams_finetuning['use_pretrained_weights'] = True
-        hyperparams_finetuning['path_to_weights'] = str(weights_path)
-
-        if self.cfg.model.name == ModelName.FOUNDATION:
-            with open_dict(hyperparams_finetuning):
-                hyperparams_finetuning['n_features'] = self.cfg.data.max_features
-                hyperparams_finetuning['n_classes'] = self.cfg.data.max_classes
-                hyperparams_finetuning['dim'] = self.cfg.model.dim
-                hyperparams_finetuning['n_layers'] = self.cfg.model.n_layers
-                hyperparams_finetuning['heads'] = self.cfg.model.n_heads
-                hyperparams_finetuning['attn_dropout'] = self.cfg.model.attn_dropout
+        hyperparams_finetuning = self.make_hyperparams_finetuning_dict(weights_path)
 
         cfg_sweep = ConfigBenchmarkSweep(
             logger=get_logger(output_dir / 'log.txt'),
@@ -220,9 +197,26 @@ class TrainerPretrain(BaseEstimator):
             n_random_runs_per_dataset=1,
             n_default_runs_per_dataset=10,
             openml_dataset_ids_to_ignore=[],
-            hyperparams_object=self.cfg.hyperparams_finetuning
+            hyperparams_object=hyperparams_finetuning
         )
         run_sweep(cfg_sweep)
+
+
+    def make_hyperparams_finetuning_dict(self, weights_path: Path) -> dict:
+
+        hyperparams_finetuning = self.cfg.hyperparams_finetuning
+        hyperparams_finetuning['use_pretrained_weights'] = True
+        hyperparams_finetuning['path_to_weights'] = str(weights_path)
+
+        if self.cfg.model.name == ModelName.FOUNDATION:
+            with open_dict(hyperparams_finetuning):
+                hyperparams_finetuning['n_features'] = self.cfg.data.max_features
+                hyperparams_finetuning['n_classes'] = self.cfg.data.max_classes
+
+                for key, value in self.cfg.model.items():
+                    hyperparams_finetuning[key] = value
+
+        return hyperparams_finetuning
 
 
     def select_optimizer(self):

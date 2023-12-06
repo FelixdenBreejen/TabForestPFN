@@ -25,6 +25,7 @@ def get_model(cfg: ConfigRun, x_train: np.ndarray, y_train: np.ndarray, categori
                 n_layers=cfg.hyperparams.n_layers,
                 heads=cfg.hyperparams.heads,
                 attn_dropout=cfg.hyperparams.attn_dropout,
+                y_as_float_embedding=cfg.hyperparams.y_as_float_embedding,
                 use_pretrained_weights=cfg.hyperparams.use_pretrained_weights,
                 path_to_weights=cfg.hyperparams.path_to_weights,
             )
@@ -47,6 +48,9 @@ def get_model_pretrain(cfg: ConfigPretrain) -> torch.nn.Module:
                 n_layers=cfg.model.n_layers,
                 heads=cfg.model.n_heads,
                 attn_dropout=cfg.model.attn_dropout,
+                y_as_float_embedding=cfg.model.y_as_float_embedding,
+                use_pretrained_weights=False,
+                path_to_weights=None,
             )
         case _:
             raise NotImplementedError(f"Model {cfg.model.name} not implemented yet")
