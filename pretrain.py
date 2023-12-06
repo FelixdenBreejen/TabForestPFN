@@ -1,16 +1,19 @@
 from __future__ import annotations
+import dataclasses
 import os
 from pathlib import Path
 import sys
 
 import hydra
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 import torch
 import torch.multiprocessing as mp
+import yaml
 from main import check_existence_of_benchmark_results_csv, save_config
 from tabularbench.core.trainer_pretrain import TrainerPretrain
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
 from tabularbench.sweeps.get_logger import get_logger
+from tabularbench.sweeps.paths_and_filenames import CONFIG_DUPLICATE
 
 from tabularbench.sweeps.set_seed import set_seed
 
@@ -35,8 +38,10 @@ def main(cfg_hydra: DictConfig):
     barrier = mp.Barrier(len(cfg.devices))
 
     if cfg.use_ddp:
+        cfg.logger.info(f"Training with {len(cfg.devices)} GPUs")
         mp.spawn(main_experiment, nprocs=len(cfg.devices), args=(cfg,barrier))
     else:
+        cfg.logger.info(f"Training with one GPU")
         mp.spawn(main_experiment, nprocs=1, args=(cfg,barrier))
 
 
@@ -48,10 +53,17 @@ def main_experiment(gpu: int, cfg: ConfigPretrain, barrier: mp.Barrier) -> None:
     setup_gpus_of_experiment(cfg, gpu)
     
     trainer = TrainerPretrain(cfg, barrier)
+
+    if cfg.is_main_process:
+        cfg.logger.info(f"Trainer of {cfg.model.name.value} created, start training")
+    
     trainer.train()
 
     if cfg.is_main_process:
+        cfg.logger.info(f"Finished training of {cfg.model.name.value}")
+        cfg.logger.info(f"Start testing of {cfg.model.name.value}")
         trainer.test()
+        cfg.logger.info(f"Finished testing of {cfg.model.name.value}")
 
 
 def setup_gpus(cfg: ConfigPretrain) -> None:
@@ -99,6 +111,21 @@ def setup_gpus_of_experiment(cfg: ConfigPretrain, gpu: int) -> torch.device:
 def debugger_is_active() -> bool:
     """Return if the debugger is currently active"""
     return hasattr(sys, 'gettrace') and sys.gettrace() is not None
+
+
+
+
+def save_config(cfg: ConfigPretrain) -> None:
+    
+    config_path = Path(cfg.output_dir) / CONFIG_DUPLICATE
+
+    # OmegaConf object looks ugly when saved as yaml
+    model_dict = OmegaConf.to_container(cfg.model, resolve=True)
+    finetuning_dict = OmegaConf.to_container(cfg.hyperparams_finetuning, resolve=True)
+    self_to_save = dataclasses.replace(cfg, model=model_dict, hyperparams_finetuning=finetuning_dict)
+
+    with open(config_path, 'w') as f:        
+        yaml.dump(self_to_save, f, default_flow_style=False)
 
 
 if __name__ == "__main__":

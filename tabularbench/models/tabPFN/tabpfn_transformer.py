@@ -239,7 +239,7 @@ class TabPFN(torch.nn.Module):
     def __init__(self, use_pretrained_weights: bool, path_to_weights: str = None):
         super().__init__()
 
-        model_state, optimizer_state, config_sample = torch.load(PATH_TO_WEIGHTS, map_location='cpu')
+        _, _, config_sample = torch.load(PATH_TO_WEIGHTS, map_location='cpu')
 
         if (('nan_prob_no_reason' in config_sample and config_sample['nan_prob_no_reason'] > 0.0) or
             ('nan_prob_a_reason' in config_sample and config_sample['nan_prob_a_reason'] > 0.0) or

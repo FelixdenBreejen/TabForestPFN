@@ -24,7 +24,6 @@ def main(cfg_hydra: DictConfig):
     check_existence_of_benchmark_results_csv(cfg)
     save_config(cfg)
     set_seed(cfg.seed)
-    # TODO: check how seeding works in subprocesses
 
 
     for cfg_benchmark_sweep in cfg.configs_benchmark_sweep:
@@ -44,7 +43,7 @@ def save_config(cfg: ConfigMain) -> None:
     
     config_path = Path(cfg.output_dir) / CONFIG_DUPLICATE
 
-    with open(config_path, 'w') as f:
+    with open(config_path, 'w') as f:        
         yaml.dump(cfg, f, default_flow_style=False)
 
 

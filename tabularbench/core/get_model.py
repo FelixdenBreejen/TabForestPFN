@@ -39,7 +39,10 @@ def get_model_pretrain(cfg: ConfigPretrain) -> torch.nn.Module:
 
     match cfg.model.name:
         case ModelName.TABPFN:
-            return TabPFN(cfg.hyperparams_finetuning.use_pretrained_weights, path_to_weights=cfg.hyperparams_finetuning.path_to_weights)
+            return TabPFN(
+                use_pretrained_weights=False,
+                path_to_weights=None,
+            )
         case ModelName.FOUNDATION:
             return FoundationTransformer(
                 n_features=cfg.data.max_features,
