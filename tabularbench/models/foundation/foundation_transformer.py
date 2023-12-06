@@ -138,7 +138,7 @@ class FoundationEmbeddingYFloat(torch.nn.Module):
         self.y_embedding = nn.Linear(1, dim)
 
 
-    def forward(self, y_support: torch.Tensor, n_obs_query: int) -> torch.Tensor:
+    def forward(self, y_support: torch.Tensor, n_obs_query: int) -> tuple[torch.Tensor, torch.Tensor]:
 
         batch_size = y_support.shape[0]
 
@@ -169,7 +169,7 @@ class FoundationEmbeddingYInteger(torch.nn.Module):
         self.y_mask = nn.Embedding(1, dim) # masking is also modeled as a separate class
 
 
-    def forward(self, y_support: torch.Tensor, n_obs_query: int) -> torch.Tensor:
+    def forward(self, y_support: torch.Tensor, n_obs_query: int) -> tuple[torch.Tensor, torch.Tensor]:
 
         batch_size = y_support.shape[0]
 
