@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from tabularbench.models.tabPFN.layer import TransformerEncoderLayer
+
 
 class FoundationTransformer(nn.Module):
 
@@ -40,13 +42,17 @@ class FoundationTransformer(nn.Module):
 
         for _ in range(n_layers):
 
-            self.layers.append(nn.ModuleDict({
-                'layer_norm1': nn.LayerNorm(dim),
-                'attention': torch.nn.MultiheadAttention(dim, n_heads, dropout=attn_dropout, batch_first=True),
-                'layer_norm2': nn.LayerNorm(dim),
-                'linear1': nn.Linear(dim, dim*2),
-                'linear2': nn.Linear(dim*2, dim),
-            }))
+            layer = TransformerEncoderLayer(512, 4, 1024, 0.0, activation='gelu', pre_norm=False, recompute_attn=False)
+
+            self.layers.append(layer)
+
+            # self.layers.append(nn.ModuleDict({
+            #     'layer_norm1': nn.LayerNorm(dim),
+            #     'attention': torch.nn.MultiheadAttention(dim, n_heads, dropout=attn_dropout, batch_first=True),
+            #     'layer_norm2': nn.LayerNorm(dim),
+            #     'linear1': nn.Linear(dim, dim*2),
+            #     'linear2': nn.Linear(dim*2, dim),
+            # }))
 
         self.final_layer1 = nn.Linear(dim, dim*2)
         self.final_layer2 = nn.Linear(dim*2, n_classes)
@@ -59,11 +65,19 @@ class FoundationTransformer(nn.Module):
 
     def init_weights(self):
 
-        for module_dict in self.layers:
-            nn.init.zeros_(module_dict['attention'].out_proj.weight)
-            nn.init.zeros_(module_dict['attention'].out_proj.bias)
-            nn.init.zeros_(module_dict['linear2'].weight)
-            nn.init.zeros_(module_dict['linear2'].bias)
+        for layer in self.layers:
+            nn.init.zeros_(layer.linear2.weight)
+            nn.init.zeros_(layer.linear2.bias)
+            attns = layer.self_attn if isinstance(layer.self_attn, nn.ModuleList) else [layer.self_attn]
+            for attn in attns:
+                nn.init.zeros_(attn.out_proj.weight)
+                nn.init.zeros_(attn.out_proj.bias)
+
+        # for module_dict in self.layers:
+            # nn.init.zeros_(module_dict['attention'].out_proj.weight)
+            # nn.init.zeros_(module_dict['attention'].out_proj.bias)
+            # nn.init.zeros_(module_dict['linear2'].weight)
+            # nn.init.zeros_(module_dict['linear2'].bias)
             
 
     def forward(self, x_support: torch.Tensor, y_support: torch.Tensor, x_query: torch.Tensor):
@@ -82,6 +96,7 @@ class FoundationTransformer(nn.Module):
         b = batch size
         n = number of observations
         d = dimension of embedding
+        c = number of classes
         """
 
         batch_size = y_support.shape[0]
@@ -100,27 +115,29 @@ class FoundationTransformer(nn.Module):
         
         for module_dict in self.layers:
 
-            x_residual = x
-            support, query = einops.unpack(x, pack, 'b * d')
-            support = module_dict['attention'](support, support, support)[0]
-            query = module_dict['attention'](query, support, support)[0]
-            x = einops.pack((support, query), 'b * d')[0]
-            x = x_residual + x
-            x = module_dict['layer_norm1'](x)
-            x_residual = x
-            x = module_dict['linear1'](x)
-            x = torch.nn.functional.gelu(x)
-            x = module_dict['linear2'](x)
-            x = x_residual + x
-            x = module_dict['layer_norm2'](x)
+            x = module_dict(x, src_mask=n_obs_support, src_key_padding_mask=None)
+
+            # x_residual = x
+            # support, query = einops.unpack(x, pack, 'b * d')
+            # support = module_dict['attention'](support, support, support)[0]
+            # query = module_dict['attention'](query, support, support)[0]
+            # x = einops.pack((support, query), 'b * d')[0]
+            # x = x_residual + x
+            # x = module_dict['layer_norm1'](x)
+            # x_residual = x
+            # x = module_dict['linear1'](x)
+            # x = torch.nn.functional.gelu(x)
+            # x = module_dict['linear2'](x)
+            # x = x_residual + x
+            # x = module_dict['layer_norm2'](x)
 
         x = self.final_layer1(x)
         x = F.gelu(x)
         x = self.final_layer2(x)
 
-        x = x[:, n_obs_support:, :] # only return the query part
+        support, query = einops.unpack(x, pack, 'b * c')
 
-        return x
+        return query
 
 
 

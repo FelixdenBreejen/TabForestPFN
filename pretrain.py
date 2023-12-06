@@ -1,22 +1,22 @@
 from __future__ import annotations
+
 import dataclasses
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import hydra
-from omegaconf import DictConfig, OmegaConf
 import torch
 import torch.multiprocessing as mp
 import yaml
+from omegaconf import DictConfig, OmegaConf
+
 from main import check_existence_of_benchmark_results_csv, save_config
 from tabularbench.core.trainer_pretrain import TrainerPretrain
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
 from tabularbench.sweeps.get_logger import get_logger
 from tabularbench.sweeps.paths_and_filenames import CONFIG_DUPLICATE
-
 from tabularbench.sweeps.set_seed import set_seed
-
 
 
 @hydra.main(version_base=None, config_path="config", config_name="pretrain")
@@ -92,13 +92,12 @@ def setup_gpus(cfg: ConfigPretrain) -> None:
 
 def setup_gpus_of_experiment(cfg: ConfigPretrain, gpu: int) -> torch.device:
 
-    device = torch.device('cuda:%d'%(int(gpu)))
+    device = cfg.devices[gpu]
     torch.cuda.set_device(device)
-    cfg.device = gpu
+    cfg.device = device
     cfg.is_main_process = (gpu == 0)
 
     if cfg.use_ddp:
-        os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
         os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
         os.environ['MASTER_ADDR'] = 'localhost'
         os.environ['MASTER_PORT'] = '5678'
