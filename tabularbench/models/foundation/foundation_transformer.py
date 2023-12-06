@@ -53,8 +53,18 @@ class FoundationTransformer(nn.Module):
 
         if use_pretrained_weights:
             self.load_state_dict(torch.load(path_to_weights))
+        else:
+            self.init_weights()
 
 
+    def init_weights(self):
+
+        for module_dict in self.layers:
+            nn.init.zeros_(module_dict['attention'].out_proj.weight)
+            nn.init.zeros_(module_dict['attention'].out_proj.bias)
+            nn.init.zeros_(module_dict['linear2'].weight)
+            nn.init.zeros_(module_dict['linear2'].bias)
+            
 
     def forward(self, x_support: torch.Tensor, y_support: torch.Tensor, x_query: torch.Tensor):
 
