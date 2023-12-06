@@ -12,7 +12,7 @@ class FoundationTransformer(nn.Module):
             n_classes: int, 
             dim: int,
             n_layers: int,
-            heads: int,
+            n_heads: int,
             attn_dropout: float,
             y_as_float_embedding: bool,
             use_pretrained_weights: bool,
@@ -25,7 +25,7 @@ class FoundationTransformer(nn.Module):
         self.n_classes = n_classes
         self.dim = dim
         self.n_layers = n_layers
-        self.heads = heads
+        self.n_heads = n_heads
         self.attn_dropout = attn_dropout
         self.y_as_float_embedding = y_as_float_embedding
 
@@ -42,14 +42,14 @@ class FoundationTransformer(nn.Module):
 
             self.layers.append(nn.ModuleDict({
                 'layer_norm1': nn.LayerNorm(dim),
-                'attention': torch.nn.MultiheadAttention(dim, heads, dropout=attn_dropout, batch_first=True),
+                'attention': torch.nn.MultiheadAttention(dim, n_heads, dropout=attn_dropout, batch_first=True),
                 'layer_norm2': nn.LayerNorm(dim),
-                'linear1': nn.Linear(dim, dim),
-                'linear2': nn.Linear(dim, dim),
+                'linear1': nn.Linear(dim, dim*2),
+                'linear2': nn.Linear(dim*2, dim),
             }))
 
-        self.final_layer1 = nn.Linear(dim, dim)
-        self.final_layer2 = nn.Linear(dim, n_classes)
+        self.final_layer1 = nn.Linear(dim, dim*2)
+        self.final_layer2 = nn.Linear(dim*2, n_classes)
 
         if use_pretrained_weights:
             self.load_state_dict(torch.load(path_to_weights))
