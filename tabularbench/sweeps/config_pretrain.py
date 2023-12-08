@@ -74,6 +74,8 @@ class ConfigPretrain():
                 warmup_steps=cfg_hydra.optim.warmup_steps,
                 cosine_scheduler=cfg_hydra.optim.cosine_scheduler,
                 max_grad_norm=cfg_hydra.optim.max_grad_norm,
+                use_pretrained_weights=cfg_hydra.optim.use_pretrained_weights,
+                path_to_weights=cfg_hydra.optim.path_to_weights,
             ),
             plotting = ConfigPlotting(
                 n_runs=cfg_hydra.plotting.n_runs,
@@ -99,6 +101,8 @@ class ConfigOptim():
     warmup_steps: int
     cosine_scheduler: bool
     max_grad_norm: float
+    use_pretrained_weights: bool
+    path_to_weights: str
 
 
 @dataclass

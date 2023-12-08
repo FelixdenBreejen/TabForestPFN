@@ -42,7 +42,7 @@ class FoundationTransformer(nn.Module):
 
             self.layers.append(nn.ModuleDict({
                 'layer_norm1': nn.LayerNorm(dim),
-                'attention': Attention(dim, n_heads, dropout=attn_dropout, batch_first=True),
+                'attention': nn.MultiheadAttention(dim, n_heads, dropout=attn_dropout, batch_first=True),
                 'layer_norm2': nn.LayerNorm(dim),
                 'linear1': nn.Linear(dim, dim*2),
                 'linear2': nn.Linear(dim*2, dim),
@@ -85,7 +85,12 @@ class FoundationTransformer(nn.Module):
         c = number of classes
         """
 
+        batch_size = x_support.shape[0]
+        n_obs_support = x_support.shape[1]
         n_obs_query = x_query.shape[1]
+
+        padding_mask = torch.zeros((batch_size, n_obs_support), dtype=torch.bool, device=x_support.device)
+        padding_mask[y_support == -100] = True
         
         x_support = self.x_embedding(x_support)
         x_query = self.x_embedding(x_query)
@@ -100,7 +105,10 @@ class FoundationTransformer(nn.Module):
         for module_dict in self.layers:
 
             x_residual = x
-            x = module_dict['attention'](x, pack)
+            support, query = einops.unpack(x, pack, 'b * d')
+            support_att = module_dict['attention'](support, support, support, key_padding_mask=padding_mask)[0]
+            query_att = module_dict['attention'](query, support, support, key_padding_mask=padding_mask)[0]
+            x = einops.pack((support_att, query_att), 'b * d')[0]
             x = x_residual + x
             x = module_dict['layer_norm1'](x)
             x_residual = x
@@ -178,33 +186,3 @@ class FoundationEmbeddingYInteger(torch.nn.Module):
         y_query = self.y_mask(y_query)
 
         return y_support, y_query
-    
-
-class Attention(nn.Module):
-
-    def __init__(
-            self,
-            dim: int,
-            n_heads: int,
-            dropout: float,
-            batch_first: bool,
-        ) -> None:
-        
-        super().__init__()
-
-        self.dim = dim
-        self.n_heads = n_heads
-        self.dropout = dropout
-        self.batch_first = batch_first
-
-        self.attention = nn.MultiheadAttention(dim, n_heads, dropout=dropout, batch_first=batch_first)
-
-
-    def forward(self, x: torch.Tensor, pack: tuple[int]) -> torch.Tensor:
-
-        support, query = einops.unpack(x, pack, 'b * d')
-        support_att = self.attention(support, support, support)[0]
-        query_att = self.attention(query, support, support)[0]
-        x = einops.pack((support_att, query_att), 'b * d')[0]
-
-        return x

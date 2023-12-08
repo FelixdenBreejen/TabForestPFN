@@ -40,8 +40,8 @@ def get_model_pretrain(cfg: ConfigPretrain) -> torch.nn.Module:
     match cfg.model.name:
         case ModelName.TABPFN:
             return TabPFN(
-                use_pretrained_weights=False,
-                path_to_weights=None,
+                use_pretrained_weights=cfg.optim.use_pretrained_weights,
+                path_to_weights=cfg.optim.path_to_weights
             )
         case ModelName.FOUNDATION:
             return FoundationTransformer(
@@ -52,8 +52,8 @@ def get_model_pretrain(cfg: ConfigPretrain) -> torch.nn.Module:
                 n_heads=cfg.model.n_heads,
                 attn_dropout=cfg.model.attn_dropout,
                 y_as_float_embedding=cfg.model.y_as_float_embedding,
-                use_pretrained_weights=False,
-                path_to_weights=None,
+                use_pretrained_weights=cfg.optim.use_pretrained_weights,
+                path_to_weights=cfg.optim.path_to_weights
             )
         case _:
             raise NotImplementedError(f"Model {cfg.model.name} not implemented yet")

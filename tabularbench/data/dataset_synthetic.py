@@ -87,11 +87,11 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
 
         curr_samples = x.shape[0]
 
-        curr_samples_support = torch.randint(low=self.min_samples_support, high=curr_samples, size=(1,)).item()
+        n_samples_support = torch.randint(low=self.min_samples_support, high=self.max_samples_support, size=(1,)).item()
 
         rand_index = torch.randperm(curr_samples)
-        rand_support_index = rand_index[:curr_samples_support]
-        rand_query_index = rand_index[curr_samples_support:curr_samples_support+self.n_samples_query]
+        rand_support_index = rand_index[:n_samples_support]
+        rand_query_index = rand_index[n_samples_support:n_samples_support+self.n_samples_query]
 
         x_support = x[rand_support_index]
         y_support = y[rand_support_index]

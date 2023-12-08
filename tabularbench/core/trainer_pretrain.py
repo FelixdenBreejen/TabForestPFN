@@ -51,7 +51,7 @@ class TrainerPretrain(BaseEstimator):
         self.synthetic_dataloader = torch.utils.data.DataLoader(
             self.synthetic_dataset,
             batch_size=self.cfg.optim.batch_size,
-            collate_fn=CollatorWithPadding(pad_to_n_support_samples=self.cfg.data.max_samples_support),
+            collate_fn=CollatorWithPadding(pad_to_n_support_samples=None),
             pin_memory=True,
             num_workers=self.cfg.workers_per_gpu,
             persistent_workers=self.cfg.workers_per_gpu > 0,
@@ -157,7 +157,7 @@ class TrainerPretrain(BaseEstimator):
             n_random_runs_per_dataset=1,
             n_default_runs_per_dataset=1,
             openml_dataset_ids_to_ignore=[],
-            hyperparams_object=self.cfg.hyperparams_finetuning
+            hyperparams_object=hyperparams_finetuning
         )
         run_sweep(cfg_sweep)
 
