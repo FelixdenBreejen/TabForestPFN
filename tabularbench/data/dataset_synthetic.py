@@ -1,7 +1,7 @@
 from typing import Generator, Iterator
 
 import torch
-from tabularbench.models.tabPFN.preprocessor import TabPFNPreprocessor
+from tabularbench.data.preprocessor import Preprocessor
 
 from tabularbench.models.tabPFN.synthetic_data import synthetic_dataset_generator
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
@@ -51,9 +51,14 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
             y = self.randomize_classes(y)
             x_support, y_support, x_query, y_query = self.split_into_support_and_query(x, y)
 
-            tab_pfn_preprocessor = TabPFNPreprocessor(self.cfg.logger, use_quantile_transformer=True)
-            x_support = tab_pfn_preprocessor.fit_transform(x_support)
-            x_query = tab_pfn_preprocessor.transform(x_query)
+            preprocessor = Preprocessor(
+                self.cfg.logger, 
+                use_quantile_transformer=True,
+                max_features=self.max_features
+            )
+
+            x_support = preprocessor.fit_transform(x_support)
+            x_query = preprocessor.transform(x_query)
             
             x_support = torch.tensor(x_support, dtype=torch.float32)
             x_query = torch.tensor(x_query, dtype=torch.float32)

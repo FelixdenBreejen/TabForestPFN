@@ -4,15 +4,16 @@ import torch
 import numpy as np
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
+from tabularbench.core.collator import CollatorWithPadding
 from tabularbench.core.enums import Task
 from tabularbench.core.get_loss import get_loss
 from tabularbench.core.get_optimizer import get_optimizer
 from tabularbench.core.get_scheduler import get_scheduler
 from tabularbench.core.y_transformer import create_y_transformer
-from tabularbench.models.tabPFN.preprocessor import TabPFNPreprocessor
+from tabularbench.data.preprocessor import Preprocessor
 from tabularbench.sweeps.config_run import ConfigRun
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
-from tabularbench.data.dataset_tabpfn_finetune import TabPFNFinetuneDataset, TabPFNFinetuneGenerator
+from tabularbench.data.dataset_finetune import DatasetFinetune, DatasetFinetuneGenerator
 
 
 class TrainerFinetune(BaseEstimator):
@@ -33,36 +34,44 @@ class TrainerFinetune(BaseEstimator):
 
         self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams.early_stopping_patience)
         self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
-        self.tab_pfn_preprocessor = TabPFNPreprocessor(cfg, use_quantile_transformer=True)
+        self.preprocessor = Preprocessor(
+            cfg, 
+            use_quantile_transformer=True,
+            max_features=self.cfg.hyperparams.max_features
+        )
+
 
 
     def train(self, x_train: np.ndarray, y_train: np.ndarray):
-        
-        x_train = self.tab_pfn_preprocessor.fit_transform(x_train)        
+
+        x_train = self.preprocessor.fit_transform(x_train)        
         self.y_transformer = create_y_transformer(y_train, self.cfg.task)
 
         a = self.make_dataset_split(x_train=x_train, y_train=y_train)
         x_train_train, x_train_valid, y_train_train, y_train_valid = a
 
-        dataset_train_generator = TabPFNFinetuneGenerator(
+        dataset_train_generator = DatasetFinetuneGenerator(
             self.cfg,
-            x_train_train,
-            self.y_transformer.transform(y_train_train),
-            regression=self.cfg.task == Task.REGRESSION,
-            batch_size=self.cfg.hyperparams.batch_size,
+            x = x_train_train,
+            y = self.y_transformer.transform(y_train_train),
+            task = self.cfg.task,
+            max_samples_support = self.cfg.hyperparams.max_samples_support,
+            max_samples_query = self.cfg.hyperparams.max_samples_query,
+            split = 0.8
         )
 
-        dataset_valid = TabPFNFinetuneDataset(
+        dataset_valid = DatasetFinetune(
             self.cfg,
-            x_train_train, 
-            self.y_transformer.transform(y_train_train), 
-            x_train_valid, 
-            y_train_valid,
-            regression=self.cfg.task == Task.REGRESSION,
-            batch_size=self.cfg.hyperparams.batch_size
+            x_support = x_train_train, 
+            y_support = self.y_transformer.transform(y_train_train), 
+            x_query = x_train_valid,
+            y_query = y_train_valid,
+            max_samples_support = self.cfg.hyperparams.max_samples_support,
+            max_samples_query = self.cfg.hyperparams.max_samples_query,
         )
 
         loader_valid = self.make_loader(dataset_valid, training=False)
+
 
         for epoch in range(self.cfg.hyperparams.max_epochs):
 
@@ -110,10 +119,19 @@ class TrainerFinetune(BaseEstimator):
 
     def predict(self, x_support: np.ndarray, y_support: np.ndarray, x_query: np.ndarray):
 
-        x_support = self.tab_pfn_preprocessor.transform(x_support)
-        x_query = self.tab_pfn_preprocessor.transform(x_query)
+        x_support = self.preprocessor.transform(x_support)
+        x_query = self.preprocessor.transform(x_query)
 
-        dataset = TabPFNFinetuneDataset(self.cfg, x_support, y_support, x_query, batch_size=self.cfg.hyperparams.batch_size)
+        dataset = DatasetFinetune(
+            self.cfg, 
+            x_support = x_support, 
+            y_support = y_support, 
+            x_query = x_query,
+            y_query = None,
+            max_samples_support = self.cfg.hyperparams.max_samples_support,
+            max_samples_query = self.cfg.hyperparams.max_samples_query,
+        )
+
         loader = self.make_loader(dataset, training=False)
 
         y_hat_list = []
@@ -135,15 +153,13 @@ class TrainerFinetune(BaseEstimator):
         epoch_statistics = EpochStatistics()
 
         for batch in dataloader:
-            
-            x_train, y_train, x_test, y_test = batch
         
-            x_train = x_train.to(self.cfg.device)
-            y_train = y_train.to(self.cfg.device)
-            x_test = x_test.to(self.cfg.device)
-            y_test = y_test.to(self.cfg.device)
+            x_support = batch['x_support'].to(self.cfg.device)
+            y_support = batch['y_support'].to(self.cfg.device)
+            x_query = batch['x_query'].to(self.cfg.device)
+            y_query = batch['y_query'].to(self.cfg.device)
             
-            y_hat = self.model(x_train, y_train, x_test)
+            y_hat = self.model(x_support, y_support, x_query)
 
             match self.cfg.task:
                 case Task.REGRESSION:
@@ -151,16 +167,16 @@ class TrainerFinetune(BaseEstimator):
                 case Task.CLASSIFICATION:
                     y_hat = y_hat[0, :, :2]
 
-            y_test = y_test[0, :]
+            y_query = y_query[0, :]
 
-            loss = self.loss(y_hat, y_test)
-            score = self.score(y_hat, y_test)
+            loss = self.loss(y_hat, y_query)
+            score = self.score(y_hat, y_query)
 
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
 
-            epoch_statistics.update(loss.item(), score, len(y_test))
+            epoch_statistics.update(loss.item(), score, len(y_query))
 
         loss, score = epoch_statistics.get()
         return loss, score
@@ -175,13 +191,11 @@ class TrainerFinetune(BaseEstimator):
         with torch.no_grad():
             for batch in dataloader:
                 
-                x_train, y_train, x_test, _ = batch
-
-                x_train = x_train.to(self.cfg.device)
-                y_train = y_train.to(self.cfg.device)
-                x_test = x_test.to(self.cfg.device)
+                x_support = batch['x_support'].to(self.cfg.device)
+                y_support = batch['y_support'].to(self.cfg.device)
+                x_query = batch['x_query'].to(self.cfg.device)
                 
-                y_hat = self.model(x_train, y_train, x_test)
+                y_hat = self.model(x_support, y_support, x_query)
 
                 match self.cfg.task:
                     case Task.REGRESSION:
@@ -226,50 +240,20 @@ class TrainerFinetune(BaseEstimator):
                 y_t_train, y_t_valid = y_train[indices[0]], y_train[indices[1]]
 
         return x_t_train, x_t_valid, y_t_train, y_t_valid
-
-    
-
-    def make_dataset(self, x_train, y_train):
-
-        match self.cfg.task:
-            case Task.REGRESSION:
-                x_t_train, x_t_valid, y_t_train, y_t_valid = train_test_split(
-                    x_train, y_train, test_size=0.2
-                )
-            case Task.CLASSIFICATION:
-                skf = StratifiedKFold(n_splits=5)
-                indices = next(skf.split(x_train, y_train))
-                x_t_train, x_t_valid = x_train[indices[0]], x_train[indices[1]]
-                y_t_train, y_t_valid = y_train[indices[0]], y_train[indices[1]]
-
-        return (
-            torch.utils.data.TensorDataset(
-                torch.as_tensor(x_t_train),
-                torch.as_tensor(y_t_train)
-            ),
-            torch.utils.data.TensorDataset(
-                torch.as_tensor(x_t_valid),
-                torch.as_tensor(y_t_valid)
-            )
-        )
         
 
     def make_loader(self, dataset, training):
 
-        if isinstance(dataset, torch.utils.data.IterableDataset):
-            return torch.utils.data.DataLoader(
-                dataset,
-                batch_size=1,
-                pin_memory=True,
-                num_workers=0,
+        return torch.utils.data.DataLoader(
+            dataset,
+            batch_size=1,
+            shuffle=training,
+            pin_memory=True,
+            num_workers=0,
+            drop_last=False,
+            collate_fn=CollatorWithPadding(
+                pad_to_n_support_samples=None
             )
-        else:
-            return torch.utils.data.DataLoader(
-                dataset,
-                batch_size=1,
-                shuffle=training,
-                pin_memory=True,
-                num_workers=0,
-            )
+        )
 
     

@@ -6,7 +6,7 @@ import torch
 import torch.multiprocessing as mp
 from transformers import get_cosine_schedule_with_warmup, get_constant_schedule_with_warmup
 
-from tabularbench.core.collator import collate_with_padding
+from tabularbench.core.collator import CollatorWithPadding
 from tabularbench.core.enums import BenchmarkName, DataSplit, ModelName, SearchType
 from tabularbench.core.get_model import get_model_pretrain
 from tabularbench.core.losses import CrossEntropyLossExtraBatch
@@ -51,7 +51,7 @@ class TrainerPretrain(BaseEstimator):
         self.synthetic_dataloader = torch.utils.data.DataLoader(
             self.synthetic_dataset,
             batch_size=self.cfg.optim.batch_size,
-            collate_fn=collate_with_padding,
+            collate_fn=CollatorWithPadding(pad_to_n_support_samples=self.cfg.data.max_samples_support),
             pin_memory=True,
             num_workers=self.cfg.workers_per_gpu,
             persistent_workers=self.cfg.workers_per_gpu > 0,

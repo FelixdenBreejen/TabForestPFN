@@ -4,12 +4,25 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import QuantileTransformer
 
 
-class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
+class Preprocessor(TransformerMixin, BaseEstimator):
+    """
+    This class is used to preprocess the data before it is pushed through the model.
+    The preprocessor assures that the data has the right shape and is normalized,
+    This way the model always gets the same input distribution, 
+    no matter whether the input data is synthetic or real.
 
-    def __init__(self, logger: Logger, use_quantile_transformer: bool=False):
+    """
+
+    def __init__(
+            self, 
+            logger: Logger, 
+            use_quantile_transformer: bool,
+            max_features: int,
+        ):
+
         self.logger = logger
         self.use_quantile_transformer = use_quantile_transformer
-        self.max_features = 100      # pretrained tab pfn model has been trained on 100 features
+        self.max_features = max_features
 
     
     def fit(self, X: np.ndarray, y: np.ndarray = None):
@@ -18,7 +31,6 @@ class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
         
         self.singular_features = X.std(axis=0) == 0
         X = self.cutoff_singular_features(X, self.singular_features)
-
 
         if self.use_quantile_transformer:
             n_quantiles = min(X.shape[0], 1000)
@@ -100,4 +112,5 @@ class TabPFNPreprocessor(TransformerMixin, BaseEstimator):
         added_zeros = np.zeros((x.shape[0], max_features - x.shape[1]), dtype=np.float32)
         x = np.concatenate([x, added_zeros], axis=1)
         return x
+
     
