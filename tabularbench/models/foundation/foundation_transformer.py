@@ -106,8 +106,8 @@ class FoundationTransformer(nn.Module):
 
             x_residual = x
             support, query = einops.unpack(x, pack, 'b * d')
-            support_att = module_dict['attention'](support, support, support, key_padding_mask=padding_mask)[0]
-            query_att = module_dict['attention'](query, support, support, key_padding_mask=padding_mask)[0]
+            support_att = module_dict['attention'](support, support, support, key_padding_mask=padding_mask, need_weights=False)[0]
+            query_att = module_dict['attention'](query, support, support, key_padding_mask=padding_mask, need_weights=False)[0]
             x = einops.pack((support_att, query_att), 'b * d')[0]
             x = x_residual + x
             x = module_dict['layer_norm1'](x)
