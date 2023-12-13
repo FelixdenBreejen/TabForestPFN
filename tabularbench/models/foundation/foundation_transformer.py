@@ -1,7 +1,10 @@
+import math
 import einops
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from tabularbench.models.foundation.cosformer_attention import CosformerAttention
 
 
 class FoundationTransformer(nn.Module):
@@ -43,7 +46,7 @@ class FoundationTransformer(nn.Module):
         for _ in range(n_layers):
 
             if reversed_attention:
-                attention = ReversedAttention(dim)
+                attention = CosformerAttention(dim, n_heads, )
             else:
                 attention = nn.MultiheadAttention(dim, n_heads, dropout=attn_dropout, batch_first=True)
 
@@ -68,10 +71,7 @@ class FoundationTransformer(nn.Module):
 
         for module_dict in self.layers:
 
-            if self.reversed_attention:
-                nn.init.zeros_(module_dict['attention'].V.weight)
-                nn.init.zeros_(module_dict['attention'].V.bias)
-            else:
+            if not self.reversed_attention:
                 nn.init.zeros_(module_dict['attention'].out_proj.weight)
                 nn.init.zeros_(module_dict['attention'].out_proj.bias)
             nn.init.zeros_(module_dict['linear2'].weight)
@@ -232,6 +232,8 @@ class ReversedAttention(torch.nn.Module):
             need_weights: bool
         ) -> torch.Tensor:
 
+        batch_size = query.shape[0]
+
         query = self.Q(query)
         key = self.K(key)
         value = self.V(value)
@@ -243,7 +245,7 @@ class ReversedAttention(torch.nn.Module):
         # attention_weights = torch.softmax(attention_weights, dim=-1)
         # QKtV = torch.einsum('b n m, b m d -> b n d', attention_weights, value)
 
-        attention_weights = torch.einsum('b n d, b n e -> b d e', key, value)
+        attention_weights = torch.einsum('b n d, b n e -> b d e', key, value) / math.sqrt(batch_size)
         attention_weights = torch.softmax(attention_weights, dim=1)
         QKtV = torch.einsum('b n d, b d e -> b n e', query, attention_weights)
 
