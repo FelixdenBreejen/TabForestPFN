@@ -1,10 +1,8 @@
-import math
 import einops
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from tabularbench.models.foundation.cosformer_attention import CosformerAttention
 
 
 class FoundationTransformer(nn.Module):
@@ -18,7 +16,7 @@ class FoundationTransformer(nn.Module):
             n_heads: int,
             attn_dropout: float,
             y_as_float_embedding: bool,
-            reversed_attention: bool,
+            linear_attention: bool,
             use_pretrained_weights: bool,
             path_to_weights: str,
         ) -> None:
@@ -32,7 +30,7 @@ class FoundationTransformer(nn.Module):
         self.n_heads = n_heads
         self.attn_dropout = attn_dropout
         self.y_as_float_embedding = y_as_float_embedding
-        self.reversed_attention = reversed_attention
+        self.linear_attention = linear_attention
 
         self.x_embedding = nn.Linear(n_features, dim)
 
@@ -45,8 +43,9 @@ class FoundationTransformer(nn.Module):
 
         for _ in range(n_layers):
 
-            if reversed_attention:
-                attention = CosformerAttention(dim, n_heads, )
+            if linear_attention:
+                # attention = CosformerAttention(dim, n_heads, )
+                attention = LinearAttention(dim, n_heads)
             else:
                 attention = nn.MultiheadAttention(dim, n_heads, dropout=attn_dropout, batch_first=True)
 
@@ -71,7 +70,7 @@ class FoundationTransformer(nn.Module):
 
         for module_dict in self.layers:
 
-            if not self.reversed_attention:
+            if not self.linear_attention:
                 nn.init.zeros_(module_dict['attention'].out_proj.weight)
                 nn.init.zeros_(module_dict['attention'].out_proj.bias)
             nn.init.zeros_(module_dict['linear2'].weight)
@@ -207,16 +206,18 @@ class FoundationEmbeddingYInteger(torch.nn.Module):
     
 
 
-class ReversedAttention(torch.nn.Module):
+class LinearAttention(torch.nn.Module):
 
     def __init__(
             self,
             dim: int,
+            n_heads: int,
         ) -> None:
         
         super().__init__()
 
         self.dim = dim
+        self.n_heads = n_heads
 
         self.Q = nn.Linear(dim, dim)
         self.K = nn.Linear(dim, dim)
@@ -231,24 +232,32 @@ class ReversedAttention(torch.nn.Module):
             key_padding_mask: torch.Tensor, 
             need_weights: bool
         ) -> torch.Tensor:
-
-        batch_size = query.shape[0]
+        """
+        b = batch size
+        n = number of samples (sequence length)
+        h = heads
+        d = dimension of embedding
+        """
 
         query = self.Q(query)
         key = self.K(key)
         value = self.V(value)
+
+        query = torch.nn.functional.relu(query)
+        key = torch.nn.functional.relu(key)
         
         if key_padding_mask is not None:
             key = key.masked_fill(key_padding_mask[:, :, None], 0)
 
-        # attention_weights = torch.einsum('b n d, b m d -> b n m', query, key) / self.dim
-        # attention_weights = torch.softmax(attention_weights, dim=-1)
-        # QKtV = torch.einsum('b n m, b m d -> b n d', attention_weights, value)
+        query = einops.rearrange(query, 'b n (h d) -> b n h d', h=self.n_heads)
+        key =   einops.rearrange(key  , 'b n (h d) -> b n h d', h=self.n_heads)
+        value = einops.rearrange(value, 'b n (h d) -> b n h d', h=self.n_heads)
 
-        attention_weights = torch.einsum('b n d, b n e -> b d e', key, value) / math.sqrt(batch_size)
-        attention_weights = torch.softmax(attention_weights, dim=1)
-        QKtV = torch.einsum('b n d, b d e -> b n e', query, attention_weights)
+        kv = torch.einsum('b n h d, b n h e -> b h d e', key, value)
+        denominator = 1.0 / (torch.einsum('b n h d, b h d -> b n h', query, key.sum(axis=1)) + 1e-6)
+        output = torch.einsum('b n h d, b h d e, b n h -> b n h e', query, kv, denominator)
+        output = einops.rearrange(output, 'b n h d -> b n (h d)')
 
-        return QKtV, None
+        return output, None
 
 
