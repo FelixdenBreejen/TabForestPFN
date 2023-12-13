@@ -3,9 +3,11 @@ hydra:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
 defaults:
+  - _self_
   - hyperparams/tabpfn: finetune_10k
   - hyperparams/foundation: finetune_10k
   - pretrain_model: foundation
+  # - pretrain_continue
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
@@ -15,20 +17,20 @@ devices: [0, 1, 2, 3]
 workers_per_gpu: 4
 
 optim:
-  max_steps: 500_000               # Every step completes batch_size * gradient_accumulation_steps samples
+  max_steps: 500_000                # Every step completes batch_size * gradient_accumulation_steps samples
+  warmup_steps: 10_000
   log_every_n_steps: 10
   eval_every_n_steps: 10_000
-  batch_size: 64                    # Total batch size over all devices. 
-  gradient_accumulation_steps: 1   # Accumulation steps are not counted towards max_steps
+  batch_size: 64                     # Total batch size over all devices. 
+  gradient_accumulation_steps: 1    # Accumulation steps are not counted towards max_steps
   lr: 1.e-4
   weight_decay: 0.00
   beta1: 0.9
   beta2: 0.95
-  warmup_steps: 10_000
   cosine_scheduler: True  
   max_grad_norm: 1.0
   use_pretrained_weights: False
-  path_to_weights: outputs_done/tab_pfn_Q_b64/weights/model_step_500000.pt               # Path to a checkpoint to load weights from
+  path_to_weights: outputs_done/foundation_key_att/weights/model_step_500000.pt               # Path to a checkpoint to load weights from
 
 data:
   min_samples_support: 128

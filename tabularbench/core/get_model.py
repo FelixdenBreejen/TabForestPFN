@@ -26,6 +26,7 @@ def get_model(cfg: ConfigRun, x_train: np.ndarray, y_train: np.ndarray, categori
                 n_heads=cfg.hyperparams.n_heads,
                 attn_dropout=cfg.hyperparams.attn_dropout,
                 y_as_float_embedding=cfg.hyperparams.y_as_float_embedding,
+                reversed_attention=cfg.hyperparams.reversed_attention,
                 use_pretrained_weights=cfg.hyperparams.use_pretrained_weights,
                 path_to_weights=cfg.hyperparams.path_to_weights,
             )
@@ -52,6 +53,7 @@ def get_model_pretrain(cfg: ConfigPretrain) -> torch.nn.Module:
                 n_heads=cfg.model.n_heads,
                 attn_dropout=cfg.model.attn_dropout,
                 y_as_float_embedding=cfg.model.y_as_float_embedding,
+                reversed_attention=cfg.model.reversed_attention,
                 use_pretrained_weights=cfg.optim.use_pretrained_weights,
                 path_to_weights=cfg.optim.path_to_weights
             )

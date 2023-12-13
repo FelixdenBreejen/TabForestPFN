@@ -15,6 +15,7 @@ class FoundationTransformer(nn.Module):
             n_heads: int,
             attn_dropout: float,
             y_as_float_embedding: bool,
+            reversed_attention: bool,
             use_pretrained_weights: bool,
             path_to_weights: str,
         ) -> None:
@@ -28,6 +29,7 @@ class FoundationTransformer(nn.Module):
         self.n_heads = n_heads
         self.attn_dropout = attn_dropout
         self.y_as_float_embedding = y_as_float_embedding
+        self.reversed_attention = reversed_attention
 
         self.x_embedding = nn.Linear(n_features, dim)
 
@@ -40,9 +42,14 @@ class FoundationTransformer(nn.Module):
 
         for _ in range(n_layers):
 
+            if reversed_attention:
+                attention = ReversedAttention(dim)
+            else:
+                attention = nn.MultiheadAttention(dim, n_heads, dropout=attn_dropout, batch_first=True)
+
             self.layers.append(nn.ModuleDict({
                 'layer_norm1': nn.LayerNorm(dim),
-                'attention': nn.MultiheadAttention(dim, n_heads, dropout=attn_dropout, batch_first=True),
+                'attention': attention,
                 'layer_norm2': nn.LayerNorm(dim),
                 'linear1': nn.Linear(dim, dim*2),
                 'linear2': nn.Linear(dim*2, dim),
@@ -60,8 +67,13 @@ class FoundationTransformer(nn.Module):
     def init_weights(self):
 
         for module_dict in self.layers:
-            nn.init.zeros_(module_dict['attention'].out_proj.weight)
-            nn.init.zeros_(module_dict['attention'].out_proj.bias)
+
+            if self.reversed_attention:
+                nn.init.zeros_(module_dict['attention'].V.weight)
+                nn.init.zeros_(module_dict['attention'].V.bias)
+            else:
+                nn.init.zeros_(module_dict['attention'].out_proj.weight)
+                nn.init.zeros_(module_dict['attention'].out_proj.bias)
             nn.init.zeros_(module_dict['linear2'].weight)
             nn.init.zeros_(module_dict['linear2'].bias)
             
@@ -186,3 +198,49 @@ class FoundationEmbeddingYInteger(torch.nn.Module):
         y_query = self.y_mask(y_query)
 
         return y_support, y_query
+    
+
+
+class ReversedAttention(torch.nn.Module):
+
+    def __init__(
+            self,
+            dim: int,
+        ) -> None:
+        
+        super().__init__()
+
+        self.dim = dim
+
+        self.Q = nn.Linear(dim, dim)
+        self.K = nn.Linear(dim, dim)
+        self.V = nn.Linear(dim, dim)
+
+
+    def forward(
+            self, 
+            query: torch.Tensor,
+            key: torch.Tensor,
+            value: torch.Tensor, 
+            key_padding_mask: torch.Tensor, 
+            need_weights: bool
+        ) -> torch.Tensor:
+
+        query = self.Q(query)
+        key = self.K(key)
+        value = self.V(value)
+        
+        if key_padding_mask is not None:
+            key = key.masked_fill(key_padding_mask[:, :, None], 0)
+
+        # attention_weights = torch.einsum('b n d, b m d -> b n m', query, key) / self.dim
+        # attention_weights = torch.softmax(attention_weights, dim=-1)
+        # QKtV = torch.einsum('b n m, b m d -> b n d', attention_weights, value)
+
+        attention_weights = torch.einsum('b n d, b n e -> b d e', key, value)
+        attention_weights = torch.softmax(attention_weights, dim=1)
+        QKtV = torch.einsum('b n d, b d e -> b n e', query, attention_weights)
+
+        return QKtV, None
+
+
