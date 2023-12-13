@@ -100,7 +100,8 @@ def setup_gpus_of_experiment(cfg: ConfigPretrain, gpu: int) -> torch.device:
     if cfg.use_ddp:
         os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
         os.environ['MASTER_ADDR'] = 'localhost'
-        os.environ['MASTER_PORT'] = '5678'
+        port = 5678 + cfg.devices[0].index
+        os.environ['MASTER_PORT'] = str(port)
         
         torch.distributed.init_process_group(backend="nccl", world_size = len(cfg.devices), rank=gpu)
 
