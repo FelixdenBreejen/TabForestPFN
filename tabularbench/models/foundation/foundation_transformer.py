@@ -70,7 +70,9 @@ class FoundationTransformer(nn.Module):
 
         for module_dict in self.layers:
 
-            if not self.linear_attention:
+            if self.linear_attention:
+                module_dict['attention'].init_weights()
+            else:
                 nn.init.zeros_(module_dict['attention'].out_proj.weight)
                 nn.init.zeros_(module_dict['attention'].out_proj.bias)
             nn.init.zeros_(module_dict['linear2'].weight)
@@ -222,6 +224,12 @@ class LinearAttention(torch.nn.Module):
         self.Q = nn.Linear(dim, dim)
         self.K = nn.Linear(dim, dim)
         self.V = nn.Linear(dim, dim)
+        self.O = nn.Linear(dim, dim)
+
+
+    def init_weights(self):
+        nn.init.zeros_(self.O.weight)
+        nn.init.zeros_(self.O.bias)
 
 
     def forward(
@@ -257,6 +265,8 @@ class LinearAttention(torch.nn.Module):
         denominator = 1.0 / (torch.einsum('b n h d, b h d -> b n h', query, key.sum(axis=1)) + 1e-6)
         output = torch.einsum('b n h d, b h d e, b n h -> b n h e', query, kv, denominator)
         output = einops.rearrange(output, 'b n h d -> b n (h d)')
+
+        output = self.O(output)
 
         return output, None
 
