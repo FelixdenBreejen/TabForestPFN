@@ -251,8 +251,8 @@ class LinearAttention(torch.nn.Module):
         key = self.K(key)
         value = self.V(value)
 
-        query = torch.nn.functional.relu(query)
-        key = torch.nn.functional.relu(key)
+        query = 1 + torch.nn.functional.elu(query)
+        key = 1 + torch.nn.functional.elu(key)
         
         if key_padding_mask is not None:
             key = key.masked_fill(key_padding_mask[:, :, None], 0)
@@ -263,7 +263,8 @@ class LinearAttention(torch.nn.Module):
 
         kv = torch.einsum('b n h d, b n h e -> b h d e', key, value)
         denominator = 1.0 / (torch.einsum('b n h d, b h d -> b n h', query, key.sum(axis=1)) + 1e-6)
-        output = torch.einsum('b n h d, b h d e, b n h -> b n h e', query, kv, denominator)
+        output = torch.einsum('b n h d, b h d e -> b n h e', query, kv)
+        output = output * denominator[:, :, :, None]
         output = einops.rearrange(output, 'b n h d -> b n (h d)')
 
         output = self.O(output)
