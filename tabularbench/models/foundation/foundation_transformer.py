@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-
 class FoundationTransformer(nn.Module):
 
     def __init__(
@@ -250,9 +249,6 @@ class LinearAttention(torch.nn.Module):
         query = self.Q(query)
         key = self.K(key)   
         value = self.V(value)
-
-        query = (1 + torch.nn.functional.elu(query))**2
-        key = (1 + torch.nn.functional.elu(key))**2
         
         if key_padding_mask is not None:
             key = key.masked_fill(key_padding_mask[:, :, None], 0)
@@ -261,14 +257,16 @@ class LinearAttention(torch.nn.Module):
         key =   einops.rearrange(key  , 'b n (h d) -> b n h d', h=self.n_heads)
         value = einops.rearrange(value, 'b n (h d) -> b n h d', h=self.n_heads)
 
+        key = key.softmax(dim=1)
+
         kv = torch.einsum('b n h d, b n h e -> b h d e', key, value)
-        denominator = torch.einsum('b n h d, b h d -> b n h', query, key.sum(axis=1))
         output = torch.einsum('b n h d, b h d e -> b n h e', query, kv)
-        output = output / (denominator[:, :, :, None] + 1e-6)
+
+        # denominator = torch.einsum('b n h d, b h d -> b n h', query, key.sum(axis=1))
+        # output = output / (denominator[:, :, :, None] + 1e-6)
+        
         output = einops.rearrange(output, 'b n h d -> b n (h d)')
 
         output = self.O(output)
 
         return output, None
-
-
