@@ -251,7 +251,7 @@ class LinearAttention(torch.nn.Module):
         value = self.V(value)
         
         if key_padding_mask is not None:
-            key = key.masked_fill(key_padding_mask[:, :, None], 0)
+            key = key.masked_fill(key_padding_mask[:, :, None], float('-inf'))
 
         query = einops.rearrange(query, 'b n (h d) -> b n h d', h=self.n_heads)
         key =   einops.rearrange(key  , 'b n (h d) -> b n h d', h=self.n_heads)
