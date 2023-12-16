@@ -3,6 +3,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from tabularbench.models.foundation.embedding import (
+    FoundationEmbeddingYFloat, FoundationEmbeddingYInteger,
+    FoundationObservationEmbedding)
+
 
 class FoundationTransformer(nn.Module):
 
@@ -38,12 +42,13 @@ class FoundationTransformer(nn.Module):
         else:
             self.y_embedding = FoundationEmbeddingYInteger(n_classes, dim)
 
+        self.obs_embedding = FoundationObservationEmbedding(dim)
+
         self.layers = nn.ModuleList([])
 
         for _ in range(n_layers):
 
             if linear_attention:
-                # attention = CosformerAttention(dim, n_heads, )
                 attention = LinearAttention(dim, n_heads)
             else:
                 attention = nn.MultiheadAttention(dim, n_heads, dropout=attn_dropout, batch_first=True)
@@ -108,9 +113,10 @@ class FoundationTransformer(nn.Module):
         x_query = self.x_embedding(x_query)
     
         y_support, y_query = self.y_embedding(y_support, n_obs_query)
+        obs_embedding_support, obs_embedding_query = self.obs_embedding(batch_size, n_obs_support, n_obs_query)
 
-        support = x_support + y_support
-        query = x_query + y_query
+        support = x_support + y_support + obs_embedding_support
+        query = x_query + y_query + obs_embedding_query
 
         x, pack = einops.pack((support, query), 'b * d')
         
@@ -140,70 +146,6 @@ class FoundationTransformer(nn.Module):
 
 
 
-class FoundationEmbeddingYFloat(torch.nn.Module):
-
-    def __init__(
-            self,
-            dim: int,
-        ) -> None:
-        
-        super().__init__()
-
-        self.dim = dim
-
-        self.y_embedding = nn.Linear(1, dim)
-
-
-    def forward(self, y_support: torch.Tensor, n_obs_query: int) -> tuple[torch.Tensor, torch.Tensor]:
-
-        batch_size = y_support.shape[0]
-
-        y_support = y_support.type(torch.float32)
-        y_support = einops.rearrange(y_support, 'b n -> b n 1')
-
-        y_support = self.y_embedding(y_support)
-        y_query = torch.zeros((batch_size, n_obs_query, self.dim), device=y_support.device, dtype=torch.float32)
-
-        return y_support, y_query
-    
-
-
-class FoundationEmbeddingYInteger(torch.nn.Module):
-
-    def __init__(
-            self,
-            n_classes: int, 
-            dim: int,
-        ) -> None:
-        
-        super().__init__()
-
-        self.n_classes = n_classes
-        self.dim = dim
-
-        self.y_embedding = nn.Embedding(n_classes, dim)
-        self.y_padding = nn.Embedding(1, dim, padding_idx=0) # padding is modeled as a separate class
-        self.y_mask = nn.Embedding(1, dim) # masking is also modeled as a separate class
-
-
-    def forward(self, y_support: torch.Tensor, n_obs_query: int) -> tuple[torch.Tensor, torch.Tensor]:
-
-        batch_size = y_support.shape[0]
-        n_obs_support = y_support.shape[1]
-
-        # padding is given as -100. We turn the padding into a 'separate class'
-        # because padding is ignored in the attention, this should make no difference whatsoever
-
-        y_support_pad = y_support == -100
-
-        y_sup = torch.zeros((batch_size, n_obs_support, self.dim), device=y_support.device, dtype=torch.float32)
-        y_sup[ y_support_pad] = self.y_padding(   y_support[ y_support_pad] + 100 )
-        y_sup[~y_support_pad] = self.y_embedding( y_support[~y_support_pad]       )
-
-        y_query = torch.zeros((batch_size, n_obs_query), device=y_support.device, dtype=torch.int64)
-        y_query = self.y_mask(y_query)
-
-        return y_sup, y_query
     
 
 
