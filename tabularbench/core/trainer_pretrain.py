@@ -32,11 +32,11 @@ class TrainerPretrain(BaseEstimator):
 
         self.cfg = cfg
         self.barrier = barrier
-        self.model = get_model_pretrain(cfg)
-        self.model.to(self.cfg.device)
+        self.model_ = get_model_pretrain(cfg)
+        self.model_.to(self.cfg.device)
 
         if cfg.use_ddp:
-            self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=[cfg.device], find_unused_parameters=False)
+            self.model = torch.nn.parallel.DistributedDataParallel(self.model_, device_ids=[cfg.device], find_unused_parameters=False)
 
         self.synthetic_dataset = SyntheticDataset(
             cfg=self.cfg,
@@ -104,9 +104,12 @@ class TrainerPretrain(BaseEstimator):
                 metrics_train.reset()
 
             if step % self.cfg.optim.eval_every_n_steps == 0:
-                self.model = self.model.to('cpu')
+                
+                del self.model
+                self.model_.cpu()
                 torch.cuda.empty_cache()
 
+                # wait until all gpus have moved the model to cpu
                 torch.distributed.barrier()
 
                 if self.cfg.is_main_process:
@@ -120,7 +123,7 @@ class TrainerPretrain(BaseEstimator):
                     output_dir = self.cfg.output_dir / f"step_{step}"
                     output_dir.mkdir(parents=True, exist_ok=True)
 
-                    state_dict = { k.replace('module.', ''): v for k, v in self.model.state_dict().items()  }
+                    state_dict = self.model_.state_dict()
                     torch.save(state_dict, weights_path)
 
                     normalized_accuracies = self.validate(output_dir, weights_path, plot_name=f"{self.cfg.model.name.value} Pretrain Step {step}")
@@ -137,7 +140,9 @@ class TrainerPretrain(BaseEstimator):
                 # This barrier only blocks execution on the cpu of the current process, which doesn't interfere with the validation sweep.
                 self.barrier.wait()
 
-                self.model = self.model.to(self.cfg.device)
+                # see https://github.com/pytorch/pytorch/issues/104336
+                self.model_.to(self.cfg.device)
+                self.model = torch.nn.parallel.DistributedDataParallel(self.model_, device_ids=[self.cfg.device], find_unused_parameters=False)
 
 
     def validate(self, output_dir: Path, weights_path: Path, plot_name: str) -> dict[DataSplit, float]:
