@@ -241,31 +241,36 @@ class LinearAttention(torch.nn.Module):
         ) -> torch.Tensor:
         """
         b = batch size
-        n = number of samples (sequence length)
+        n = number of samples (dataset size)
         h = heads
         d = dimension of embedding
+
+        query is (b, n, d)
+        key is (b, n, d)
+        value is (b, n, d)
+
+        attention weights will be (b, h, d, d)
+        output will be (b, n, d)
         """
+
+        n_obs_query = query.shape[1]
 
         query = self.Q(query)
         key = self.K(key)   
         value = self.V(value)
-        
-        if key_padding_mask is not None:
-            key = key.masked_fill(key_padding_mask[:, :, None], float('-inf'))
 
-        query = einops.rearrange(query, 'b n (h d) -> b n h d', h=self.n_heads)
-        key =   einops.rearrange(key  , 'b n (h d) -> b n h d', h=self.n_heads)
-        value = einops.rearrange(value, 'b n (h d) -> b n h d', h=self.n_heads)
+        key.masked_fill_(key_padding_mask[:, :, None], -1e9)
 
-        key = key.softmax(dim=1)
+        query = torch.nn.functional.softmax(query, dim=1)
+        key = torch.nn.functional.softmax(key, dim=2)
 
-        kv = torch.einsum('b n h d, b n h e -> b h d e', key, value)
-        output = torch.einsum('b n h d, b h d e -> b n h e', query, kv)
+        query = einops.rearrange(query, 'b n (h d) -> b h n d', h=self.n_heads)
+        key =   einops.rearrange(key  , 'b n (h d) -> b h n d', h=self.n_heads)
+        value = einops.rearrange(value, 'b n (h d) -> b h n d', h=self.n_heads)
 
-        # denominator = torch.einsum('b n h d, b h d -> b n h', query, key.sum(axis=1))
-        # output = output / (denominator[:, :, :, None] + 1e-6)
-        
-        output = einops.rearrange(output, 'b n h d -> b n (h d)')
+        kv = torch.einsum('b h n d, b h n e -> b h d e', key, value)       
+        output = torch.einsum('b h n d, b h d e -> b h n e', query, kv)
+        output = einops.rearrange(output, 'b h n d -> b n (h d)')
 
         output = self.O(output)
 
