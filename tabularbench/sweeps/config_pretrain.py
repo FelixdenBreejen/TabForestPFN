@@ -24,6 +24,7 @@ class ConfigPretrain():
     model: DictConfig
     data: ConfigData
     optim: ConfigOptim
+    preprocessing: ConfigPreprocessing
     plotting: ConfigPlotting
     hyperparams_finetuning: DictConfig
 
@@ -77,6 +78,10 @@ class ConfigPretrain():
                 use_pretrained_weights=cfg_hydra.optim.use_pretrained_weights,
                 path_to_weights=cfg_hydra.optim.path_to_weights,
             ),
+            preprocessing = ConfigPreprocessing(
+                use_quantile_transformer=cfg_hydra.preprocessing.use_quantile_transformer,
+                use_feature_count_scaling=cfg_hydra.preprocessing.use_feature_count_scaling,
+            ),
             plotting = ConfigPlotting(
                 n_runs=cfg_hydra.plotting.n_runs,
                 n_random_shuffles=cfg_hydra.plotting.n_random_shuffles,
@@ -113,6 +118,12 @@ class ConfigData():
     min_features: int
     max_features: int
     max_classes: int
+
+
+@dataclass
+class ConfigPreprocessing():
+    use_quantile_transformer: bool
+    use_feature_count_scaling: bool
 
 
 

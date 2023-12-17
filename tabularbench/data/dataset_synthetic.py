@@ -19,7 +19,8 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         min_features: int,
         max_features: int,
         max_classes: int,
-        # TODO: change to uniform random
+        use_quantile_transformer: bool,
+        use_feature_count_scaling: bool,
     ) -> None:
         
         self.cfg = cfg
@@ -30,6 +31,8 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         self.min_features = min_features
         self.max_features = max_features
         self.max_classes = max_classes
+        self.use_quantile_transformer = use_quantile_transformer
+        self.use_feature_count_scaling = use_feature_count_scaling
 
     def __iter__(self) -> Iterator:
 
@@ -53,8 +56,9 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
 
             preprocessor = Preprocessor(
                 self.cfg.logger, 
-                use_quantile_transformer=True,
-                max_features=self.max_features
+                max_features=self.max_features,
+                use_quantile_transformer=self.use_quantile_transformer,
+                use_feature_count_scaling=self.use_feature_count_scaling,
             )
 
             x_support = preprocessor.fit_transform(x_support)

@@ -50,7 +50,9 @@ class TrainerPretrain(BaseEstimator):
             n_samples_query=self.cfg.data.n_samples_query,
             min_features=self.cfg.data.min_features,
             max_features=self.cfg.data.max_features,
-            max_classes=self.cfg.data.max_classes
+            max_classes=self.cfg.data.max_classes,
+            use_quantile_transformer=self.cfg.preprocessing.use_quantile_transformer,
+            use_feature_count_scaling=self.cfg.preprocessing.use_feature_count_scaling,
         )
 
         self.synthetic_dataloader = torch.utils.data.DataLoader(
@@ -217,6 +219,8 @@ class TrainerPretrain(BaseEstimator):
         hyperparams_finetuning = self.cfg.hyperparams_finetuning
         hyperparams_finetuning['use_pretrained_weights'] = True
         hyperparams_finetuning['path_to_weights'] = str(weights_path)
+        hyperparams_finetuning['use_quantile_transformer'] = self.cfg.preprocessing.use_quantile_transformer
+        hyperparams_finetuning['use_feature_count_scaling'] = self.cfg.preprocessing.use_feature_count_scaling
 
         if self.cfg.model.name == ModelName.FOUNDATION:
             with open_dict(hyperparams_finetuning):
