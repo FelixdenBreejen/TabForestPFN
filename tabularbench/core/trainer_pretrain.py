@@ -237,7 +237,7 @@ class TrainerPretrain(BaseEstimator):
         parameters_without_weight_decay = []
 
         for name, param in parameters:
-            if name.endswith(".bias") or '.norm' in name:
+            if name.endswith("bias") or 'norm' in name:
                 parameters_without_weight_decay.append(param)
             else:
                 parameters_with_weight_decay.append(param)
