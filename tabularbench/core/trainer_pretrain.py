@@ -35,8 +35,13 @@ class TrainerPretrain(BaseEstimator):
         self.model_ = get_model_pretrain(cfg)
         self.model_.to(self.cfg.device)
 
+        if cfg.is_main_process:
+            self.cfg.logger.info(f"Model has {sum(p.numel() for p in self.model_.parameters() if p.requires_grad):,} trainable parameters")
+
         if cfg.use_ddp:
             self.model = torch.nn.parallel.DistributedDataParallel(self.model_, device_ids=[cfg.device], find_unused_parameters=False)
+        else:
+            self.model = self.model_
 
         self.synthetic_dataset = SyntheticDataset(
             cfg=self.cfg,

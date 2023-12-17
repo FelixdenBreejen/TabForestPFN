@@ -42,7 +42,8 @@ class FoundationTransformer(nn.Module):
         else:
             self.y_embedding = FoundationEmbeddingYInteger(n_classes, dim)
 
-        self.obs_embedding = FoundationObservationEmbedding(dim)
+        self.obs_embedding_support = FoundationObservationEmbedding(dim)
+        self.obs_embedding_query__ = FoundationObservationEmbedding(dim)
 
         self.layers = nn.ModuleList([])
 
@@ -102,31 +103,35 @@ class FoundationTransformer(nn.Module):
         c = number of classes
         """
 
+        x_query__ = x_query
+
         batch_size = x_support.shape[0]
         n_obs_support = x_support.shape[1]
-        n_obs_query = x_query.shape[1]
+        n_obs_query__ = x_query__.shape[1]
 
         padding_mask = torch.zeros((batch_size, n_obs_support), dtype=torch.bool, device=x_support.device)
         padding_mask[y_support == -100] = True
         
         x_support = self.x_embedding(x_support)
-        x_query = self.x_embedding(x_query)
+        x_query__ = self.x_embedding(x_query__)
     
-        y_support, y_query = self.y_embedding(y_support, n_obs_query)
-        obs_embedding_support, obs_embedding_query = self.obs_embedding(batch_size, n_obs_support, n_obs_query)
+        y_support, y_query__ = self.y_embedding(y_support, n_obs_query__)
+
+        obs_embedding_support = self.obs_embedding_support(batch_size, n_obs_support)
+        obs_embedding_query__ = self.obs_embedding_query__(batch_size, n_obs_query__)
 
         support = x_support + y_support + obs_embedding_support
-        query = x_query + y_query + obs_embedding_query
+        query__ = x_query__ + y_query__ + obs_embedding_query__
 
-        x, pack = einops.pack((support, query), 'b * d')
+        x, pack = einops.pack((support, query__), 'b * d')
         
         for module_dict in self.layers:
 
             x_residual = x
-            support, query = einops.unpack(x, pack, 'b * d')
-            support_att = module_dict['attention'](support, support, support, key_padding_mask=padding_mask, need_weights=False)[0]
-            query_att = module_dict['attention'](query, support, support, key_padding_mask=padding_mask, need_weights=False)[0]
-            x = einops.pack((support_att, query_att), 'b * d')[0]
+            support, query__ = einops.unpack(x, pack, 'b * d')
+            att_support = module_dict['attention'](support, support, support, key_padding_mask=padding_mask, need_weights=False)[0]
+            att_query__ = module_dict['attention'](query__, support, support, key_padding_mask=padding_mask, need_weights=False)[0]
+            x = einops.pack((att_support, att_query__), 'b * d')[0]
             x = x_residual + x
             x = module_dict['layer_norm1'](x)
             x_residual = x
@@ -140,9 +145,9 @@ class FoundationTransformer(nn.Module):
         x = F.gelu(x)
         x = self.final_layer2(x)
 
-        support, query = einops.unpack(x, pack, 'b * c')
+        support, query__ = einops.unpack(x, pack, 'b * c')
 
-        return query
+        return query__
 
 
 
@@ -195,23 +200,21 @@ class LinearAttention(torch.nn.Module):
         output will be (b, n, d)
         """
 
-        n_obs_query = query.shape[1]
-
         query = self.Q(query)
-        key = self.K(key)   
+        key   = self.K(key  )   
         value = self.V(value)
 
         key.masked_fill_(key_padding_mask[:, :, None], -1e9)
 
         query = torch.nn.functional.softmax(query, dim=1)
-        key = torch.nn.functional.softmax(key, dim=2)
+        key   = torch.nn.functional.softmax(key  , dim=2)
 
         query = einops.rearrange(query, 'b n (h d) -> b h n d', h=self.n_heads)
         key =   einops.rearrange(key  , 'b n (h d) -> b h n d', h=self.n_heads)
         value = einops.rearrange(value, 'b n (h d) -> b h n d', h=self.n_heads)
 
-        kv = torch.einsum('b h n d, b h n e -> b h d e', key, value)       
-        output = torch.einsum('b h n d, b h d e -> b h n e', query, kv)
+        kv     = torch.einsum('b h n d, b h n e -> b h d e', key  , value)       
+        output = torch.einsum('b h n d, b h d e -> b h n e', query, kv   )
         output = einops.rearrange(output, 'b h n d -> b n (h d)')
 
         output = self.O(output)
