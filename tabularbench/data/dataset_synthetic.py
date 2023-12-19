@@ -1,11 +1,11 @@
 from typing import Generator, Iterator
 
 import torch
+
 from tabularbench.data.preprocessor import Preprocessor
-
-from tabularbench.models.tabPFN.synthetic_data import synthetic_dataset_generator
+from tabularbench.data.synthetic_generator_tabpfn import \
+    synthetic_dataset_generator
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
-
 
 
 class SyntheticDataset(torch.utils.data.IterableDataset):
