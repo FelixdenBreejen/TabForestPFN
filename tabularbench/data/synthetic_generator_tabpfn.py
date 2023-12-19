@@ -1,18 +1,14 @@
 
 import sys
+
 import torch
-
-
+from tabpfn.notebook_utils import *
+from tabpfn.priors.utils import uniform_int_sampler_f
 from tabpfn.scripts.model_builder import get_model
 from tabpfn.scripts.model_configs import *
 
-from tabpfn.priors.utils import uniform_int_sampler_f
 
-
-from tabpfn.notebook_utils import *
-
-
-def synthetic_dataset_generator(
+def synthetic_dataset_generator_tabpfn(
         n_samples: int,
         min_features: int,
         max_features: int,
@@ -135,7 +131,7 @@ class DisablePrinting:
 
 if __name__  == '__main__':
 
-    gen = synthetic_dataset_generator(
+    gen = synthetic_dataset_generator_tabpfn(
         min_samples = 100,
         max_samples = 10000,
         min_features = 3,

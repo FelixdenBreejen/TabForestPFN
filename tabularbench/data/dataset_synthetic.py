@@ -2,9 +2,12 @@ from typing import Generator, Iterator
 
 import torch
 
+from tabularbench.core.enums import GeneratorName
 from tabularbench.data.preprocessor import Preprocessor
+from tabularbench.data.synthetic_generator_forest import \
+    synthetic_dataset_generator_forest
 from tabularbench.data.synthetic_generator_tabpfn import \
-    synthetic_dataset_generator
+    synthetic_dataset_generator_tabpfn
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
 
 
@@ -13,6 +16,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
     def __init__(
         self, 
         cfg: ConfigPretrain,
+        generator_name: GeneratorName,
         min_samples_support: int,
         max_samples_support: int,
         n_samples_query: int,
@@ -24,6 +28,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
     ) -> None:
         
         self.cfg = cfg
+        self.generator_name = generator_name
         self.min_samples_support = min_samples_support
         self.max_samples_support = max_samples_support
         self.n_samples_query = n_samples_query
@@ -36,12 +41,21 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
 
     def __iter__(self) -> Iterator:
 
-        self.synthetic_dataset_generator = synthetic_dataset_generator(
-            n_samples=self.n_samples,
-            min_features=self.min_features,
-            max_features=self.max_features,
-            max_classes=self.max_classes
-        )
+        match self.generator_name:
+            case GeneratorName.TABPFN:
+                self.synthetic_dataset_generator = synthetic_dataset_generator_tabpfn(
+                    n_samples=self.n_samples,
+                    min_features=self.min_features,
+                    max_features=self.max_features,
+                    max_classes=self.max_classes
+                )
+            case GeneratorName.FOREST:
+                self.synthetic_dataset_generator = synthetic_dataset_generator_forest(
+                    n_samples=self.n_samples,
+                    min_features=self.min_features,
+                    max_features=self.max_features,
+                    max_classes=self.max_classes
+                )
 
         return self.generator()
     

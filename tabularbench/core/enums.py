@@ -58,4 +58,9 @@ class BenchmarkName(StrEnum):
     NUMERICAL_REGRESSION_LARGE = "numerical_regression_large"
 
 
+class GeneratorName(StrEnum):
+    TABPFN = 'tabpfn'
+    FOREST = 'forest'
+
+
 

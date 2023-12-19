@@ -1,14 +1,14 @@
 from __future__ import annotations
-from dataclasses import dataclass
+
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from omegaconf import DictConfig
 import torch
-from tabularbench.core.enums import ModelName
+from omegaconf import DictConfig
 
-
+from tabularbench.core.enums import GeneratorName, ModelName
 from tabularbench.sweeps.config_benchmark_sweep import ConfigPlotting
 from tabularbench.sweeps.get_logger import get_logger
 
@@ -55,6 +55,7 @@ class ConfigPretrain():
             model = model_settings,
             hyperparams_finetuning = hyperparams_finetuning,
             data = ConfigData(
+                generator=GeneratorName(cfg_hydra.data.generator),
                 min_samples_support=cfg_hydra.data.min_samples_support,
                 max_samples_support=cfg_hydra.data.max_samples_support,
                 n_samples_query=cfg_hydra.data.n_samples_query,
@@ -112,6 +113,7 @@ class ConfigOptim():
 
 @dataclass
 class ConfigData():
+    generator: GeneratorName
     min_samples_support: int
     max_samples_support: int
     n_samples_query: int
