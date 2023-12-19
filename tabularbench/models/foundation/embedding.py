@@ -76,13 +76,13 @@ class FoundationObservationEmbedding(torch.nn.Module):
         super().__init__()
 
         self.dim = dim
-        self.max_dim = 2**14
+        self.max_dim = 2**16
         self.embedding = nn.Embedding(self.max_dim, dim)
 
     
     def forward(self, batch_size: int, n_obs_support: int, n_obs_query: int) -> torch.Tensor:
 
-        assert n_obs_support + n_obs_query <= self.max_dim, f'Number of observations is too large. Max is {self.max_dim}'
+        assert n_obs_support + n_obs_query <= self.max_dim, f'Number of observations is too large. Max is {self.max_dim}, got {n_obs_support + n_obs_query}'
 
         # Take a random embedding from the pool of embeddings 
         weights = torch.ones((batch_size, self.max_dim), dtype=torch.float32, device=self.embedding.weight.device)

@@ -4,8 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from tabularbench.models.foundation.embedding import (
-    FoundationEmbeddingYFloat, FoundationEmbeddingYInteger,
-    FoundationObservationEmbedding)
+    FoundationEmbeddingYFloat, FoundationEmbeddingYInteger)
 
 
 class FoundationTransformer(nn.Module):
@@ -41,8 +40,6 @@ class FoundationTransformer(nn.Module):
             self.y_embedding = FoundationEmbeddingYFloat(dim)
         else:
             self.y_embedding = FoundationEmbeddingYInteger(n_classes, dim)
-
-        self.obs_embedding = FoundationObservationEmbedding(dim)
 
         self.layers = nn.ModuleList([])
 
@@ -113,10 +110,9 @@ class FoundationTransformer(nn.Module):
         x_query = self.x_embedding(x_query)
     
         y_support, y_query = self.y_embedding(y_support, n_obs_query)
-        obs_embedding_support, obs_embedding_query = self.obs_embedding(batch_size, n_obs_support, n_obs_query)
-
-        support = x_support + y_support + obs_embedding_support
-        query = x_query + y_query + obs_embedding_query
+       
+        support = x_support + y_support
+        query = x_query + y_query
 
         x, pack = einops.pack((support, query), 'b * d')
         
