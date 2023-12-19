@@ -16,13 +16,15 @@ class Preprocessor(TransformerMixin, BaseEstimator):
     def __init__(
             self, 
             logger: Logger, 
-            use_quantile_transformer: bool,
             max_features: int,
+            use_quantile_transformer: bool,
+            use_feature_count_scaling: bool,
         ):
 
         self.logger = logger
-        self.use_quantile_transformer = use_quantile_transformer
         self.max_features = max_features
+        self.use_quantile_transformer = use_quantile_transformer
+        self.use_feature_count_scaling = use_feature_count_scaling
 
     
     def fit(self, X: np.ndarray, y: np.ndarray = None):
@@ -51,7 +53,10 @@ class Preprocessor(TransformerMixin, BaseEstimator):
             X = self.quantile_transformer.transform(X)
         
         X = self.normalize_by_mean_std(X, self.mean, self.std)
-        X = self.normalize_by_feature_count(X, self.max_features)
+
+        if self.use_feature_count_scaling:
+            X = self.normalize_by_feature_count(X, self.max_features)
+
         X = self.extend_features(X, self.max_features)
 
         if y is None:

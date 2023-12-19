@@ -36,7 +36,8 @@ class TrainerFinetune(BaseEstimator):
         self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
         self.preprocessor = Preprocessor(
             cfg, 
-            use_quantile_transformer=True,
+            use_quantile_transformer=self.cfg.hyperparams.use_quantile_transformer,
+            use_feature_count_scaling=self.cfg.hyperparams.use_feature_count_scaling,
             max_features=self.cfg.hyperparams.max_features
         )
 

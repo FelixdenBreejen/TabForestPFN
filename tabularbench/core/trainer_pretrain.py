@@ -35,8 +35,13 @@ class TrainerPretrain(BaseEstimator):
         self.model_ = get_model_pretrain(cfg)
         self.model_.to(self.cfg.device)
 
+        if cfg.is_main_process:
+            self.cfg.logger.info(f"Model has {sum(p.numel() for p in self.model_.parameters() if p.requires_grad):,} trainable parameters")
+
         if cfg.use_ddp:
             self.model = torch.nn.parallel.DistributedDataParallel(self.model_, device_ids=[cfg.device], find_unused_parameters=False)
+        else:
+            self.model = self.model_
 
         self.synthetic_dataset = SyntheticDataset(
             cfg=self.cfg,
@@ -45,7 +50,9 @@ class TrainerPretrain(BaseEstimator):
             n_samples_query=self.cfg.data.n_samples_query,
             min_features=self.cfg.data.min_features,
             max_features=self.cfg.data.max_features,
-            max_classes=self.cfg.data.max_classes
+            max_classes=self.cfg.data.max_classes,
+            use_quantile_transformer=self.cfg.preprocessing.use_quantile_transformer,
+            use_feature_count_scaling=self.cfg.preprocessing.use_feature_count_scaling,
         )
 
         self.synthetic_dataloader = torch.utils.data.DataLoader(
@@ -212,6 +219,8 @@ class TrainerPretrain(BaseEstimator):
         hyperparams_finetuning = self.cfg.hyperparams_finetuning
         hyperparams_finetuning['use_pretrained_weights'] = True
         hyperparams_finetuning['path_to_weights'] = str(weights_path)
+        hyperparams_finetuning['use_quantile_transformer'] = self.cfg.preprocessing.use_quantile_transformer
+        hyperparams_finetuning['use_feature_count_scaling'] = self.cfg.preprocessing.use_feature_count_scaling
 
         if self.cfg.model.name == ModelName.FOUNDATION:
             with open_dict(hyperparams_finetuning):
@@ -232,7 +241,7 @@ class TrainerPretrain(BaseEstimator):
         parameters_without_weight_decay = []
 
         for name, param in parameters:
-            if name.endswith(".bias") or '.norm' in name:
+            if name.endswith("bias") or 'norm' in name:
                 parameters_without_weight_decay.append(param)
             else:
                 parameters_with_weight_decay.append(param)

@@ -83,8 +83,9 @@ class MetricsValidation():
         fig, ax = plt.subplots(figsize=(15, 6))
 
         ax.plot(range(len(self._loss)), self._loss, color='blue', label='Cross Entropy Loss (training)')
-        mov_avg = np.convolve(self._loss, np.ones(100)/100, mode='valid')
-        ax.plot(range(99, len(self._loss)), mov_avg, color='darkblue', label='Moving Average (window=100)')
+        if len(self._loss) > 100:
+            mov_avg = np.convolve(self._loss, np.ones(100)/100, mode='valid')
+            ax.plot(range(99, len(self._loss)), mov_avg, color='darkblue', label='Moving Average (window=100)')
         ax.set_ylabel('Cross Entropy Loss')
 
         ax2 = ax.twinx()
