@@ -1,4 +1,5 @@
 from typing import Optional
+
 import torch
 
 
@@ -26,6 +27,8 @@ class CollatorWithPadding():
         n_query_features = batch[0]['x_query'].shape[1]
 
         batch_size = len(batch)
+
+        # TODO: how about randomly shuffling the features and or classes here?
 
         tensor_dict = {
             'x_support': torch.zeros((batch_size, self.n_support_samples, n_support_features), dtype=torch.float32),
