@@ -4,7 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from tabularbench.models.foundation.embedding import (
-    FoundationEmbeddingYFloat, FoundationEmbeddingYInteger)
+    FoundationEmbeddingX, FoundationEmbeddingYFloat,
+    FoundationEmbeddingYInteger)
 
 
 class FoundationTransformer(nn.Module):
@@ -34,7 +35,7 @@ class FoundationTransformer(nn.Module):
         self.y_as_float_embedding = y_as_float_embedding
         self.linear_attention = linear_attention
 
-        self.x_embedding = nn.Linear(n_features, dim)
+        self.x_embedding = FoundationEmbeddingX(dim, n_features)
 
         if self.y_as_float_embedding:
             self.y_embedding = FoundationEmbeddingYFloat(dim)
@@ -107,10 +108,8 @@ class FoundationTransformer(nn.Module):
 
         padding_mask = torch.zeros((batch_size, n_obs_support), dtype=torch.bool, device=x_support.device)
         padding_mask[y_support == -100] = True
-        
-        x_support = self.x_embedding(x_support)
-        x_query__ = self.x_embedding(x_query__)
-    
+
+        x_support, x_query__ = self.x_embedding(x_support, x_query__)
         y_support, y_query__ = self.y_embedding(y_support, n_obs_query__)
 
         support = x_support + y_support
