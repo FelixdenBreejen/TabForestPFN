@@ -25,17 +25,6 @@ class FoundationEmbeddingX(torch.nn.Module):
         n_obs_support = x_support.shape[1]
         n_obs_query__ = x_query__.shape[1]
 
-        # shuffle the features
-        # this is bad when fine-tuning -> TODO: find different solution another time
-
-        # prob_matrix = torch.ones((batch_size, self.n_features), dtype=torch.float32, device=x_support.device) / self.n_features
-        # indices = torch.multinomial(prob_matrix, num_samples=self.n_features, replacement=False)
-        # indices_support = einops.repeat(indices, 'b f -> b n f', n=n_obs_support)
-        # indices_query__ = einops.repeat(indices, 'b f -> b n f', n=n_obs_query__)
-
-        # x_support = torch.gather(x_support, dim=2, index=indices_support)
-        # x_query__ = torch.gather(x_query__, dim=2, index=indices_query__)
-
         x_support = self.x_embedding(x_support)
         x_query__ = self.x_embedding(x_query__)
 

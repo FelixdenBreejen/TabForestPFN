@@ -28,8 +28,6 @@ class CollatorWithPadding():
 
         batch_size = len(batch)
 
-        # TODO: how about randomly shuffling the features and or classes here?
-
         tensor_dict = {
             'x_support': torch.zeros((batch_size, self.n_support_samples, n_support_features), dtype=torch.float32),
             'y_support': torch.zeros((batch_size, self.n_support_samples), dtype=torch.int64) - 100,
