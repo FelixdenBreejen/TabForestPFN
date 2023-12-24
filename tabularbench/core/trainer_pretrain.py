@@ -171,8 +171,8 @@ class TrainerPretrain(BaseEstimator):
             search_type=SearchType.DEFAULT,
             config_plotting=self.cfg.plotting,
             n_random_runs_per_dataset=1,
-            n_default_runs_per_dataset=1,
-            openml_dataset_ids_to_ignore=[],
+            n_default_runs_per_dataset=self.cfg.testing.n_default_runs_per_dataset_valid,
+            openml_dataset_ids_to_ignore=self.cfg.testing.openml_dataset_ids_to_ignore,
             hyperparams_object=hyperparams_finetuning
         )
         run_sweep(cfg_sweep)
@@ -195,11 +195,11 @@ class TrainerPretrain(BaseEstimator):
         torch.cuda.empty_cache()
 
         weights_path = self.last_weights_path
-        output_dir = self.cfg.output_dir / 'test'
         plot_name = f"{self.cfg.model.name.value} Pretrain Test"
 
         hyperparams_finetuning = self.make_hyperparams_finetuning_dict(weights_path)
 
+        output_dir = self.cfg.output_dir / 'test-categorical-classification'
         cfg_sweep = ConfigBenchmarkSweep(
             logger=get_logger(output_dir / 'log.txt'),
             output_dir=output_dir,
@@ -211,11 +211,31 @@ class TrainerPretrain(BaseEstimator):
             search_type=SearchType.DEFAULT,
             config_plotting=self.cfg.plotting,
             n_random_runs_per_dataset=1,
-            n_default_runs_per_dataset=10,
-            openml_dataset_ids_to_ignore=[],
+            n_default_runs_per_dataset=self.cfg.testing.n_default_runs_per_dataset_test,
+            openml_dataset_ids_to_ignore=self.cfg.testing.openml_dataset_ids_to_ignore,
             hyperparams_object=hyperparams_finetuning
         )
         run_sweep(cfg_sweep)
+
+        output_dir = self.cfg.output_dir / 'test-numerical-classification'
+        cfg_sweep = ConfigBenchmarkSweep(
+            logger=get_logger(output_dir / 'log.txt'),
+            output_dir=output_dir,
+            seed=self.cfg.seed,
+            devices=self.cfg.devices,
+            benchmark=BENCHMARKS[BenchmarkName.NUMERICAL_CLASSIFICATION],
+            model_name=self.cfg.model.name,
+            model_plot_name=plot_name,
+            search_type=SearchType.DEFAULT,
+            config_plotting=self.cfg.plotting,
+            n_random_runs_per_dataset=1,
+            n_default_runs_per_dataset=self.cfg.testing.n_default_runs_per_dataset_test,
+            openml_dataset_ids_to_ignore=self.cfg.testing.openml_dataset_ids_to_ignore,
+            hyperparams_object=hyperparams_finetuning
+        )
+        run_sweep(cfg_sweep)
+
+
 
 
     def make_hyperparams_finetuning_dict(self, weights_path: Path) -> dict:

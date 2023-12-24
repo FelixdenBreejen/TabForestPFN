@@ -45,6 +45,17 @@ preprocessing:
   use_quantile_transformer: True         # TabPFN: True
   use_feature_count_scaling: True        # TabPFN: True
 
+testing:
+  n_default_runs_per_dataset_valid: 1
+  n_default_runs_per_dataset_test: 2                  
+  openml_dataset_ids_to_ignore:
+    - 44089  # missing SAINT hyperparameter search in original benchmark results
+    - 44135  # isolet numerical regression (613 features)
+    - 44061  # mercedes_benz categorical regression (359 features)
+    - 45041  # topo categorical regression (255 features)
+    - 45046  # allstate_claims categorical regression (124 features)
+    - 45019  # bioresponse numerical classification (419 features)
+
 
 plotting:
   n_runs: 500                   # Number of runs to consider for plotting

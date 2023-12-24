@@ -35,7 +35,7 @@ class TrainerFinetune(BaseEstimator):
         self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams.early_stopping_patience)
         self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
         self.preprocessor = Preprocessor(
-            cfg, 
+            cfg.logger, 
             use_quantile_transformer=self.cfg.hyperparams.use_quantile_transformer,
             use_feature_count_scaling=self.cfg.hyperparams.use_feature_count_scaling,
             max_features=self.cfg.hyperparams.max_features

@@ -25,6 +25,7 @@ class ConfigPretrain():
     data: ConfigData
     optim: ConfigOptim
     preprocessing: ConfigPreprocessing
+    testing: ConfigTesting
     plotting: ConfigPlotting
     hyperparams_finetuning: DictConfig
 
@@ -83,6 +84,11 @@ class ConfigPretrain():
                 use_quantile_transformer=cfg_hydra.preprocessing.use_quantile_transformer,
                 use_feature_count_scaling=cfg_hydra.preprocessing.use_feature_count_scaling,
             ),
+            testing = ConfigTesting(
+                n_default_runs_per_dataset_valid=cfg_hydra.testing.n_default_runs_per_dataset_valid,
+                n_default_runs_per_dataset_test=cfg_hydra.testing.n_default_runs_per_dataset_test,
+                openml_dataset_ids_to_ignore=cfg_hydra.testing.openml_dataset_ids_to_ignore,
+            ),
             plotting = ConfigPlotting(
                 n_runs=cfg_hydra.plotting.n_runs,
                 n_random_shuffles=cfg_hydra.plotting.n_random_shuffles,
@@ -126,6 +132,13 @@ class ConfigData():
 class ConfigPreprocessing():
     use_quantile_transformer: bool
     use_feature_count_scaling: bool
+
+
+@dataclass
+class ConfigTesting():
+    n_default_runs_per_dataset_valid: int
+    n_default_runs_per_dataset_test: int               
+    openml_dataset_ids_to_ignore: list[int]
 
 
 
