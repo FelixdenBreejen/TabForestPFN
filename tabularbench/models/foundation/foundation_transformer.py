@@ -48,8 +48,8 @@ class FoundationTransformer(nn.Module):
 
             self.layers.append(nn.ModuleDict({
                 'layer_norm1': nn.LayerNorm(dim),
-                'attention_lin': EfficientAdditiveAttention(dim, n_heads),
-                'attention_mha': nn.MultiheadAttention(dim, n_heads, dropout=attn_dropout, batch_first=True),
+                'attention_lin': MultiheadAttention(dim, n_heads),
+                'attention_mha': MultiheadAttention(dim, n_heads),
                 'layer_norm2': nn.LayerNorm(dim),
                 'linear1': nn.Linear(dim, dim*2),
                 'linear2': nn.Linear(dim*2, dim),
@@ -69,8 +69,7 @@ class FoundationTransformer(nn.Module):
         for module_dict in self.layers:
 
             module_dict['attention_lin'].init_weights()
-            nn.init.zeros_(module_dict['attention_mha'].out_proj.weight)
-            nn.init.zeros_(module_dict['attention_mha'].out_proj.bias)
+            module_dict['attention_mha'].init_weights()
             nn.init.zeros_(module_dict['linear2'].weight)
             nn.init.zeros_(module_dict['linear2'].bias)
             
@@ -115,8 +114,8 @@ class FoundationTransformer(nn.Module):
 
             x_residual = x
             support, query__ = einops.unpack(x, pack, 'b * d')
-            att_support = module_dict['attention_lin'](support, support, support, key_padding_mask=padding_mask, need_weights=False)[0]
-            att_query__ = module_dict['attention_mha'](query__, support, support, key_padding_mask=padding_mask, need_weights=False)[0]
+            att_support = module_dict['attention_lin'](support, support, support, key_padding_mask=padding_mask)
+            att_query__ = module_dict['attention_mha'](query__, support, support, key_padding_mask=padding_mask)
             x = einops.pack((att_support, att_query__), 'b * d')[0]
             x = x_residual + x
             x = module_dict['layer_norm1'](x)
@@ -137,7 +136,47 @@ class FoundationTransformer(nn.Module):
 
 
 
+class MultiheadAttention(torch.nn.Module):
+
+    def __init__(self, dim: int, n_heads: int) -> None:
+        
+        super().__init__()
+
+        self.dim = dim
+        self.n_heads = n_heads
+
+        self.att = nn.MultiheadAttention(dim, n_heads, dropout=0.0, batch_first=True)
+
+
+    def init_weights(self):
+        nn.init.zeros_(self.att.out_proj.weight)
+        nn.init.zeros_(self.att.out_proj.bias)
+
     
+    def forward(
+            self, 
+            query: torch.Tensor,
+            key: torch.Tensor,
+            value: torch.Tensor, 
+            key_padding_mask: torch.Tensor
+        ) -> torch.Tensor:
+        """
+        b = batch size
+        n = number of samples (dataset size)
+        h = heads
+        d = dimension of embedding
+
+        query is (b, n, d)
+        key is (b, n, d)
+        value is (b, n, d)
+
+        attention weights will be (b, h, n, n)
+        output will be (b, n, d)
+        """
+
+        output, weights = self.att(query, key, value, key_padding_mask=key_padding_mask, need_weights=None)
+        return output
+
 
 
 class LinearAttention(torch.nn.Module):
@@ -169,8 +208,7 @@ class LinearAttention(torch.nn.Module):
             query: torch.Tensor,
             key: torch.Tensor,
             value: torch.Tensor, 
-            key_padding_mask: torch.Tensor, 
-            need_weights: bool
+            key_padding_mask: torch.Tensor
         ) -> torch.Tensor:
         """
         b = batch size
@@ -190,21 +228,28 @@ class LinearAttention(torch.nn.Module):
         key   = self.K(key  )   
         value = self.V(value)
 
-        key.masked_fill_(key_padding_mask[:, :, None], 1e-9)
+        query = 1+torch.nn.functional.elu(query)
+        key   = 1+torch.nn.functional.elu(key  )
+
+        key.masked_fill_(key_padding_mask[:, :, None], 0.)
 
         query = einops.rearrange(query, 'b n (h d) -> b h n d', h=self.n_heads)
         key =   einops.rearrange(key  , 'b n (h d) -> b h n d', h=self.n_heads)
         value = einops.rearrange(value, 'b n (h d) -> b h n d', h=self.n_heads)
 
-        attention_weights = torch.einsum('b h n d, b h n e -> b h d e', query, key) / (self.dim ** 0.5)
-        attention_weights = torch.softmax(attention_weights, dim=-1)
+        # query = query * (self.dim // self.n_heads) ** -0.5
+        # key = key * (self.dim // self.n_heads) ** -0.5
 
-        output = torch.einsum('b h d e, b h n e -> b h n d', attention_weights, value)
+        query = torch.nn.functional.normalize(query, dim=2)
+        key = torch.nn.functional.normalize(key, dim=3)
+
+        kv = torch.einsum('b h n d, b h n e -> b h d e', key, value)
+        output = torch.einsum('b h n d, b h d e -> b h n e', query, kv)
         output = einops.rearrange(output, 'b h n d -> b n (h d)')
 
         output = self.O(output)
 
-        return output, None
+        return output
     
 
 
@@ -223,6 +268,9 @@ class EfficientAdditiveAttention(nn.Module):
         ) -> None:
         
         super().__init__()
+
+        self.dim = dim
+        self.n_heads = n_heads
 
         self.to_query = nn.Linear(dim, dim)
         self.to_key = nn.Linear(dim, dim)
@@ -243,8 +291,7 @@ class EfficientAdditiveAttention(nn.Module):
             query: torch.Tensor,
             key: torch.Tensor,
             value: torch.Tensor, 
-            key_padding_mask: torch.Tensor, 
-            need_weights: bool
+            key_padding_mask: torch.Tensor,
         ) -> torch.Tensor:
 
         query = self.to_query(query)
@@ -268,4 +315,4 @@ class EfficientAdditiveAttention(nn.Module):
 
         out = self.final(out) # BxNxD
 
-        return out, None
+        return out
