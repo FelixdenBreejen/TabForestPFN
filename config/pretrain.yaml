@@ -33,7 +33,7 @@ optim:
   path_to_weights: outputs_done/foundation_key_att/weights/model_step_500000.pt               # Path to a checkpoint to load weights from
 
 data:
-  generator: forest             # tabpfn or forest
+  generator: tabpfn             # tabpfn or forest
   min_samples_support: 128
   max_samples_support: 1024            
   n_samples_query: 256
@@ -47,7 +47,7 @@ preprocessing:
 
 testing:
   n_default_runs_per_dataset_valid: 1
-  n_default_runs_per_dataset_test: 2                  
+  n_default_runs_per_dataset_test: 10                  
   openml_dataset_ids_to_ignore:
     - 44089  # missing SAINT hyperparameter search in original benchmark results
     - 44135  # isolet numerical regression (613 features)
