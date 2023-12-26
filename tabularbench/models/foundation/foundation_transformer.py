@@ -46,10 +46,12 @@ class FoundationTransformer(nn.Module):
 
         for _ in range(n_layers):
 
+            att = MultiheadAttention(dim, n_heads) 
+
             self.layers.append(nn.ModuleDict({
                 'layer_norm1': nn.LayerNorm(dim),
-                'attention_lin': MultiheadAttention(dim, n_heads),
-                'attention_mha': MultiheadAttention(dim, n_heads),
+                'attention_lin': att,
+                'attention_mha': att,
                 'layer_norm2': nn.LayerNorm(dim),
                 'linear1': nn.Linear(dim, dim*2),
                 'linear2': nn.Linear(dim*2, dim),
@@ -174,7 +176,7 @@ class MultiheadAttention(torch.nn.Module):
         output will be (b, n, d)
         """
 
-        output, weights = self.att(query, key, value, key_padding_mask=key_padding_mask, need_weights=None)
+        output, weights = self.att(query, key, value, key_padding_mask=key_padding_mask, need_weights=False)
         return output
 
 

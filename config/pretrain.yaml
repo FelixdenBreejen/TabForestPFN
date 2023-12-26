@@ -14,7 +14,7 @@ defaults:
 output_dir: ${hydra:run.dir}
 seed: 0
 devices: [0, 1, 2, 3]
-workers_per_gpu: 8
+workers_per_gpu: 16
 
 optim:
   max_steps: 500_000                # Every step completes batch_size * gradient_accumulation_steps samples
