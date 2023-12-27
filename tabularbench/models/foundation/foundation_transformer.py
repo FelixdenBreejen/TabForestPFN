@@ -59,6 +59,7 @@ class FoundationTransformer(nn.Module):
 
         self.final_layer1 = nn.Linear(dim, dim*2)
         self.final_layer2 = nn.Linear(dim*2, n_classes)
+        # TODO: change to one final layer
 
         if use_pretrained_weights:
             self.load_state_dict(torch.load(path_to_weights))
