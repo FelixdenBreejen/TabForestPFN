@@ -38,7 +38,7 @@ class TrainerFinetune(BaseEstimator):
             cfg.logger, 
             use_quantile_transformer=self.cfg.hyperparams.use_quantile_transformer,
             use_feature_count_scaling=self.cfg.hyperparams.use_feature_count_scaling,
-            max_features=self.cfg.hyperparams.max_features
+            max_features=self.cfg.hyperparams.n_features
         )
 
 
