@@ -18,7 +18,7 @@ devices: [0, 1, 2, 3]
 workers_per_gpu: 16
 
 optim:
-  max_steps: 500_000                # Every step completes batch_size * gradient_accumulation_steps samples
+  max_steps: 300_000                # Every step completes batch_size * gradient_accumulation_steps samples
   warmup_steps: 10_000
   log_every_n_steps: 10
   eval_every_n_steps: 20_000

@@ -46,20 +46,19 @@ class FoundationTransformer(nn.Module):
 
         for _ in range(n_layers):
 
-            att = MultiheadAttention(dim, n_heads) 
+            att = MultiheadAttention(dim, n_heads)
 
             self.layers.append(nn.ModuleDict({
                 'layer_norm1': nn.LayerNorm(dim),
                 'attention_lin': att,
                 'attention_mha': att,
                 'layer_norm2': nn.LayerNorm(dim),
-                'linear1': nn.Linear(dim, dim*2),
-                'linear2': nn.Linear(dim*2, dim),
+                'linear1': nn.Linear(dim, dim*4),
+                'linear2': nn.Linear(dim*4, dim),
             }))
 
-        self.final_layer1 = nn.Linear(dim, dim*2)
-        self.final_layer2 = nn.Linear(dim*2, n_classes)
-        # TODO: change to one final layer
+        self.final_layer1 = nn.Linear(dim, dim*4)
+        self.final_layer2 = nn.Linear(dim*4, n_classes)
 
         if use_pretrained_weights:
             self.load_state_dict(torch.load(path_to_weights))
@@ -319,3 +318,9 @@ class EfficientAdditiveAttention(nn.Module):
         out = self.final(out) # BxNxD
 
         return out
+
+
+class SwiGLU(nn.Module):
+    def forward(self, x):
+        x, gate = x.chunk(2, dim=-1)
+        return F.silu(gate) * x
