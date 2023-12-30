@@ -1,3 +1,4 @@
+
 import einops
 import torch
 import torch.nn as nn
@@ -222,7 +223,6 @@ class LinearAttention(torch.nn.Module):
         key is (b, n, d)
         value is (b, n, d)
 
-        attention weights will be (b, h, d, d)
         output will be (b, n, d)
         """
 
