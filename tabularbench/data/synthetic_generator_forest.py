@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import QuantileTransformer
+from tqdm import tqdm
 
 
 def synthetic_dataset_function_forest(
@@ -100,7 +101,7 @@ def synthetic_dataset_generator_forest(
 
 if __name__ == '__main__':
 
-    x, y = synthetic_dataset_function_forest(
+    generator = synthetic_dataset_generator_forest(
         min_features = 3,
         max_features = 100,
         n_samples = 10000,
@@ -110,3 +111,6 @@ if __name__ == '__main__':
         min_depth = 15,
         max_depth = 25,
     )
+
+    for _ in tqdm(range(200)):        
+        x, y = next(generator)

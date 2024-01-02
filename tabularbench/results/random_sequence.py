@@ -1,10 +1,9 @@
 import numpy as np
 import pandas as pd
+
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.results.scores_min_max import scores_min_max
-
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
-
 
 
 def create_random_sequences_from_df(cfg: ConfigBenchmarkSweep, df: pd.DataFrame) -> np.ndarray: 
@@ -133,7 +132,10 @@ def create_random_sequences(
 
     
     assert len(random_values_val) == len(random_values_test), "The number of random values for val and test must be the same"
-    assert len(random_values_val) > 0
+
+    if len(random_values_val) == 0:
+        # If there are no random values, we just return the default value
+        return np.tile(default_value_test, (n_shuffles, sequence_length))
 
     random_values = np.concatenate([random_values_val[None, :], random_values_test[None, :]], axis=0)
     default_values = np.array([default_value_val, default_value_test])
