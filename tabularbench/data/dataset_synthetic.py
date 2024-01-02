@@ -25,6 +25,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         max_classes: int,
         use_quantile_transformer: bool,
         use_feature_count_scaling: bool,
+        generator_hyperparams: dict
     ) -> None:
         
         self.cfg = cfg
@@ -38,6 +39,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
         self.max_classes = max_classes
         self.use_quantile_transformer = use_quantile_transformer
         self.use_feature_count_scaling = use_feature_count_scaling
+        self.generator_hyperparams = generator_hyperparams
 
     def __iter__(self) -> Iterator:
 
@@ -54,7 +56,10 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
                     n_samples=self.n_samples,
                     min_features=self.min_features,
                     max_features=self.max_features,
-                    max_classes=self.max_classes
+                    max_classes=self.max_classes,
+                    base_size=self.generator_hyperparams['base_size'],
+                    min_depth=self.generator_hyperparams['min_depth'],
+                    max_depth=self.generator_hyperparams['max_depth'],
                 )
 
         return self.generator()

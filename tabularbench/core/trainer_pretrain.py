@@ -57,6 +57,7 @@ class TrainerPretrain(BaseEstimator):
             max_classes=self.cfg.data.max_classes,
             use_quantile_transformer=self.cfg.preprocessing.use_quantile_transformer,
             use_feature_count_scaling=self.cfg.preprocessing.use_feature_count_scaling,
+            generator_hyperparams=self.cfg.data.generator_hyperparams
         )
 
         self.synthetic_dataloader = torch.utils.data.DataLoader(

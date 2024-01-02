@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 import torch
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from tabularbench.core.enums import GeneratorName, ModelName
 from tabularbench.sweeps.config_benchmark_sweep import ConfigPlotting
@@ -63,6 +63,7 @@ class ConfigPretrain():
                 min_features=cfg_hydra.data.min_features,
                 max_features=cfg_hydra.data.max_features,
                 max_classes=cfg_hydra.data.max_classes,
+                generator_hyperparams=OmegaConf.to_container(cfg_hydra.data.generator_hyperparams),
             ),
             optim = ConfigOptim(
                 max_steps=cfg_hydra.optim.max_steps,
@@ -126,6 +127,7 @@ class ConfigData():
     min_features: int
     max_features: int
     max_classes: int
+    generator_hyperparams: dict
 
 
 @dataclass
