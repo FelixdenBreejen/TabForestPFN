@@ -1,27 +1,17 @@
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import QuantileTransformer
-from tqdm import tqdm
 
 
-def synthetic_dataset_function_forest(
+def synthetic_dataset_function_cuts(
         min_features = 3,
         max_features = 100,
         n_samples = 10000,
         max_classes = 10,
-        base_size = 1000,
-        n_estimators = 1,
-        min_depth = 15,
-        max_depth = 25,
+        n_cuts = 1000,
     ):
 
     n_classes = np.random.randint(2, max_classes, size=1).item()
     categorical_perc = np.random.uniform(0, 1, size=(1,)).item()
-
-    if min_depth == max_depth:
-        depth = min_depth
-    else:
-        depth = np.random.randint(min_depth, max_depth, size=1).item()
     
     if min_features == max_features:
         n_features = min_features
@@ -31,45 +21,38 @@ def synthetic_dataset_function_forest(
     n_categorical_features = int(categorical_perc * (n_features + 1))
     n_categorical_classes = np.random.geometric(p=0.5, size=(n_categorical_features,)) + 1
 
-    x = np.random.normal(size=(base_size, n_features))
-    y = np.random.normal(0, 1, size=(base_size,))
+    x = np.random.normal(size=(n_samples, n_features))
 
-    clf = RandomForestRegressor(
-        n_estimators=n_estimators,
-        max_depth=depth
-    )
-    clf.fit(x, y)
-
-    x2 = np.random.normal(size=(n_samples, n_features))
 
     if n_categorical_features > 0:
-        x2_categorical = x2[:, :n_categorical_features]
-        x2_numerical = x2[:, n_categorical_features:]
+        x_categorical = x[:, :n_categorical_features]
+        x_numerical = x[:, n_categorical_features:]
 
         quantile_transformer = QuantileTransformer(output_distribution='uniform')
-        x2_categorical = quantile_transformer.fit_transform(x2_categorical)
+        x_categorical = quantile_transformer.fit_transform(x_categorical)
 
         for i in range(n_categorical_features):
             n_categorical_class = n_categorical_classes[i]
             buckets = np.random.uniform(0, 1, size=(n_categorical_class-1,))
             buckets.sort()
             buckets = np.hstack([buckets, 1])
-            b = np.argmax(x2_categorical[:, i] < buckets[:, None], axis=0)
-            x2_categorical[:, i] = b
+            b = np.argmax(x_categorical[:, i] < buckets[:, None], axis=0)
+            x_categorical[:, i] = b
 
-        x2 = np.hstack([x2_categorical, x2_numerical])
+        x = np.hstack([x_categorical, x_numerical])
 
-    z = clf.predict(x2)
+    A = np.random.uniform(-1, 1, size=(n_features, n_cuts))
+    b = np.random.uniform(-1, 1, size=(n_cuts,))
 
-    quantile_transformer = QuantileTransformer()
-    z = quantile_transformer.fit_transform(z.reshape(-1, 1)).flatten()
+    z = np.matmul(x, A) + b
+    z = np.abs(z)
 
-    buckets = np.random.uniform(0, 1, size=(n_classes-1,))
-    buckets.sort()
-    buckets = np.hstack([buckets, 1])
-    b = np.argmax(z < buckets[:, None], axis=0)
+    gamma = np.random.uniform(-1, 1, size=(n_cuts, n_classes))
+    y = np.matmul(z, gamma)
 
-    return x2, b
+    y = np.argmax(y, axis=1)
+
+    return x, y
 
 
 def synthetic_dataset_generator_forest(
@@ -101,16 +84,13 @@ def synthetic_dataset_generator_forest(
 
 if __name__ == '__main__':
 
-    generator = synthetic_dataset_generator_forest(
+    x, y = synthetic_dataset_function_cuts(
         min_features = 3,
         max_features = 100,
         n_samples = 10000,
         max_classes = 10,
-        base_size = 10000,
-        n_estimators = 1,
-        min_depth = 2,
-        max_depth = 2,
     )
 
-    for _ in tqdm(range(1)):        
-        x, y = next(generator)
+    pass
+
+    
