@@ -34,7 +34,7 @@ optim:
   path_to_weights: outputs_done/foundation_key_att/weights/model_step_500000.pt               # Path to a checkpoint to load weights from
 
 data:
-  generator: forest             # tabpfn or forest
+  generator: neighbor             # tabpfn or forest or neighbor
   min_samples_support: 128
   max_samples_support: 1024            
   n_samples_query: 256
@@ -42,9 +42,8 @@ data:
   max_features: 100
   max_classes: 10
   generator_hyperparams:
-    min_depth: 2
-    max_depth: 2
-    base_size: 1000
+    min_neighbors: 2
+    max_neighbors: 2048
 
 preprocessing:
   use_quantile_transformer: True         # TabPFN: True

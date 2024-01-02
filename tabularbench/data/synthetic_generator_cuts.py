@@ -55,27 +55,21 @@ def synthetic_dataset_function_cuts(
     return x, y
 
 
-def synthetic_dataset_generator_forest(
+def synthetic_dataset_generator_cut(
         min_features = 3,
         max_features = 100,
         n_samples = 10000,
         max_classes = 10,
-        base_size = 1000,
-        n_estimators = 1,
-        min_depth = 15,
-        max_depth = 25,
+        n_cuts = 1000,
     ):
 
     while True:
-        x, y = synthetic_dataset_function_forest(
+        x, y = synthetic_dataset_function_cuts(
             min_features = min_features,
             max_features = max_features,
             n_samples = n_samples,
             max_classes = max_classes,
-            base_size = base_size,
-            n_estimators = n_estimators,
-            min_depth = min_depth,
-            max_depth = max_depth,
+            n_cuts = n_cuts,
         )
 
         yield x, y

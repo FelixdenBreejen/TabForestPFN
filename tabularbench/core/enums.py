@@ -61,6 +61,7 @@ class BenchmarkName(StrEnum):
 class GeneratorName(StrEnum):
     TABPFN = 'tabpfn'
     FOREST = 'forest'
+    NEIGHBOR = 'neighbor'
 
 
 

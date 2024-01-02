@@ -6,6 +6,7 @@ from tabularbench.core.enums import GeneratorName
 from tabularbench.data.preprocessor import Preprocessor
 from tabularbench.data.synthetic_generator_forest import \
     synthetic_dataset_generator_forest
+from tabularbench.data.synthetic_generator_neighbor import synthetic_dataset_generator_neighbor
 from tabularbench.data.synthetic_generator_tabpfn import \
     synthetic_dataset_generator_tabpfn
 from tabularbench.sweeps.config_pretrain import ConfigPretrain
@@ -60,6 +61,15 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
                     base_size=self.generator_hyperparams['base_size'],
                     min_depth=self.generator_hyperparams['min_depth'],
                     max_depth=self.generator_hyperparams['max_depth'],
+                )
+            case GeneratorName.NEIGHBOR:
+                self.synthetic_dataset_generator = synthetic_dataset_generator_neighbor(
+                    n_samples=self.n_samples,
+                    min_features=self.min_features,
+                    max_features=self.max_features,
+                    max_classes=self.max_classes,
+                    min_neighbors=self.generator_hyperparams['min_neighbors'],
+                    max_neighbors=self.generator_hyperparams['max_neighbors'],
                 )
 
         return self.generator()
