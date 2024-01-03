@@ -27,14 +27,14 @@ optim:
   lr: 1.e-4
   weight_decay: 0.00
   beta1: 0.9
-  beta2: 0.999
+  beta2: 0.95
   cosine_scheduler: True  
   max_grad_norm: 1.0
   use_pretrained_weights: False
   path_to_weights: outputs_done/foundation_key_att/weights/model_step_500000.pt               # Path to a checkpoint to load weights from
 
 data:
-  generator: neighbor             # tabpfn or forest or neighbor
+  generator: forest             # tabpfn or forest or neighbor
   min_samples_support: 128
   max_samples_support: 1024            
   n_samples_query: 256
@@ -42,8 +42,10 @@ data:
   max_features: 100
   max_classes: 10
   generator_hyperparams:
-    min_neighbors: 2
-    max_neighbors: 2048
+    min_depth: 1
+    max_depth: 1
+    base_size: 1000
+
 
 preprocessing:
   use_quantile_transformer: True         # TabPFN: True
