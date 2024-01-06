@@ -9,6 +9,7 @@ defaults:
   - pretrain_model: foundation
   # - pretrain_continue
   # - test
+  # - big
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
@@ -43,7 +44,7 @@ data:
   max_classes: 10
   generator_hyperparams:
     min_depth: 1
-    max_depth: 1
+    max_depth: 5
     base_size: 1000
 
 
