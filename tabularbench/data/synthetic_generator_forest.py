@@ -13,10 +13,15 @@ def synthetic_dataset_function_forest(
         n_estimators = 1,
         min_depth = 15,
         max_depth = 25,
+        categorical_x = True,
     ):
 
     n_classes = np.random.randint(2, max_classes, size=1).item()
-    categorical_perc = np.random.uniform(0, 1, size=(1,)).item()
+
+    if categorical_x:
+        categorical_perc = np.random.uniform(0, 1, size=(1,)).item()
+    else:
+        categorical_perc = 0
 
     if min_depth == max_depth:
         depth = min_depth
@@ -72,29 +77,10 @@ def synthetic_dataset_function_forest(
     return x2, b
 
 
-def synthetic_dataset_generator_forest(
-        min_features = 3,
-        max_features = 100,
-        n_samples = 10000,
-        max_classes = 10,
-        base_size = 1000,
-        n_estimators = 1,
-        min_depth = 15,
-        max_depth = 25,
-    ):
+def synthetic_dataset_generator_forest(**kwargs):
 
     while True:
-        x, y = synthetic_dataset_function_forest(
-            min_features = min_features,
-            max_features = max_features,
-            n_samples = n_samples,
-            max_classes = max_classes,
-            base_size = base_size,
-            n_estimators = n_estimators,
-            min_depth = min_depth,
-            max_depth = max_depth,
-        )
-
+        x, y = synthetic_dataset_function_forest(**kwargs)
         yield x, y
 
 

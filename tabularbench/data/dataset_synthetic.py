@@ -61,6 +61,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
                     base_size=self.generator_hyperparams['base_size'],
                     min_depth=self.generator_hyperparams['min_depth'],
                     max_depth=self.generator_hyperparams['max_depth'],
+                    categorical_x=self.generator_hyperparams['categorical_x'],
                 )
             case GeneratorName.NEIGHBOR:
                 self.synthetic_dataset_generator = synthetic_dataset_generator_neighbor(
