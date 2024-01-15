@@ -94,3 +94,8 @@ BENCHMARKS = {
         suite_id=337
     ),
 }
+
+
+if __name__ == "__main__":
+    print(BENCHMARKS)
+    pass

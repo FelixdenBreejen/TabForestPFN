@@ -5,5 +5,6 @@ DEFAULT_RESULTS_VAL_FILE_NAME = 'default_results_val.csv'                   # Re
 DEFAULT_RESULTS_TEST_FILE_NAME = 'default_results_test.csv'                 # Results for default configuration runs 
 PATH_TO_ALL_BENCH_CSV = 'data/benchmark_total.csv'                          # Benchmark results from benchmark authors
 PATH_TO_ALL_BENCH_CSV_REFORMATTED = 'data/benchmark_total_reformatted.csv'  # Same as above, but reformatted to match our results
+PATH_TO_OPENML_DATASETS = 'data/openml/'                                    # Where downloaded OpenML datasets are stored
 CONFIG_DUPLICATE = 'config.yaml'                                            # Duplicate config inside the output dir
 PATH_TO_DATA_SPLIT = 'tabularbench/data/train_val_test_indices.npy'         # Indices for train/val/test split
