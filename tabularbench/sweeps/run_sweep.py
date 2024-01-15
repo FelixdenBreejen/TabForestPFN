@@ -23,8 +23,6 @@ def run_sweep(cfg: ConfigBenchmarkSweep):
 
     log_ignore_datasets(cfg)
 
-    results_path = cfg.output_dir / RESULTS_FILE_NAME
-
     match cfg.search_type:
         case SearchType.RANDOM:
             runs_per_dataset = cfg.n_random_runs_per_dataset
@@ -67,7 +65,7 @@ def run_sweep(cfg: ConfigBenchmarkSweep):
 
         hyperparam_search_type = cfg.search_type
         if len(run_results_dict[dataset_id]) == 0 and runs_busy_dict[dataset_id] == 0:
-            # This is the first run for this dataset, so we draw the default hyperaparams
+            # This is the first run for this dataset, so we draw the default hyperparams
             hyperparam_search_type = SearchType.DEFAULT
             seed = cfg.seed
         elif cfg.search_type == SearchType.DEFAULT:

@@ -15,7 +15,6 @@ from tabularbench.sweeps.config_run import ConfigRun
 @dataclass
 class RunResults():
     model_name: ModelName
-    openml_task_id: int
     openml_dataset_id: int
     openml_dataset_name: str
     task: Task
@@ -46,7 +45,6 @@ class RunResults():
 
         d = {
             'model': self.model_name.name,
-            'openml_task_id': self.openml_task_id,
             'openml_dataset_id': self.openml_dataset_id,
             'openml_dataset_name': self.openml_dataset_name,
             'task': self.task.name,
@@ -89,7 +87,6 @@ class RunResults():
         
         return cls(
             model=d['model'],
-            openml_task_id=d['openml_task_id'],
             openml_dataset_id=d['openml_dataset_id'],
             openml_dataset_name=d['openml_dataset_name'],
             task=d['task'],
@@ -184,13 +181,11 @@ class RunResults():
 
         assert dataset_name in benchmark.openml_dataset_names, f"Dataset {dataset_name} not in benchmark {benchmark_name}"
         index = benchmark.openml_dataset_names.index(dataset_name)
-        task_id = benchmark.openml_task_ids[index]
         dataset_id = benchmark.openml_dataset_ids[index]
 
 
         return cls(
             model_name=model_name,
-            openml_task_id=task_id,
             openml_dataset_id=dataset_id,
             openml_dataset_name=dataset_name,
             task=task,
@@ -218,7 +213,6 @@ class RunResults():
 
         return cls(
             model_name=cfg.model_name,
-            openml_task_id=cfg.openml_task_id,
             openml_dataset_id=cfg.openml_dataset_id,
             openml_dataset_name=cfg.openml_dataset_name,
             task=cfg.task,

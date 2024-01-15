@@ -8,14 +8,14 @@ defaults:
   - hyperparams/foundation: finetune_10k
   - pretrain_model: foundation
   # - pretrain_continue
-  # - test
+  - test
   # - big
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [0, 1, 2, 3]
+devices: [0, 1, 6, 7]
 workers_per_gpu: 16
 
 optim:

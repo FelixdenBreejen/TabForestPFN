@@ -8,6 +8,7 @@ from omegaconf import DictConfig
 import torch
 
 from tabularbench.core.enums import ModelName, Task, DatasetSize
+from tabularbench.data.datafile_openml import OpenmlDatafile
 from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.get_logger import get_logger
 
@@ -22,7 +23,6 @@ class ConfigRun():
     model_name: ModelName
     task: Task
     dataset_size: DatasetSize
-    openml_task_id: int
     openml_dataset_id: int
     openml_dataset_name: str
     hyperparams: DictConfig
@@ -39,9 +39,8 @@ class ConfigRun():
             run_id: int
         ) -> Self:
 
-        id_index = cfg.benchmark.openml_dataset_ids.index(dataset_id)
-        openml_task_id = cfg.benchmark.openml_task_ids[id_index]
-        openml_dataset_name = cfg.benchmark.openml_dataset_names[id_index]
+        dataset_size = cfg.benchmark.dataset_size
+        openml_dataset_name = OpenmlDatafile(dataset_id, dataset_size).ds.attrs['openml_dataset_name']
         
         output_dir = cfg.output_dir / str(dataset_id) / f"#{run_id}"
         logger = get_logger(output_dir / 'log.txt')
@@ -53,8 +52,7 @@ class ConfigRun():
             device=device,
             seed=seed,
             task=cfg.benchmark.task,
-            dataset_size=cfg.benchmark.dataset_size,
-            openml_task_id=openml_task_id,
+            dataset_size=dataset_size,
             openml_dataset_id=dataset_id,
             openml_dataset_name=openml_dataset_name,
             hyperparams=hyperparams
