@@ -9,13 +9,13 @@ defaults:
   - pretrain_model: foundation
   # - pretrain_continue
   # - test
-  # - big
+  - big
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [0, 1, 6, 7]
+devices: [0, 1, 2, 3]
 workers_per_gpu: 16
 
 optim:
@@ -46,7 +46,7 @@ data:
     min_depth: 1
     max_depth: 25
     base_size: 1024
-    categorical_x: False
+    categorical_x: True
 
 
 preprocessing:
