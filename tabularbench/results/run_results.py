@@ -9,7 +9,7 @@ import torch
 from tabularbench.core.enums import BenchmarkName, DatasetSize, FeatureType, ModelName, Task, SearchType
 from tabularbench.data.benchmarks import BENCHMARKS
 from tabularbench.results.run_metrics import RunMetrics
-from tabularbench.sweeps.config_run import ConfigRun
+from tabularbench.utils.config_run import ConfigRun
 
 
 @dataclass

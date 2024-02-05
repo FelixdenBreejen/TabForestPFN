@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 from tabularbench.results.run_results import RunResults
 
-from tabularbench.sweeps.paths_and_filenames import PATH_TO_ALL_BENCH_CSV, PATH_TO_ALL_BENCH_CSV_REFORMATTED
+from tabularbench.utils.paths_and_filenames import PATH_TO_ALL_BENCH_CSV, PATH_TO_ALL_BENCH_CSV_REFORMATTED
 
 
 def reformat_benchmark():

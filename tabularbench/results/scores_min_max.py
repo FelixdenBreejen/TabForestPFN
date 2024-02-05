@@ -3,7 +3,7 @@ import logging
 
 from tabularbench.core.enums import DataSplit, Task
 from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
-from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def get_combined_normalized_scores(cfg: ConfigBenchmarkSweep, openml_ids: list[int], data_split: DataSplit, scores: list[float]) -> float:
@@ -30,7 +30,7 @@ def scores_min_max(cfg: ConfigBenchmarkSweep, openml_dataset_id: int, data_split
     """
 
     benchmark_model_names = tuple(model_name.name for model_name in cfg.config_plotting.benchmark_model_names)
-    score_min, score_max = scores_min_max_(openml_dataset_id, benchmark_model_names, cfg.benchmark.task, data_split, cfg.logger)
+    score_min, score_max = scores_min_max_(openml_dataset_id, benchmark_model_names, cfg.benchmark.task, data_split, logger)
 
     return score_min, score_max
 

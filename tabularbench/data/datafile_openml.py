@@ -5,7 +5,7 @@ import xarray as xr
 from sklearn.preprocessing import LabelEncoder
 from tabularbench.core.enums import DatasetSize
 
-from tabularbench.sweeps.paths_and_filenames import PATH_TO_DATA_SPLIT, PATH_TO_OPENML_DATASETS
+from tabularbench.utils.paths_and_filenames import PATH_TO_DATA_SPLIT, PATH_TO_OPENML_DATASETS
 
 
 class OpenmlDatafile():

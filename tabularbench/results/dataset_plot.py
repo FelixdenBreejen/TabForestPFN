@@ -6,7 +6,7 @@ from tabularbench.results.dataset_plot_combined import make_combined_dataset_plo
 from tabularbench.results.dataset_plot_separate import make_separate_dataset_plot_data, make_separate_dataset_plots
 from tabularbench.results.random_sequence import create_random_sequences_from_df
 from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
-from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def make_dataset_plots(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame) -> None:

@@ -3,7 +3,7 @@ import pandas as pd
 
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.results.scores_min_max import scores_min_max
-from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def create_random_sequences_from_df(cfg: ConfigBenchmarkSweep, df: pd.DataFrame) -> np.ndarray: 
@@ -71,7 +71,7 @@ def compute_random_sequences_for_model(cfg: ConfigBenchmarkSweep, df_model: pd.D
         default_value_val = df_model_default_seed_0['score_val_mean'].item()
         default_value_test = df_model_default_seed_0['score_test_mean'].item()
     elif len(df_model_default) == 0:
-        cfg.logger.warning(f"No default value found for model {model} on dataset {openml_dataset_id}. We will assume 0.")
+        logger.warning(f"No default value found for model {model} on dataset {openml_dataset_id}. We will assume 0.")
         default_value_val = 0
         default_value_test = 0
     else:

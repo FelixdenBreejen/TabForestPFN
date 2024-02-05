@@ -1,4 +1,4 @@
-from logging import Logger
+from loguru import logger
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import QuantileTransformer
@@ -15,13 +15,11 @@ class Preprocessor(TransformerMixin, BaseEstimator):
 
     def __init__(
             self, 
-            logger: Logger, 
             max_features: int,
             use_quantile_transformer: bool,
             use_feature_count_scaling: bool,
         ):
 
-        self.logger = logger
         self.max_features = max_features
         self.use_quantile_transformer = use_quantile_transformer
         self.use_feature_count_scaling = use_feature_count_scaling
@@ -68,7 +66,7 @@ class Preprocessor(TransformerMixin, BaseEstimator):
     def cutoff_excess_features(self, x: np.ndarray, max_features: int) -> np.ndarray:
 
         if x.shape[1] > max_features:
-            self.logger.info(f"TabPFN allows {max_features} features, but the dataset has {x.shape[1]} features. Excess features are cut off.")
+            logger.info(f"TabPFN allows {max_features} features, but the dataset has {x.shape[1]} features. Excess features are cut off.")
             x = x[:, :max_features]
 
         return x

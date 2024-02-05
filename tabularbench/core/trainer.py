@@ -9,7 +9,7 @@ from tabularbench.core.get_loss import get_loss
 from tabularbench.core.get_optimizer import get_optimizer
 from tabularbench.core.get_scheduler import get_scheduler
 from tabularbench.core.y_transformer import create_y_transformer
-from tabularbench.sweeps.config_run import ConfigRun
+from tabularbench.utils.config_run import ConfigRun
 
 
 class Trainer(BaseEstimator):
@@ -48,13 +48,13 @@ class Trainer(BaseEstimator):
             loss_train, score_train = self.train_epoch(dataloader_train)
             loss_valid, score_valid = self.test_epoch(dataloader_valid, y_train_val)
 
-            self.cfg.logger.info(f"Epoch {epoch:03d} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Val loss: {loss_valid:.4f} | Val score: {score_valid:.4f}")
+            logger.info(f"Epoch {epoch:03d} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Val loss: {loss_valid:.4f} | Val score: {score_valid:.4f}")
 
             self.checkpoint(self.model, loss_valid)
             
             self.early_stopping(loss_valid)
             if self.early_stopping.we_should_stop():
-                self.cfg.logger.info("Early stopping")
+                logger.info("Early stopping")
                 break
 
             self.scheduler.step(loss_valid)

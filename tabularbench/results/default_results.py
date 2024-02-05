@@ -5,8 +5,8 @@ import pandas as pd
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
 from tabularbench.results.scores_min_max import get_combined_normalized_scores
-from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
-from tabularbench.sweeps.paths_and_filenames import (
+from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.utils.paths_and_filenames import (
     DEFAULT_RESULTS_VAL_FILE_NAME, DEFAULT_RESULTS_TEST_FILE_NAME
 )
 

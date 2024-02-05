@@ -4,21 +4,21 @@ import random
 import pandas as pd
 import torch
 import torch.multiprocessing as mp
+from loguru import logger
 
 from tabularbench.core.enums import SearchType
 from tabularbench.results.run_results import RunResults
-from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
 from tabularbench.sweeps.make_plots import plot_results
-from tabularbench.sweeps.paths_and_filenames import RESULTS_FILE_NAME
-from tabularbench.sweeps.config_run import ConfigRun
-from tabularbench.sweeps.run_experiment import run_experiment
-from tabularbench.sweeps.get_logger import get_logger
+from tabularbench.utils.paths_and_filenames import RESULTS_FILE_NAME
+from tabularbench.utils.config_run import ConfigRun
+from tabularbench.core.run_experiment import run_experiment
 
 
 def run_sweep(cfg: ConfigBenchmarkSweep):
 
-    cfg.logger.info(f"Start {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
+    logger.info(f"Start {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
     cfg.save()
 
     log_ignore_datasets(cfg)
@@ -52,14 +52,14 @@ def run_sweep(cfg: ConfigBenchmarkSweep):
         if all_runs_almost_finished(cfg, run_results_dict, runs_per_dataset, runs_busy_dict):
             # The last few runs are being executed, so we need to wait for them to finish
             # These last runs might have an error, so we need to be able to redo them if necessary
-            cfg.logger.info(f"Waiting for last {sum(runs_busy_dict.values())} run(s) to finish...")
+            logger.info(f"Waiting for last {sum(runs_busy_dict.values())} run(s) to finish...")
             device = device_queue.get()   # blocks until a gpu is available (run is finished)
             run_results_df = convert_run_results_dict_to_dataframe(run_results_dict)
             save_results(cfg, run_results_df)
             plot_results(cfg, run_results_df)
             continue
 
-        cfg.logger.info(f"Currently, {sum(runs_busy_dict.values())} runs are busy and {sum(runs_attempted_dict.values())} runs have been attempted")
+        logger.info(f"Currently, {sum(runs_busy_dict.values())} runs are busy and {sum(runs_attempted_dict.values())} runs have been attempted")
 
         dataset_id = draw_dataset_id(cfg, run_results_dict, runs_per_dataset, runs_busy_dict)
 
@@ -77,7 +77,7 @@ def run_sweep(cfg: ConfigBenchmarkSweep):
         runs_busy_dict[dataset_id] += 1
         runs_attempted_dict[dataset_id] += 1
 
-        cfg.logger.info(f"Start {cfg.search_type.value} run for {cfg.model_name.value} on {cfg.benchmark.name} with dataset {config_run.openml_dataset_name} (id={config_run.openml_dataset_id})")
+        logger.info(f"Start {cfg.search_type.value} run for {cfg.model_name.value} on {cfg.benchmark.name} with dataset {config_run.openml_dataset_name} (id={config_run.openml_dataset_id})")
 
         mp.Process(target=run_a_run, args=(config_run, device, device_queue, run_results_dict, runs_busy_dict, hyperparam_search_type)).start()
        
@@ -86,22 +86,22 @@ def run_sweep(cfg: ConfigBenchmarkSweep):
         plot_results(cfg, run_results_df)
 
         device = device_queue.get()   # blocks until a gpu is available
-        cfg.logger.info(f"A free device {device} is found and grabbed")
+        logger.info(f"A free device {device} is found and grabbed")
 
 
-    cfg.logger.info(f"Finished {cfg.search_type.name} search for {cfg.model_name.name} on {cfg.benchmark.name}")
+    logger.info(f"Finished {cfg.search_type.name} search for {cfg.model_name.name} on {cfg.benchmark.name}")
 
 
 
 def log_ignore_datasets(cfg: ConfigBenchmarkSweep) -> None:
 
     if len(cfg.openml_dataset_ids_to_ignore) > 0:
-        cfg.logger.info("The following openml datasets will be ignored:")
+        logger.info("The following openml datasets will be ignored:")
         for dataset_id in cfg.openml_dataset_ids_to_ignore:
             dataset_name = cfg.benchmark.openml_dataset_names[cfg.benchmark.openml_dataset_ids.index(dataset_id)]
-            cfg.logger.info(f"    {dataset_name} (id={dataset_id})")
+            logger.info(f"    {dataset_name} (id={dataset_id})")
     else:
-        cfg.logger.info("All openml datasets in the benchmark will be used, non ignored")
+        logger.info("All openml datasets in the benchmark will be used, non ignored")
 
 
 def all_runs_finished(cfg: ConfigRun, run_results_dict: dict[int, list[RunResults]], runs_per_dataset: int) -> bool:
@@ -148,13 +148,12 @@ def run_a_run(
     search_type: SearchType
 ):
 
-    # logger needs to be reinitialized because of multiprocessing issues
-    cfg.logger = get_logger(cfg.output_dir / 'log.txt')
 
+    logger.add(cfg.output_dir / "log.log", enqueue=True)
     metrics = run_experiment(cfg)
 
     if metrics is None:
-        cfg.logger.info(f"Run crashed for {cfg.model_name.value} on {cfg.openml_dataset_name} with dataset {cfg.openml_dataset_id}")
+        logger.info(f"Run crashed for {cfg.model_name.value} on {cfg.openml_dataset_name} with dataset {cfg.openml_dataset_id}")
         device_queue.put(device)
         return
 
@@ -175,7 +174,7 @@ def save_results(cfg: ConfigBenchmarkSweep, run_results_df: pd.DataFrame) -> Non
     results_path = cfg.output_dir / RESULTS_FILE_NAME
     run_results_df.to_csv(results_path, index=False, header=True)
 
-    cfg.logger.info(f"Saved results ({len(run_results_df)} runs total) to {RESULTS_FILE_NAME}")
+    logger.info(f"Saved results ({len(run_results_df)} runs total) to {RESULTS_FILE_NAME}")
     
 
 def convert_run_results_dict_to_dataframe(run_results_dict: dict[int, list[RunResults]]) -> pd.DataFrame:

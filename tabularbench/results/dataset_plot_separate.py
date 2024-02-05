@@ -2,7 +2,7 @@ import math
 from matplotlib import pyplot as plt
 import numpy as np
 
-from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def make_separate_dataset_plot_data(cfg: ConfigBenchmarkSweep, sequences_all: np.ndarray) -> np.ndarray:

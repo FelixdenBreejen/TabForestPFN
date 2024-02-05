@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pandas as pd
-from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 

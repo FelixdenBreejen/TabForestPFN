@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from tabularbench.core.enums import Task
 
-from tabularbench.sweeps.config_run import ConfigRun
+from tabularbench.utils.config_run import ConfigRun
 
 
 class DatasetFinetune(torch.utils.data.Dataset):

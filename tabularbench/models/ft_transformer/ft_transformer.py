@@ -10,7 +10,7 @@ import torch.nn.init as nn_init
 from torch import Tensor
 
 from tabularbench.core.enums import Task
-from tabularbench.sweeps.config_run import ConfigRun
+from tabularbench.utils.config_run import ConfigRun
 
 
 # %%
