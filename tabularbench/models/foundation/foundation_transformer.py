@@ -3,6 +3,8 @@ import einops
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from flash_attn.bert_padding import pad_input, unpad_input
+from flash_attn.modules.mha import MHA
 
 from tabularbench.models.foundation.embedding import (
     FoundationEmbeddingX, FoundationEmbeddingYFloat,
@@ -51,8 +53,7 @@ class FoundationTransformer(nn.Module):
 
             self.layers.append(nn.ModuleDict({
                 'layer_norm1': nn.LayerNorm(dim),
-                'attention_lin': att,
-                'attention_mha': att,
+                'attention': att,
                 'layer_norm2': nn.LayerNorm(dim),
                 'linear1': nn.Linear(dim, dim*4),
                 'linear2': nn.Linear(dim*4, dim),
@@ -71,8 +72,7 @@ class FoundationTransformer(nn.Module):
 
         for module_dict in self.layers:
 
-            module_dict['attention_lin'].init_weights()
-            module_dict['attention_mha'].init_weights()
+            # module_dict['attention'].init_weights()
             nn.init.zeros_(module_dict['linear2'].weight)
             nn.init.zeros_(module_dict['linear2'].bias)
             
@@ -117,8 +117,8 @@ class FoundationTransformer(nn.Module):
 
             x_residual = x
             support, query__ = einops.unpack(x, pack, 'b * d')
-            att_support = module_dict['attention_lin'](support, support, support, key_padding_mask=padding_mask)
-            att_query__ = module_dict['attention_mha'](query__, support, support, key_padding_mask=padding_mask)
+            att_support = module_dict['attention'](support, support, support, key_padding_mask=padding_mask)
+            att_query__ = module_dict['attention'](query__, support, support, key_padding_mask=padding_mask)
             x = einops.pack((att_support, att_query__), 'b * d')[0]
             x = x_residual + x
             x = module_dict['layer_norm1'](x)
@@ -145,15 +145,19 @@ class MultiheadAttention(torch.nn.Module):
         
         super().__init__()
 
+        self.use_flash_attention = True
         self.dim = dim
         self.n_heads = n_heads
 
-        self.att = nn.MultiheadAttention(dim, n_heads, dropout=0.0, batch_first=True)
+        # self.att = nn.MultiheadAttention(dim, n_heads, dropout=0.0, batch_first=True)
+        self.att = MHA(embed_dim = dim, num_heads=n_heads, cross_attn=True, use_flash_attn=self.use_flash_attention)
+
 
 
     def init_weights(self):
-        nn.init.zeros_(self.att.out_proj.weight)
-        nn.init.zeros_(self.att.out_proj.bias)
+        pass
+        # nn.init.zeros_(self.att.out_proj.weight)
+        # nn.init.zeros_(self.att.out_proj.bias)
 
     
     def forward(
@@ -177,147 +181,17 @@ class MultiheadAttention(torch.nn.Module):
         output will be (b, n, d)
         """
 
-        output, weights = self.att(query, key, value, key_padding_mask=key_padding_mask, need_weights=False)
+        assert torch.all(key == value)
+
+        if self.use_flash_attention:
+            key, indices, cu_seqlens, max_seqlens = unpad_input(key, key_padding_mask)
+            output = self.att(query, key)
+            output = pad_input(output, indices, cu_seqlens, max_seqlens)
+
+        output = self.att(query, key, key_padding_mask=key_padding_mask)
         return output
 
 
-
-class LinearAttention(torch.nn.Module):
-
-    def __init__(
-            self,
-            dim: int,
-            n_heads: int,
-        ) -> None:
-        
-        super().__init__()
-
-        self.dim = dim
-        self.n_heads = n_heads
-
-        self.Q = nn.Linear(dim, dim)
-        self.K = nn.Linear(dim, dim)
-        self.V = nn.Linear(dim, dim)
-        self.O = nn.Linear(dim, dim)
-
-
-    def init_weights(self):
-        nn.init.zeros_(self.O.weight)
-        nn.init.zeros_(self.O.bias)
-
-
-    def forward(
-            self, 
-            query: torch.Tensor,
-            key: torch.Tensor,
-            value: torch.Tensor, 
-            key_padding_mask: torch.Tensor
-        ) -> torch.Tensor:
-        """
-        b = batch size
-        n = number of samples (dataset size)
-        h = heads
-        d = dimension of embedding
-
-        query is (b, n, d)
-        key is (b, n, d)
-        value is (b, n, d)
-
-        output will be (b, n, d)
-        """
-
-        query = self.Q(query)
-        key   = self.K(key  )   
-        value = self.V(value)
-
-        query = 1+torch.nn.functional.elu(query)
-        key   = 1+torch.nn.functional.elu(key  )
-
-        key.masked_fill_(key_padding_mask[:, :, None], 0.)
-
-        query = einops.rearrange(query, 'b n (h d) -> b h n d', h=self.n_heads)
-        key =   einops.rearrange(key  , 'b n (h d) -> b h n d', h=self.n_heads)
-        value = einops.rearrange(value, 'b n (h d) -> b h n d', h=self.n_heads)
-
-        # query = query * (self.dim // self.n_heads) ** -0.5
-        # key = key * (self.dim // self.n_heads) ** -0.5
-
-        query = torch.nn.functional.normalize(query, dim=2)
-        key = torch.nn.functional.normalize(key, dim=3)
-
-        kv = torch.einsum('b h n d, b h n e -> b h d e', key, value)
-        output = torch.einsum('b h n d, b h d e -> b h n e', query, kv)
-        output = einops.rearrange(output, 'b h n d -> b n (h d)')
-
-        output = self.O(output)
-
-        return output
-    
-
-
-class EfficientAdditiveAttention(nn.Module):
-    """
-    Efficient Additive Attention module for SwiftFormer.
-    Edited from https://github.com/Amshaker/SwiftFormer/blob/main/models/swiftformer.py
-    Input: tensor in shape [B, N, D]
-    Output: tensor in shape [B, N, D]
-    """
-
-    def __init__(
-            self,
-            dim: int,
-            n_heads: int,
-        ) -> None:
-        
-        super().__init__()
-
-        self.dim = dim
-        self.n_heads = n_heads
-
-        self.to_query = nn.Linear(dim, dim)
-        self.to_key = nn.Linear(dim, dim)
-
-        self.w_g = nn.Parameter(torch.randn(dim, 1))
-        self.scale_factor = dim ** -0.5
-        self.Proj = nn.Linear(dim, dim)
-        self.final = nn.Linear(dim, dim)
-
-
-    def init_weights(self):
-        nn.init.zeros_(self.final.weight)
-        nn.init.zeros_(self.final.bias)
-
-
-    def forward(
-            self, 
-            query: torch.Tensor,
-            key: torch.Tensor,
-            value: torch.Tensor, 
-            key_padding_mask: torch.Tensor,
-        ) -> torch.Tensor:
-
-        query = self.to_query(query)
-        key = self.to_key(key)
-
-        key.masked_fill_(key_padding_mask[:, :, None], 0.)
-
-        query = torch.nn.functional.normalize(query, dim=-1) #BxNxD
-        key = torch.nn.functional.normalize(key, dim=-1) #BxNxD
-
-        query_weight = query @ self.w_g # BxNx1 (BxNxD @ Dx1)
-        A = query_weight * self.scale_factor # BxNx1
-
-        A = torch.nn.functional.normalize(A, dim=1) # BxNx1
-        G = torch.sum(A * query, dim=1) # BxD
-        G = einops.repeat(
-            G, "b d -> b repeat d", repeat=key.shape[1]
-        ) # BxNxD
-
-        out = self.Proj(G * key) + query #BxNxD
-
-        out = self.final(out) # BxNxD
-
-        return out
 
 
 class SwiGLU(nn.Module):
