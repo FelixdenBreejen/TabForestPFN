@@ -11,7 +11,7 @@ def synthetic_dataset_function_forest(
         max_classes = 10,
         base_size = 1000,
         n_estimators = 1,
-        min_depth = 15,
+        min_depth = 1,
         max_depth = 25,
         categorical_x = True,
     ):
