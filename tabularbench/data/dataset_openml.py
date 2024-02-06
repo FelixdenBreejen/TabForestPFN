@@ -4,7 +4,7 @@ from sklearn.preprocessing import QuantileTransformer
 
 from tabularbench.core.enums import DatasetSize, FeatureType, Task
 from tabularbench.data.datafile_openml import OpenmlDatafile
-from tabularbench.sweeps.paths_and_filenames import PATH_TO_DATA_SPLIT
+from tabularbench.utils.paths_and_filenames import PATH_TO_DATA_SPLIT
 
 
 

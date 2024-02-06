@@ -1,22 +1,22 @@
 from __future__ import annotations
+import copy
 from dataclasses import dataclass
 import itertools
-import logging
+from loguru import logger
 from pathlib import Path
 
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 import torch
+import yaml
 
 
 from tabularbench.core.enums import BenchmarkName, ModelName, SearchType
 from tabularbench.data.benchmarks import BENCHMARKS
-from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep, ConfigPlotting
-from tabularbench.sweeps.get_logger import get_logger
+from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep, ConfigPlotting
 
 
 @dataclass
 class ConfigMain():
-    logger: logging.Logger
     output_dir: Path
     seed: int
     configs_benchmark_sweep: list[ConfigBenchmarkSweep]
@@ -26,13 +26,12 @@ class ConfigMain():
     def from_hydra(cls, cfg_hydra: DictConfig):
 
         output_dir = Path(cfg_hydra.output_dir)
-        logger = get_logger(output_dir / 'log.txt')
+
         logger.info(f"Start creating main config")
-        configs_benchmark_sweep = cls.create_configs_benchmark_sweep(cfg_hydra, output_dir, logger)
+        configs_benchmark_sweep = cls.create_configs_benchmark_sweep(cfg_hydra, output_dir)
         logger.info(f"Finished creating main config")
 
         return cls(
-            logger=logger,
             output_dir=output_dir,
             seed=cfg_hydra.seed,
             configs_benchmark_sweep=configs_benchmark_sweep
@@ -40,7 +39,7 @@ class ConfigMain():
     
     
     @staticmethod
-    def create_configs_benchmark_sweep(cfg_hydra: DictConfig, output_dir: Path, logger: logging.Logger) -> list[ConfigBenchmarkSweep]:
+    def create_configs_benchmark_sweep(cfg_hydra: DictConfig, output_dir: Path) -> list[ConfigBenchmarkSweep]:
 
         benchmark_names = [BenchmarkName[benchmark] for benchmark in cfg_hydra.benchmarks]
         models = [ModelName[model] for model in cfg_hydra.models]
@@ -69,12 +68,10 @@ class ConfigMain():
             hyperparams_object = cfg_hydra.hyperparams[model_name.name.lower()]
 
             output_dir_benchmark = output_dir / f'{model_name.value.lower()}-{search_type.value}-{benchmark_name.value}'
-            logger_benchmark = get_logger(output_dir_benchmark / 'log.txt')
-
+          
             dataset_ids_to_ignore = list(set(cfg_hydra.openml_dataset_ids_to_ignore) & set(benchmark.openml_dataset_ids))
 
             bscfg = ConfigBenchmarkSweep(
-                logger=logger_benchmark,
                 output_dir=output_dir_benchmark,
                 seed=cfg_hydra.seed,
                 devices=devices,
@@ -93,6 +90,19 @@ class ConfigMain():
             benchmark_sweep_configs.append(bscfg)
         
         return benchmark_sweep_configs
+
+
+    def save(self) -> None:
+        
+        config_path = Path(self.output_dir) / 'config_main.yaml'
+
+        cfg = copy.deepcopy(self)
+
+        for cfg_benchmark_sweep in cfg.configs_benchmark_sweep:
+            cfg_benchmark_sweep.hyperparams_object = OmegaConf.to_container(cfg_benchmark_sweep.hyperparams_object, resolve=True)
+
+        with open(config_path, 'w') as f:        
+            yaml.dump(cfg, f, default_flow_style=False)
 
 
 

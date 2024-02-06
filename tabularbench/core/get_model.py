@@ -5,8 +5,8 @@ import numpy as np
 from tabularbench.core.enums import ModelName
 from tabularbench.models.foundation.foundation_transformer import FoundationTransformer
 from tabularbench.models.tabPFN.tabpfn_transformer import TabPFN
-from tabularbench.sweeps.config_pretrain import ConfigPretrain
-from tabularbench.sweeps.config_run import ConfigRun
+from tabularbench.utils.config_pretrain import ConfigPretrain
+from tabularbench.utils.config_run import ConfigRun
 from tabularbench.models.ft_transformer.ft_transformer import FTTransformer
 
 

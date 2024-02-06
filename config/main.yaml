@@ -16,12 +16,12 @@ n_random_runs_per_dataset: 500                  # suggested: 500
 n_default_runs_per_dataset: 10                   # on default we also want multiple runs for the confidence bound
 
 models:
-  - TABPFN
+  - FOUNDATION
 model_plot_names:
-  - TabPFN Finetune
+  - Foundation Finetune
 benchmarks:
   - CATEGORICAL_CLASSIFICATION
-  # - NUMERICAL_CLASSIFICATION
+  - NUMERICAL_CLASSIFICATION
   # - CATEGORICAL_REGRESSION
   # - NUMERICAL_REGRESSION
   # - CATEGORICAL_CLASSIFICATION_LARGE
@@ -29,8 +29,8 @@ benchmarks:
   # - CATEGORICAL_REGRESSION_LARGE
   # - NUMERICAL_REGRESSION_LARGE
 search_types:
-  - DEFAULT
-  # - RANDOM
+  # - DEFAULT
+  - RANDOM
 
 
 openml_dataset_ids_to_ignore:

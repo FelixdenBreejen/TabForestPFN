@@ -7,6 +7,7 @@ from omegaconf import open_dict
 from sklearn.base import BaseEstimator
 from transformers import (get_constant_schedule_with_warmup,
                           get_cosine_schedule_with_warmup)
+from loguru import logger
 
 from tabularbench.core.collator import CollatorWithPadding
 from tabularbench.core.enums import (BenchmarkName, DataSplit, ModelName,
@@ -16,13 +17,12 @@ from tabularbench.core.losses import CrossEntropyLossExtraBatch
 from tabularbench.core.metrics import MetricsTraining, MetricsValidation
 from tabularbench.data.benchmarks import BENCHMARKS
 from tabularbench.data.dataset_synthetic import SyntheticDataset
-from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
-from tabularbench.sweeps.config_pretrain import ConfigPretrain
-from tabularbench.sweeps.get_logger import get_logger
-from tabularbench.sweeps.paths_and_filenames import (
+from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.utils.config_pretrain import ConfigPretrain
+from tabularbench.utils.paths_and_filenames import (
     DEFAULT_RESULTS_TEST_FILE_NAME, DEFAULT_RESULTS_VAL_FILE_NAME)
 from tabularbench.sweeps.run_sweep import run_sweep
-from tabularbench.sweeps.set_seed import seed_worker
+from tabularbench.utils.set_seed import seed_worker
 
 
 class TrainerPretrain(BaseEstimator):
@@ -39,7 +39,7 @@ class TrainerPretrain(BaseEstimator):
         self.model_.to(self.cfg.device)
 
         if cfg.is_main_process:
-            self.cfg.logger.info(f"Model has {sum(p.numel() for p in self.model_.parameters() if p.requires_grad):,} trainable parameters")
+            logger.info(f"Model has {sum(p.numel() for p in self.model_.parameters() if p.requires_grad):,} trainable parameters")
 
         if cfg.use_ddp:
             self.model = torch.nn.parallel.DistributedDataParallel(self.model_, device_ids=[cfg.device], find_unused_parameters=False)
@@ -112,7 +112,7 @@ class TrainerPretrain(BaseEstimator):
                 metrics_val.update(pred, y_query)
 
             if step % self.cfg.optim.log_every_n_steps == 0 and self.cfg.is_main_process:
-                self.cfg.logger.info(f"Step {step} | Loss: {metrics_train.loss:.4f} | Accuracy: {metrics_train.accuracy:.4f}")
+                logger.info(f"Step {step} | Loss: {metrics_train.loss:.4f} | Accuracy: {metrics_train.accuracy:.4f}")
                 metrics_train.reset()
 
             if step % self.cfg.optim.eval_every_n_steps == 0:
@@ -126,7 +126,7 @@ class TrainerPretrain(BaseEstimator):
 
                 if self.cfg.is_main_process:
 
-                    self.cfg.logger.info(f"Starting validation sweep")
+                    logger.info(f"Starting validation sweep")
 
                     weights_path = self.cfg.output_dir / 'weights' / f"model_step_{step}.pt"
                     weights_path.parent.mkdir(parents=True, exist_ok=True)
@@ -140,9 +140,9 @@ class TrainerPretrain(BaseEstimator):
 
                     normalized_accuracies = self.validate(output_dir, weights_path, plot_name=f"{self.cfg.model.name.value} Pretrain Step {step}")
 
-                    self.cfg.logger.info(f"Finished validation sweep")
-                    self.cfg.logger.info(f"Normalized Validation Accuracy: {normalized_accuracies[DataSplit.VALID]:.4f}")
-                    self.cfg.logger.info(f"Normalized Test Accuracy: {normalized_accuracies[DataSplit.TEST]:.4f}")
+                    logger.info(f"Finished validation sweep")
+                    logger.info(f"Normalized Validation Accuracy: {normalized_accuracies[DataSplit.VALID]:.4f}")
+                    logger.info(f"Normalized Test Accuracy: {normalized_accuracies[DataSplit.TEST]:.4f}")
 
                     metrics_val.update_val(normalized_accuracies[DataSplit.VALID], normalized_accuracies[DataSplit.TEST], step)
                     metrics_val.plot(self.cfg.output_dir)
@@ -162,7 +162,6 @@ class TrainerPretrain(BaseEstimator):
         hyperparams_finetuning = self.make_hyperparams_finetuning_dict(weights_path)
 
         cfg_sweep = ConfigBenchmarkSweep(
-            logger=get_logger(output_dir / 'log.txt'),
             output_dir=output_dir,
             seed=self.cfg.seed,
             devices=self.cfg.devices,
@@ -202,7 +201,6 @@ class TrainerPretrain(BaseEstimator):
 
         output_dir = self.cfg.output_dir / 'test-categorical-classification'
         cfg_sweep = ConfigBenchmarkSweep(
-            logger=get_logger(output_dir / 'log.txt'),
             output_dir=output_dir,
             seed=self.cfg.seed,
             devices=self.cfg.devices,
@@ -220,7 +218,6 @@ class TrainerPretrain(BaseEstimator):
 
         output_dir = self.cfg.output_dir / 'test-numerical-classification'
         cfg_sweep = ConfigBenchmarkSweep(
-            logger=get_logger(output_dir / 'log.txt'),
             output_dir=output_dir,
             seed=self.cfg.seed,
             devices=self.cfg.devices,

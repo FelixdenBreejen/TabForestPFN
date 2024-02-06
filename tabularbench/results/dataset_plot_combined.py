@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 from tabularbench.results.random_sequence import normalize_sequences
-from tabularbench.sweeps.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def make_combined_dataset_plot_data(cfg: ConfigBenchmarkSweep, sequences_all: np.ndarray) -> np.ndarray:

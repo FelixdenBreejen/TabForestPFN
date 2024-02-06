@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -9,13 +8,11 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 
 from tabularbench.core.enums import GeneratorName, ModelName
-from tabularbench.sweeps.config_benchmark_sweep import ConfigPlotting
-from tabularbench.sweeps.get_logger import get_logger
+from tabularbench.utils.config_benchmark_sweep import ConfigPlotting
 
 
 @dataclass
 class ConfigPretrain():
-    logger: logging.Logger
     output_dir: Path
     seed: int
     devices: list[torch.device]
@@ -37,7 +34,6 @@ class ConfigPretrain():
     def from_hydra(cls, cfg_hydra: DictConfig):
 
         output_dir = Path(cfg_hydra.output_dir)
-        logger = get_logger(output_dir / 'log.txt')
 
         devices = [torch.device(device) for device in cfg_hydra.devices]
         pretrain_model_name = ModelName[cfg_hydra.pretrain_model.name]
@@ -47,7 +43,6 @@ class ConfigPretrain():
 
 
         return cls(
-            logger=logger,
             output_dir=output_dir,
             devices=devices,
             use_ddp=len(devices) > 1,

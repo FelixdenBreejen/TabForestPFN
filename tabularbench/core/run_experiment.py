@@ -2,28 +2,31 @@ import sys
 from typing import Optional
 from omegaconf import DictConfig
 
+from loguru import logger
+
 from tabularbench.core.enums import DatasetSize, ModelName, Task
 from tabularbench.core.get_model import get_model
 from tabularbench.core.get_trainer import get_trainer
 
 from tabularbench.data.dataset_openml import OpenMLDataset
 from tabularbench.results.run_metrics import RunMetrics
-from tabularbench.sweeps.config_run import ConfigRun
-from tabularbench.sweeps.set_seed import set_seed
+from tabularbench.utils.config_run import ConfigRun
+from tabularbench.utils.set_seed import set_seed
 
 
 
 def run_experiment(cfg: ConfigRun) -> Optional[RunMetrics]:
 
-    cfg.logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.value} doing {cfg.task.value}")
+    cfg.save()
+
+    logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.value} doing {cfg.task.value}")
 
     set_seed(cfg.seed)
-    cfg.logger.info(f"Set seed to {cfg.seed}")
+    logger.info(f"Set seed to {cfg.seed}")
 
-    cfg.logger.info(f"We are using the following hyperparameters:")
+    logger.info(f"We are using the following hyperparameters:")
     for key, value in cfg.hyperparams.items():
-        cfg.logger.info(f"    {key}: {value}")
-
+        logger.info(f"    {key}: {value}")
 
     if debugger_is_active():
         metrics = run_experiment_(cfg)
@@ -31,14 +34,14 @@ def run_experiment(cfg: ConfigRun) -> Optional[RunMetrics]:
         try:
             metrics = run_experiment_(cfg)
         except Exception as e:
-            cfg.logger.exception("Exception occurred while running experiment")        
+            logger.exception("Exception occurred while running experiment")        
             return None
     
-    cfg.logger.info(f"Finished experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name} doing {cfg.task.name}")
-    cfg.logger.info(f"Final scores: ")
+    logger.info(f"Finished experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name} doing {cfg.task.name}")
+    logger.info(f"Final scores: ")
 
     for i in range(len(metrics)):
-        cfg.logger.info(f"split_{i} :: train: {metrics.scores_train[i]:.4f}, val: {metrics.scores_val[i]:.4f}, test: {metrics.scores_test[i]:.4f}")
+        logger.info(f"split_{i} :: train: {metrics.scores_train[i]:.4f}, val: {metrics.scores_val[i]:.4f}, test: {metrics.scores_test[i]:.4f}")
 
     return metrics
     
@@ -55,7 +58,7 @@ def run_experiment_(cfg: ConfigRun) -> RunMetrics:
 
     for split_i, (x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator) in enumerate(dataset.split_iterator()):
 
-        cfg.logger.info(f"Start split {split_i+1}/{dataset.n_splits} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.name} doing {cfg.task.name}")
+        logger.info(f"Start split {split_i+1}/{dataset.n_splits} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.name} doing {cfg.task.name}")
 
         model = get_model(cfg, x_train, y_train, categorical_indicator)
         trainer = get_trainer(cfg, model)
@@ -73,54 +76,43 @@ def run_experiment_(cfg: ConfigRun) -> RunMetrics:
 
 if __name__ == "__main__":
 
-    import logging
     import torch
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
+
 
     cfg = ConfigRun(
-        logger = logging.getLogger("run_experiment"),
         output_dir = "output_run_experiment",
-        device = torch.device("cuda:5"),
-        model_name = ModelName.FT_TRANSFORMER,
+        device = torch.device("cuda:0"),
+        model_name = ModelName.FOUNDATION,
         seed = 0,
         task = Task.CLASSIFICATION,
         dataset_size = DatasetSize.MEDIUM,
-        openml_task_id = 361111,
         openml_dataset_id = 44157,
         openml_dataset_name = "eye-movements",
         hyperparams = DictConfig({
-            'batch_size': 512,
+            'n_features': 100,
+            'n_classes': 10,
+            'dim': 512,
+            'n_layers': 12,
+            'n_heads': 4,
+            'attn_dropout': 0.0,
+            'y_as_float_embedding': True,
+            'linear_attention': False,
+            'max_samples_support': 10000,
+            'max_samples_query': 10000,
             'max_epochs': 300,
             'optimizer': 'adamw',
-            'lr': 1.e-4,
-            'weight_decay': 1.e-5,
-            'lr_scheduler': True,
+            'lr': 1.e-5,
+            'weight_decay': 0,
+            'lr_scheduler': False,
             'lr_scheduler_patience': 30,
             'early_stopping_patience': 40,
-            'd_token': 192,
-            'activation': 'reglu',
-            'token_bias': True,
-            'prenormalization': True,
-            'kv_compression': True,
-            'kv_compression_sharing': 'headwise',
-            'initialization': 'kaiming',
-            'n_layers': 3,
-            'n_heads': 8,
-            'd_ffn_factor': 1.333,
-            'ffn_dropout': 0.1,
-            'attention_dropout': 0.2,
-            'residual_dropout': 0.0
+            'use_pretrained_weights': True,
+            'path_to_weights': "tabularbench/weights/foundation_forest.pt",
+            'n_ensembles': 1,
+            'use_quantile_transformer': True,
+            'use_feature_count_scaling': True
         })
     )
 
-    results = run_experiment(cfg)
-    assert results is not None
-    scores, losses = results
-    print(scores)
+    run_experiment(cfg)

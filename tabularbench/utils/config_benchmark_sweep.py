@@ -1,7 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import dataclasses
-import logging
 from pathlib import Path
 
 from omegaconf import DictConfig, OmegaConf
@@ -15,7 +14,6 @@ from tabularbench.data.benchmarks import Benchmark
 
 @dataclass
 class ConfigBenchmarkSweep():
-    logger: logging.Logger
     output_dir: Path
     seed: int
     devices: list[torch.device]
@@ -45,8 +43,8 @@ class ConfigBenchmarkSweep():
         # OmegaConf object looks ugly when saved as yaml
         hyperparams_dict = OmegaConf.to_container(self.hyperparams_object, resolve=True)
         self_to_save = dataclasses.replace(self, hyperparams_object=hyperparams_dict)
-
-        with open(self.output_dir / "config.yaml", 'w') as f:
+    
+        with open(self.output_dir / "config_benchmark_sweep.yaml", 'w') as f:
             yaml.dump(self_to_save, f, default_flow_style=False)
 
 

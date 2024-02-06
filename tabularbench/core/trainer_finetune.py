@@ -2,6 +2,7 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import StratifiedKFold, train_test_split
 import torch
 import numpy as np
+from loguru import logger
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.core.collator import CollatorWithPadding
@@ -11,7 +12,7 @@ from tabularbench.core.get_optimizer import get_optimizer
 from tabularbench.core.get_scheduler import get_scheduler
 from tabularbench.core.y_transformer import create_y_transformer
 from tabularbench.data.preprocessor import Preprocessor
-from tabularbench.sweeps.config_run import ConfigRun
+from tabularbench.utils.config_run import ConfigRun
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.data.dataset_finetune import DatasetFinetune, DatasetFinetuneGenerator
 
@@ -34,8 +35,7 @@ class TrainerFinetune(BaseEstimator):
 
         self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams.early_stopping_patience)
         self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
-        self.preprocessor = Preprocessor(
-            cfg.logger, 
+        self.preprocessor = Preprocessor( 
             use_quantile_transformer=self.cfg.hyperparams.use_quantile_transformer,
             use_feature_count_scaling=self.cfg.hyperparams.use_feature_count_scaling,
             max_features=self.cfg.hyperparams.n_features
@@ -82,13 +82,13 @@ class TrainerFinetune(BaseEstimator):
             loss_train, score_train = self.train_epoch(loader_train)
             loss_valid, score_valid = self.test_epoch(loader_valid, y_train_valid)
 
-            self.cfg.logger.info(f"Epoch {epoch:03d} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Val loss: {loss_valid:.4f} | Val score: {score_valid:.4f}")
+            logger.info(f"Epoch {epoch:03d} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Val loss: {loss_valid:.4f} | Val score: {score_valid:.4f}")
 
             self.checkpoint(self.model, loss_valid)
             
             self.early_stopping(loss_valid)
             if self.early_stopping.we_should_stop():
-                self.cfg.logger.info("Early stopping")
+                logger.info("Early stopping")
                 break
 
             self.scheduler.step(loss_valid)

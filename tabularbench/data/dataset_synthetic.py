@@ -9,7 +9,7 @@ from tabularbench.data.synthetic_generator_forest import \
 from tabularbench.data.synthetic_generator_neighbor import synthetic_dataset_generator_neighbor
 from tabularbench.data.synthetic_generator_tabpfn import \
     synthetic_dataset_generator_tabpfn
-from tabularbench.sweeps.config_pretrain import ConfigPretrain
+from tabularbench.utils.config_pretrain import ConfigPretrain
 
 
 class SyntheticDataset(torch.utils.data.IterableDataset):
@@ -85,7 +85,7 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
             x_support, y_support, x_query, y_query = self.split_into_support_and_query(x, y)
 
             preprocessor = Preprocessor(
-                self.cfg.logger, 
+                logger, 
                 max_features=self.max_features,
                 use_quantile_transformer=self.use_quantile_transformer,
                 use_feature_count_scaling=self.use_feature_count_scaling,
