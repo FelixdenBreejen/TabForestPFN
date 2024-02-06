@@ -145,7 +145,7 @@ class MultiheadAttention(torch.nn.Module):
         
         super().__init__()
 
-        self.use_flash_attention = True
+        self.use_flash_attention = False
         self.dim = dim
         self.n_heads = n_heads
 

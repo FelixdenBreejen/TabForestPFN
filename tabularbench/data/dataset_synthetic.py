@@ -6,7 +6,8 @@ from tabularbench.core.enums import GeneratorName
 from tabularbench.data.preprocessor import Preprocessor
 from tabularbench.data.synthetic_generator_forest import \
     synthetic_dataset_generator_forest
-from tabularbench.data.synthetic_generator_neighbor import synthetic_dataset_generator_neighbor
+from tabularbench.data.synthetic_generator_neighbor import \
+    synthetic_dataset_generator_neighbor
 from tabularbench.data.synthetic_generator_tabpfn import \
     synthetic_dataset_generator_tabpfn
 from tabularbench.utils.config_pretrain import ConfigPretrain
@@ -85,7 +86,6 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
             x_support, y_support, x_query, y_query = self.split_into_support_and_query(x, y)
 
             preprocessor = Preprocessor(
-                logger, 
                 max_features=self.max_features,
                 use_quantile_transformer=self.use_quantile_transformer,
                 use_feature_count_scaling=self.use_feature_count_scaling,

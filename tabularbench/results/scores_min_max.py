@@ -1,8 +1,10 @@
 import functools
-import logging
+
+from loguru import logger
 
 from tabularbench.core.enums import DataSplit, Task
-from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
+from tabularbench.results.reformat_benchmark import \
+    get_benchmark_csv_reformatted
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
@@ -30,14 +32,14 @@ def scores_min_max(cfg: ConfigBenchmarkSweep, openml_dataset_id: int, data_split
     """
 
     benchmark_model_names = tuple(model_name.name for model_name in cfg.config_plotting.benchmark_model_names)
-    score_min, score_max = scores_min_max_(openml_dataset_id, benchmark_model_names, cfg.benchmark.task, data_split, logger)
+    score_min, score_max = scores_min_max_(openml_dataset_id, benchmark_model_names, cfg.benchmark.task, data_split)
 
     return score_min, score_max
 
 
 
 @functools.lru_cache(maxsize=None)
-def scores_min_max_(openml_dataset_id: int, benchmark_model_names: tuple[str], task: Task, data_split: DataSplit, logger: logging.Logger) -> tuple[float, float]:
+def scores_min_max_(openml_dataset_id: int, benchmark_model_names: tuple[str], task: Task, data_split: DataSplit) -> tuple[float, float]:
 
     match data_split:
         case DataSplit.VALID:

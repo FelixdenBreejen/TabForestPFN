@@ -9,10 +9,10 @@ import hydra
 import torch
 import torch.multiprocessing as mp
 import yaml
-from omegaconf import DictConfig, OmegaConf
 from loguru import logger
+from omegaconf import DictConfig, OmegaConf
 
-from main import check_existence_of_benchmark_results_csv, save_config
+from main import check_existence_of_benchmark_results_csv
 from tabularbench.core.trainer_pretrain import TrainerPretrain
 from tabularbench.utils.config_pretrain import ConfigPretrain
 from tabularbench.utils.paths_and_filenames import CONFIG_DUPLICATE
@@ -32,7 +32,7 @@ def main(cfg_hydra: DictConfig):
     logger.info("Finished creating pretrain config")
 
     check_existence_of_benchmark_results_csv(cfg)
-    save_config(cfg)
+    cfg.save()
     setup_gpus(cfg)
     set_seed(cfg.seed)
 
