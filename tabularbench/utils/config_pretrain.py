@@ -38,6 +38,7 @@ class ConfigPretrain():
 
         cfg = copy.deepcopy(self)
         cfg = dataclasses.replace(cfg, hyperparams_finetuning=OmegaConf.to_container(cfg.hyperparams_finetuning))
+        cfg = dataclasses.replace(cfg, model=OmegaConf.to_container(cfg.model))
 
         with open(config_path, 'w') as f:        
             yaml.dump(cfg, f, default_flow_style=False)
@@ -96,7 +97,7 @@ class ConfigPretrain():
             testing = ConfigTesting(
                 n_default_runs_per_dataset_valid=cfg_hydra.testing.n_default_runs_per_dataset_valid,
                 n_default_runs_per_dataset_test=cfg_hydra.testing.n_default_runs_per_dataset_test,
-                openml_dataset_ids_to_ignore=cfg_hydra.testing.openml_dataset_ids_to_ignore,
+                openml_dataset_ids_to_ignore=OmegaConf.to_container(cfg_hydra.testing.openml_dataset_ids_to_ignore),
             ),
             plotting = ConfigPlotting(
                 n_runs=cfg_hydra.plotting.n_runs,
