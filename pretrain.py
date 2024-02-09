@@ -1,21 +1,17 @@
 from __future__ import annotations
 
-import dataclasses
 import os
 import sys
-from pathlib import Path
 
 import hydra
 import torch
 import torch.multiprocessing as mp
-import yaml
 from loguru import logger
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 from main import check_existence_of_benchmark_results_csv
 from tabularbench.core.trainer_pretrain import TrainerPretrain
 from tabularbench.utils.config_pretrain import ConfigPretrain
-from tabularbench.utils.paths_and_filenames import CONFIG_DUPLICATE
 from tabularbench.utils.set_seed import set_seed
 
 
@@ -47,6 +43,8 @@ def main(cfg_hydra: DictConfig):
 
 
 def main_experiment(gpu: int, cfg: ConfigPretrain, barrier: mp.Barrier) -> None:
+
+    logger.add(cfg.output_dir / "log.log", enqueue=True)
 
     setup_gpus_of_experiment(cfg, gpu)
     
@@ -109,21 +107,6 @@ def setup_gpus_of_experiment(cfg: ConfigPretrain, gpu: int) -> torch.device:
 def debugger_is_active() -> bool:
     """Return if the debugger is currently active"""
     return hasattr(sys, 'gettrace') and sys.gettrace() is not None
-
-
-
-
-def save_config(cfg: ConfigPretrain) -> None:
-    
-    config_path = Path(cfg.output_dir) / CONFIG_DUPLICATE
-
-    # OmegaConf object looks ugly when saved as yaml
-    model_dict = OmegaConf.to_container(cfg.model, resolve=True)
-    finetuning_dict = OmegaConf.to_container(cfg.hyperparams_finetuning, resolve=True)
-    self_to_save = dataclasses.replace(cfg, model=model_dict, hyperparams_finetuning=finetuning_dict)
-
-    with open(config_path, 'w') as f:        
-        yaml.dump(self_to_save, f, default_flow_style=False)
 
 
 if __name__ == "__main__":
