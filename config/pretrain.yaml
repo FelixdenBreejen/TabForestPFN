@@ -8,8 +8,8 @@ defaults:
   - hyperparams/foundation: finetune_10k
   - pretrain_model: foundation
   # - pretrain_continue
-  - test
-  # - big
+  # - test
+  - big
   # - size_change
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
@@ -36,7 +36,7 @@ optim:
   path_to_weights: outputs_done/foundation_key_att/weights/model_step_500000.pt               # Path to a checkpoint to load weights from
 
 data:
-  generator: forest             # tabpfn or forest or neighbor
+  generator: tabpfn             # tabpfn or forest or neighbor
   min_samples_support: 128
   max_samples_support: 1024            
   n_samples_query: 256

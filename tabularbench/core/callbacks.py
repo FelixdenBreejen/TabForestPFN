@@ -43,6 +43,11 @@ class Checkpoint():
         self.id = id
         self.curr_best_loss = np.inf
         self.path = Path(self.dirname) / f"params_{self.id}.pt"
+
+    
+    def reset(self, net):
+        self.curr_best_loss = np.inf
+        torch.save(net.state_dict(), self.path)
         
 
     def __call__(self, net, loss):

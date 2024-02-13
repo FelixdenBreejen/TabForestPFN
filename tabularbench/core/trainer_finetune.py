@@ -1,3 +1,4 @@
+from pathlib import Path
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import StratifiedKFold, train_test_split
 import torch
@@ -34,7 +35,7 @@ class TrainerFinetune(BaseEstimator):
         self.scheduler = get_scheduler(self.cfg.hyperparams, self.optimizer)
 
         self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams.early_stopping_patience)
-        self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
+        self.checkpoint = Checkpoint(Path("temp_weights"), id=str(self.cfg.device))
         self.preprocessor = Preprocessor( 
             use_quantile_transformer=self.cfg.hyperparams.use_quantile_transformer,
             use_feature_count_scaling=self.cfg.hyperparams.use_feature_count_scaling,
@@ -72,7 +73,7 @@ class TrainerFinetune(BaseEstimator):
         )
 
         loader_valid = self.make_loader(dataset_valid, training=False)
-
+        self.checkpoint.reset(self.model)
 
         for epoch in range(self.cfg.hyperparams.max_epochs):
 
