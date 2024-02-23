@@ -2,6 +2,7 @@ from loguru import logger
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import QuantileTransformer
+from sklearn.feature_selection import SelectKBest
 
 
 class Preprocessor(TransformerMixin, BaseEstimator):
@@ -15,22 +16,25 @@ class Preprocessor(TransformerMixin, BaseEstimator):
 
     def __init__(
             self, 
+            max_samples: int,
             max_features: int,
             use_quantile_transformer: bool,
             use_feature_count_scaling: bool,
         ):
 
+        self.max_samples = max_samples
         self.max_features = max_features
         self.use_quantile_transformer = use_quantile_transformer
         self.use_feature_count_scaling = use_feature_count_scaling
 
     
-    def fit(self, X: np.ndarray, y: np.ndarray = None):
+    def fit(self, X: np.ndarray, y: np.ndarray):
 
-        X = self.cutoff_excess_features(X, self.max_features)
-        
         self.singular_features = X.std(axis=0) == 0
         X = self.cutoff_singular_features(X, self.singular_features)
+
+        self.determine_which_features_to_select(X, y)
+        X = self.select_features(X)
 
         if self.use_quantile_transformer:
             n_quantiles = min(X.shape[0], 1000)
@@ -42,10 +46,10 @@ class Preprocessor(TransformerMixin, BaseEstimator):
         return self
     
 
-    def transform(self, X: np.ndarray, y: np.ndarray = None):
+    def transform(self, X: np.ndarray):
 
-        X = self.cutoff_excess_features(X, self.max_features)
         X = self.cutoff_singular_features(X, self.singular_features)
+        X = self.select_features(X)
 
         if self.use_quantile_transformer:
             X = self.quantile_transformer.transform(X)
@@ -57,17 +61,22 @@ class Preprocessor(TransformerMixin, BaseEstimator):
 
         X = self.extend_features(X, self.max_features)
 
-        if y is None:
-            return X
-
-        return X, y
+        return X
         
 
-    def cutoff_excess_features(self, x: np.ndarray, max_features: int) -> np.ndarray:
+    def determine_which_features_to_select(self, x: np.ndarray, y: np.ndarray) -> None:
 
-        if x.shape[1] > max_features:
-            logger.info(f"TabPFN allows {max_features} features, but the dataset has {x.shape[1]} features. Excess features are cut off.")
-            x = x[:, :max_features]
+        if x.shape[1] > self.max_features:
+            logger.info(f"A maximum of {self.max_features} features are allowed, but the dataset has {x.shape[1]} features. A subset of {self.max_features} are selected using SelectKBest")
+
+            self.select_k_best = SelectKBest(k=self.max_features)
+            self.select_k_best.fit(x, y)
+
+    
+    def select_features(self, x: np.ndarray) -> np.ndarray:
+
+        if x.shape[1] > self.max_features:
+            x = self.select_k_best.transform(x)
 
         return x
     
@@ -110,10 +119,12 @@ class Preprocessor(TransformerMixin, BaseEstimator):
 
     def extend_features(self, x: np.ndarray, max_features) -> np.ndarray:
         """
-        Increases the number of features to the number of features the tab pfn model has been trained on
+        Increases the number of features to the number of features the model has been trained on
         """
         added_zeros = np.zeros((x.shape[0], max_features - x.shape[1]), dtype=np.float32)
         x = np.concatenate([x, added_zeros], axis=1)
         return x
+    
+
 
     

@@ -46,7 +46,8 @@ class TrainerFinetune(BaseEstimator):
 
     def train(self, x_train: np.ndarray, y_train: np.ndarray):
 
-        x_train = self.preprocessor.fit_transform(x_train)        
+        self.preprocessor.fit(x_train, y_train)       
+        x_train = self.preprocessor.transform(x_train) 
         self.y_transformer = create_y_transformer(y_train, self.cfg.task)
 
         a = self.make_dataset_split(x_train=x_train, y_train=y_train)

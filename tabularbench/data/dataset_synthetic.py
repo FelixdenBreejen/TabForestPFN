@@ -85,13 +85,19 @@ class SyntheticDataset(torch.utils.data.IterableDataset):
             y = self.randomize_classes(y)
             x_support, y_support, x_query, y_query = self.split_into_support_and_query(x, y)
 
+            x_support = x_support.numpy()
+            x_query = x_query.numpy()
+            y_support = y_support.numpy()
+            y_query = y_query.numpy()
+
             preprocessor = Preprocessor(
                 max_features=self.max_features,
                 use_quantile_transformer=self.use_quantile_transformer,
                 use_feature_count_scaling=self.use_feature_count_scaling,
             )
 
-            x_support = preprocessor.fit_transform(x_support)
+            preprocessor.fit(x_support, y_support)
+            x_support = preprocessor.transform(x_support)
             x_query = preprocessor.transform(x_query)
             
             x_support = torch.tensor(x_support, dtype=torch.float32)
