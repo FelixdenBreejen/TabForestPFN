@@ -4,6 +4,9 @@ from pathlib import Path
 # NOTE: To import datasets from sources other than openml, add them using a new module
 from tabularbench.data.tabzilla_preprocessors_openml import preprocessor_dict
 
+import warnings
+warnings.filterwarnings('ignore', category=FutureWarning ) # Openml FutureWarning for version 0.15
+
 dataset_path = Path("data/openml/")
 
 
@@ -32,8 +35,8 @@ def preprocess_dataset(dataset_name, overwrite=False, verbose=True):
     if dataset_name not in preprocessors:
         raise KeyError(f"Unrecognized dataset name: {dataset_name}")
     dataset = preprocessors[dataset_name]()
-    dataset.write(dest_path, overwrite=overwrite)
-    return dest_path
+    dataset.write(dataset_path, overwrite=overwrite)
+    return dataset_path
 
 
 if __name__ == "__main__":

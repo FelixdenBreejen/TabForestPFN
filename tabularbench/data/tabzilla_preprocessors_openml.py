@@ -7,15 +7,15 @@ from tabularbench.data.tabzilla_preprocessor_utils import cv_n_folds, dataset_pr
 
 preprocessor_dict = {}
 
-easy_import_task_file = "tabularbench/data/tabzilla_easy_import_list.txt"  # Datasets identified just by their ID can be easily imported from here
+easy_import_task_file = "tabularbench/data/tabzilla_hard_benchmark_openml_ids.txt"  # Datasets identified just by their ID can be easily imported from here
 
 debug_mode = False
 
 openml_tasks = [
-    {
-        "openml_task_id": 3021,
-        "drop_features": ["TBG"],
-    },
+    # {
+    #     "openml_task_id": 3021,
+    #     "drop_features": ["TBG"],
+    # },
     # These datasets have been added to openml_easy_import_list.txt, but are provided here as a blueprint
     # for addition of other datasets
     # {
@@ -55,7 +55,7 @@ def preprocess_openml(
     if drop_features is None:
         drop_features = []
 
-    task = openml.tasks.get_task(task_id=openml_task_id)
+    task = openml.tasks.get_task(task_id=openml_task_id, download_splits=True)
     n_repeats, n_folds, n_samples = task.get_split_dimensions()
     if n_repeats != 1 or n_folds != cv_n_folds or n_samples != 1:
         raise NotImplementedError(
@@ -245,7 +245,7 @@ def inspect_openml_task(
     task = openml.tasks.get_task(task_id=openml_task_id)
 
     if openml_data_dict is None:
-        dataset = task.get_dataset()
+        dataset = task.get_dataset(download_splits=True)
         X, y, categorical_indicator, col_names = dataset.get_data(
             dataset_format="dataframe",
             target=task.target_name,
@@ -394,7 +394,7 @@ for kwargs in openml_tasks:
     # if kwargs["openml_task_id"] in [48, 50]:
     #    continue
     task = openml.tasks.get_task(
-        task_id=kwargs["openml_task_id"], download_data=False, download_qualities=False
+        task_id=kwargs["openml_task_id"], download_data=False, download_qualities=False, download_splits=True
     )
     ds = openml.datasets.get_dataset(
         task.dataset_id, download_data=False, download_qualities=False

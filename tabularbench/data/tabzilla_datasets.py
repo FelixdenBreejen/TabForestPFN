@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
+import xarray as xr
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -169,8 +170,61 @@ class TabularDataset(object):
         kwargs["X"], kwargs["y"], kwargs["split_indeces"] = X, y, split_indeces
         return cls(**kwargs)
 
-    def write(self, p: Path, overwrite=False) -> None:
-        """write the dataset to a new folder. this folder cannot already exist"""
+
+    def write(self, path: Path, overwrite=True) -> None:
+        """Save the dataset as a netcdf file."""
+
+        name_parts = self.name.split("__")
+        openml_dataset_id = int(name_parts[2])
+        openml_dataset_name = name_parts[1]
+
+        n_observations = self.X.shape[0]
+        n_features = self.X.shape[1]
+        n_splits = len(self.split_indeces)
+
+        split_train = np.zeros((n_observations, n_splits), dtype=bool)
+        split_val = np.zeros((n_observations, n_splits), dtype=bool)
+        split_test = np.zeros((n_observations, n_splits), dtype=bool)
+
+        for i in range(n_splits):
+            split_train[self.split_indeces[i]['train'], i] = True
+            split_val[self.split_indeces[i]['val'], i] = True
+            split_test[self.split_indeces[i]['test'], i] = True
+
+        categorical_indicator = np.zeros(n_features, dtype=bool)
+        for i in self.cat_idx:
+            categorical_indicator[i] = True
+
+        attribute_names = np.array([f"feature_{i}" for i in range(n_features)])
+
+        X = self.X.astype(np.float32)
+
+        self.ds = xr.Dataset(
+            data_vars={
+                'x': (['observation', 'feature'], X),
+                'y': (['observation'], self.y),
+                'split_index_train': (['observation', 'split'], split_train),
+                'split_index_val': (['observation', 'split'], split_val),
+                'split_index_test': (['observation', 'split'], split_test),
+                'categorical_indicator': (['feature'], categorical_indicator),
+                'attribute_names': (['feature'], attribute_names)
+            },
+            coords={
+                'observation': np.arange(n_observations),
+                'feature': np.arange(n_features),
+                'split': np.arange(n_splits),
+            },
+            attrs={
+                'openml_dataset_id': openml_dataset_id,
+                'openml_dataset_name': openml_dataset_name,
+            }
+        )
+    
+        self.ds.to_netcdf(path / f"tabzilla_{openml_dataset_id}")
+
+
+    def write_legacy(self, p: Path, overwrite=False) -> None:
+        """original write function made by tabzilla"""
 
         if not overwrite:
             assert ~p.exists(), f"the path {p} already exists."
