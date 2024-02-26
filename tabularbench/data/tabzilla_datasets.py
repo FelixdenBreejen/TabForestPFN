@@ -220,7 +220,7 @@ class TabularDataset(object):
             }
         )
     
-        self.ds.to_netcdf(path / f"tabzilla_{openml_dataset_id}")
+        self.ds.to_netcdf(path / f"tabzilla_{openml_dataset_id}.nc")
 
 
     def write_legacy(self, p: Path, overwrite=False) -> None:
