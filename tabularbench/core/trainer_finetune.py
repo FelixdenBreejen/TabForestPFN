@@ -24,11 +24,13 @@ class TrainerFinetune(BaseEstimator):
             self, 
             cfg: ConfigRun,
             model: torch.nn.Module,
+            n_classes: int
         ) -> None:
 
         self.cfg = cfg
         self.model = model
         self.model.to(self.cfg.device)
+        self.n_classes = n_classes
         
         self.loss = get_loss(self.cfg.task)
         self.optimizer = get_optimizer(self.cfg.hyperparams, self.model)
@@ -39,7 +41,7 @@ class TrainerFinetune(BaseEstimator):
         self.preprocessor = Preprocessor( 
             use_quantile_transformer=self.cfg.hyperparams.use_quantile_transformer,
             use_feature_count_scaling=self.cfg.hyperparams.use_feature_count_scaling,
-            max_features=self.cfg.hyperparams.n_features
+            max_features=self.cfg.hyperparams.n_features,
         )
 
 
@@ -168,7 +170,7 @@ class TrainerFinetune(BaseEstimator):
                 case Task.REGRESSION:
                     y_hat = y_hat[0, :, 0]
                 case Task.CLASSIFICATION:
-                    y_hat = y_hat[0, :, :2]
+                    y_hat = y_hat[0, :, :self.n_classes]
 
             y_query = y_query[0, :]
 
@@ -204,7 +206,7 @@ class TrainerFinetune(BaseEstimator):
                     case Task.REGRESSION:
                         y_hat = y_hat[0, :, 0]
                     case Task.CLASSIFICATION:
-                        y_hat = y_hat[0, :, :2]
+                        y_hat = y_hat[0, :, :self.n_classes]
 
                 y_hat_list.append(y_hat.cpu().numpy())
 

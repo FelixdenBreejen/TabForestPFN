@@ -23,6 +23,7 @@ class ConfigRun():
     dataset_size: DatasetSize
     openml_dataset_id: int
     openml_dataset_name: str
+    datafile_path: Path
     hyperparams: DictConfig
 
 
@@ -32,15 +33,17 @@ class ConfigRun():
             cfg: ConfigBenchmarkSweep, 
             seed: int,
             device: torch.device, 
-            dataset_id: int, 
+            dataset_file_path: Path,
             hyperparams: DictConfig,
             run_id: int
         ) -> Self:
 
         dataset_size = cfg.benchmark.dataset_size
-        openml_dataset_name = OpenmlDatafile(dataset_id, dataset_size).ds.attrs['openml_dataset_name']
+        openml_datafile = OpenmlDatafile(dataset_file_path)
+        openml_dataset_id = openml_datafile.ds.attrs['openml_dataset_id']
+        openml_dataset_name = openml_datafile.ds.attrs['openml_dataset_name']
         
-        output_dir = cfg.output_dir / str(dataset_id) / f"#{run_id}"
+        output_dir = cfg.output_dir / str(openml_dataset_id) / f"#{run_id}"
 
         return cls(
             output_dir=output_dir,
@@ -49,8 +52,9 @@ class ConfigRun():
             seed=seed,
             task=cfg.benchmark.task,
             dataset_size=dataset_size,
-            openml_dataset_id=dataset_id,
+            openml_dataset_id=openml_dataset_id,
             openml_dataset_name=openml_dataset_name,
+            datafile_path=dataset_file_path,
             hyperparams=hyperparams
         )
     

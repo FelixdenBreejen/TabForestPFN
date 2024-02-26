@@ -1,7 +1,9 @@
+from pathlib import Path
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import StratifiedKFold, train_test_split
 import torch
 import numpy as np
+from loguru import logger
 
 from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
 from tabularbench.core.enums import Task
@@ -18,18 +20,20 @@ class Trainer(BaseEstimator):
             self, 
             cfg: ConfigRun,
             model: torch.nn.Module,
+            n_classes: int
         ) -> None:
 
         self.cfg = cfg
         self.model = model
         self.model.to(self.cfg.device)
+        self.n_classes = n_classes
         
         self.loss = get_loss(self.cfg.task)
         self.optimizer = get_optimizer(self.cfg.hyperparams, self.model)
         self.scheduler = get_scheduler(self.cfg.hyperparams, self.optimizer)
 
         self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams.early_stopping_patience)
-        self.checkpoint = Checkpoint("temp_weights", id=str(self.cfg.device))
+        self.checkpoint = Checkpoint(Path("temp_weights"), id=str(self.cfg.device))
 
 
     def train(self, x_train: np.ndarray, y_train: np.ndarray):

@@ -113,12 +113,12 @@ def DatasetFinetuneGenerator(
     The idea is to split the training dataset into a support and query set.
     Every single iteration, the generator yields a different support and query set split.
     """
-    
-    match task:
-        case Task.REGRESSION:
-            stratify = None
-        case Task.CLASSIFICATION:
-            stratify = y
+
+    stratify = None
+    smallest_class_size = min(np.bincount(y))
+
+    if task == Task.CLASSIFICATION and smallest_class_size >= 5:
+        stratify = y
         
     while True:
 

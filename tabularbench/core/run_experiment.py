@@ -1,3 +1,4 @@
+from pathlib import Path
 import sys
 from typing import Optional
 from omegaconf import DictConfig
@@ -53,7 +54,7 @@ def debugger_is_active() -> bool:
 
 def run_experiment_(cfg: ConfigRun) -> RunMetrics:
 
-    dataset = OpenMLDataset(cfg.openml_dataset_id, cfg.task, cfg.dataset_size)
+    dataset = OpenMLDataset(cfg.datafile_path, cfg.task)
     metrics = RunMetrics()
 
     for split_i, (x_train, x_val, x_test, y_train, y_val, y_test, categorical_indicator) in enumerate(dataset.split_iterator()):
@@ -61,7 +62,7 @@ def run_experiment_(cfg: ConfigRun) -> RunMetrics:
         logger.info(f"Start split {split_i+1}/{dataset.n_splits} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.name} doing {cfg.task.name}")
 
         model = get_model(cfg, x_train, y_train, categorical_indicator)
-        trainer = get_trainer(cfg, model)
+        trainer = get_trainer(cfg, model, dataset.n_classes)
         trainer.train(x_train, y_train)
 
         loss_train, score_train = trainer.test(x_train, y_train, x_train, y_train)
@@ -81,14 +82,15 @@ if __name__ == "__main__":
 
 
     cfg = ConfigRun(
-        output_dir = "output_run_experiment",
-        device = torch.device("cuda:0"),
+        output_dir = Path("output_run_experiment"),
+        device = torch.device("cuda:4"),
         model_name = ModelName.FOUNDATION,
         seed = 0,
         task = Task.CLASSIFICATION,
         dataset_size = DatasetSize.MEDIUM,
-        openml_dataset_id = 44157,
-        openml_dataset_name = "eye-movements",
+        openml_dataset_id = 10,
+        openml_dataset_name = "set10",
+        datafile_path = Path("data/datasets/tabzilla_10.nc"),
         hyperparams = DictConfig({
             'n_features': 100,
             'n_classes': 10,
@@ -108,7 +110,7 @@ if __name__ == "__main__":
             'lr_scheduler_patience': 30,
             'early_stopping_patience': 40,
             'use_pretrained_weights': True,
-            'path_to_weights': "tabularbench/weights/foundation_forest.pt",
+            'path_to_weights': Path("outputs_done/foundation_forest_big_300k/weights/model_step_300000.pt"),
             'n_ensembles': 1,
             'use_quantile_transformer': True,
             'use_feature_count_scaling': True

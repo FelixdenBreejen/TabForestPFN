@@ -16,13 +16,11 @@ class Preprocessor(TransformerMixin, BaseEstimator):
 
     def __init__(
             self, 
-            max_samples: int,
             max_features: int,
             use_quantile_transformer: bool,
             use_feature_count_scaling: bool,
         ):
 
-        self.max_samples = max_samples
         self.max_features = max_features
         self.use_quantile_transformer = use_quantile_transformer
         self.use_feature_count_scaling = use_feature_count_scaling

@@ -1,32 +1,36 @@
+from pathlib import Path
 from typing import Iterator
 import numpy as np
+import xarray as xr
 from sklearn.preprocessing import QuantileTransformer
 
-from tabularbench.core.enums import DatasetSize, FeatureType, Task
-from tabularbench.data.datafile_openml import OpenmlDatafile
-from tabularbench.utils.paths_and_filenames import PATH_TO_DATA_SPLIT
+from tabularbench.core.enums import FeatureType, Task
 
 
 
 class OpenMLDataset():
 
-    def __init__(self, openml_dataset_id: int, task: Task, dataset_size: DatasetSize):
+    def __init__(self, datafile_path: Path, task: Task):
 
-        self.openml_dataset_id = openml_dataset_id
+        self.datafile_path = datafile_path
         self.task = task
-        self.dataset_size = dataset_size
 
-        datafile = OpenmlDatafile(openml_dataset_id, dataset_size)
-        X = datafile.x
-        y = datafile.y
-        categorical_indicator = datafile.categorical_indicator
+        ds = xr.open_dataset(self.datafile_path)
+        X = ds['x'].values
+        y = ds['y'].values
+        categorical_indicator = ds['categorical_indicator'].values
+
+        self.splits_train = ds['split_index_train'].values
+        self.splits_val = ds['split_index_val'].values
+        self.splits_test = ds['split_index_test'].values
+        self.n_splits = ds.dims['split']
 
         self.X, self.y, self.categorical_indicator = self.do_basic_preprocessing(X, y, categorical_indicator)
 
-        train_val_test_indices_all = np.load(PATH_TO_DATA_SPLIT, allow_pickle=True).item()
-        self.train_val_test_indices = train_val_test_indices_all[self.openml_dataset_id][int(self.dataset_size)]
+        self.n_classes = len(np.unique(self.y))
 
-        self.n_splits = len(self.train_val_test_indices)
+
+
 
 
     def do_basic_preprocessing(self, X, y, categorical_indicator) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -59,11 +63,11 @@ class OpenMLDataset():
     def split_iterator(self) -> Iterator[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
         
 
-        for idcs in self.train_val_test_indices:
+        for split_i in range(self.n_splits):
             
-            train_idcs = idcs['train']
-            val_idcs = idcs['val']
-            test_idcs = idcs['test']
+            train_idcs = self.splits_train[:, split_i]
+            val_idcs = self.splits_val[:, split_i]
+            test_idcs = self.splits_test[:, split_i]
 
             x_train = self.X[train_idcs]
             x_val = self.X[val_idcs]
