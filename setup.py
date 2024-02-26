@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='tabularbench',
     version='0.0.1',
-    packages=find_packages('tabular_bench'),
+    packages=find_packages('tabularbench'),
     url='',
     license='',
     author='',
