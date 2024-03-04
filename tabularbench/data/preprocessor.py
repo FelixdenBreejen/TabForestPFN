@@ -1,8 +1,8 @@
-from loguru import logger
 import numpy as np
+from loguru import logger
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import QuantileTransformer
 from sklearn.feature_selection import SelectKBest
+from sklearn.preprocessing import QuantileTransformer
 
 
 class Preprocessor(TransformerMixin, BaseEstimator):
@@ -28,14 +28,15 @@ class Preprocessor(TransformerMixin, BaseEstimator):
     
     def fit(self, X: np.ndarray, y: np.ndarray):
 
-        self.singular_features = X.std(axis=0) == 0
+        self.determine_which_features_are_singular(X)
         X = self.cutoff_singular_features(X, self.singular_features)
 
         self.determine_which_features_to_select(X, y)
         X = self.select_features(X)
 
         if self.use_quantile_transformer:
-            n_quantiles = min(X.shape[0], 1000)
+            n_obs, n_features = X.shape
+            n_quantiles = min(n_obs, 1000)
             self.quantile_transformer = QuantileTransformer(n_quantiles=n_quantiles, output_distribution='normal')
             X = self.quantile_transformer.fit_transform(X)
         
@@ -57,10 +58,16 @@ class Preprocessor(TransformerMixin, BaseEstimator):
         if self.use_feature_count_scaling:
             X = self.normalize_by_feature_count(X, self.max_features)
 
-        X = self.extend_features(X, self.max_features)
+        X = self.extend_feature_dim_to_max_features(X, self.max_features)
 
         return X
         
+
+    def determine_which_features_are_singular(self, x: np.ndarray) -> None:
+
+        self.singular_features = x.std(axis=0) == 0
+        
+
 
     def determine_which_features_to_select(self, x: np.ndarray, y: np.ndarray) -> None:
 
@@ -115,7 +122,7 @@ class Preprocessor(TransformerMixin, BaseEstimator):
 
 
 
-    def extend_features(self, x: np.ndarray, max_features) -> np.ndarray:
+    def extend_feature_dim_to_max_features(self, x: np.ndarray, max_features) -> np.ndarray:
         """
         Increases the number of features to the number of features the model has been trained on
         """

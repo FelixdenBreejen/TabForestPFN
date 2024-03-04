@@ -1,9 +1,10 @@
 from typing import Optional
-import torch
-import numpy as np
-from sklearn.model_selection import train_test_split
-from tabularbench.core.enums import Task
 
+import numpy as np
+import torch
+
+from tabularbench.core.dataset_split import make_dataset_split
+from tabularbench.core.enums import Task
 from tabularbench.utils.config_run import ConfigRun
 
 
@@ -113,23 +114,10 @@ def DatasetFinetuneGenerator(
     The idea is to split the training dataset into a support and query set.
     Every single iteration, the generator yields a different support and query set split.
     """
-
-    stratify = None
-    smallest_class_size = min(np.bincount(y))
-
-    if task == Task.CLASSIFICATION and smallest_class_size >= 5:
-        stratify = y
         
     while True:
 
-        x_support, x_query, y_support, y_query = train_test_split(
-            x, 
-            y, 
-            train_size=split, 
-            shuffle=True,
-            stratify=stratify
-        )
-
+        x_support, x_query, y_support, y_query = make_dataset_split(x=x, y=y, task=task)
         n_samples_support = x_support.shape[0]
         n_samples_query = x_query.shape[0]
 

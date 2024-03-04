@@ -1,21 +1,22 @@
 from pathlib import Path
-from sklearn.base import BaseEstimator
-from sklearn.model_selection import StratifiedKFold, train_test_split
-import torch
-import numpy as np
-from loguru import logger
 
-from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
+import numpy as np
+import torch
+from loguru import logger
+from sklearn.base import BaseEstimator
+
+from tabularbench.core.callbacks import (Checkpoint, EarlyStopping,
+                                         EpochStatistics)
 from tabularbench.core.collator import CollatorWithPadding
 from tabularbench.core.enums import Task
 from tabularbench.core.get_loss import get_loss
 from tabularbench.core.get_optimizer import get_optimizer
 from tabularbench.core.get_scheduler import get_scheduler
 from tabularbench.core.y_transformer import create_y_transformer
+from tabularbench.data.dataset_finetune import (DatasetFinetune,
+                                                DatasetFinetuneGenerator)
 from tabularbench.data.preprocessor import Preprocessor
 from tabularbench.utils.config_run import ConfigRun
-from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
-from tabularbench.data.dataset_finetune import DatasetFinetune, DatasetFinetuneGenerator
 
 
 class TrainerFinetune(BaseEstimator):
@@ -46,19 +47,17 @@ class TrainerFinetune(BaseEstimator):
 
 
 
-    def train(self, x_train: np.ndarray, y_train: np.ndarray):
+    def train(self, x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y_val: np.ndarray):
 
         self.preprocessor.fit(x_train, y_train)       
         x_train = self.preprocessor.transform(x_train) 
+        x_val = self.preprocessor.transform(x_val)
         self.y_transformer = create_y_transformer(y_train, self.cfg.task)
-
-        a = self.make_dataset_split(x_train=x_train, y_train=y_train)
-        x_train_train, x_train_valid, y_train_train, y_train_valid = a
-
+        
         dataset_train_generator = DatasetFinetuneGenerator(
             self.cfg,
-            x = x_train_train,
-            y = self.y_transformer.transform(y_train_train),
+            x = x_train,
+            y = self.y_transformer.transform(y_train),
             task = self.cfg.task,
             max_samples_support = self.cfg.hyperparams.max_samples_support,
             max_samples_query = self.cfg.hyperparams.max_samples_query,
@@ -67,10 +66,10 @@ class TrainerFinetune(BaseEstimator):
 
         dataset_valid = DatasetFinetune(
             self.cfg,
-            x_support = x_train_train, 
-            y_support = self.y_transformer.transform(y_train_train), 
-            x_query = x_train_valid,
-            y_query = y_train_valid,
+            x_support = x_train, 
+            y_support = self.y_transformer.transform(y_train), 
+            x_query = x_val,
+            y_query = y_val,
             max_samples_support = self.cfg.hyperparams.max_samples_support,
             max_samples_query = self.cfg.hyperparams.max_samples_query,
         )
@@ -78,13 +77,17 @@ class TrainerFinetune(BaseEstimator):
         loader_valid = self.make_loader(dataset_valid, training=False)
         self.checkpoint.reset(self.model)
 
-        for epoch in range(self.cfg.hyperparams.max_epochs):
+        loss_valid, score_valid = self.test_epoch(loader_valid, y_val)
+        logger.info(f"Epoch 000 | Train loss: -.---- | Train score: -.---- | Val loss: {loss_valid:.4f} | Val score: {score_valid:.4f}")
+        self.checkpoint(self.model, loss_valid)
+
+        for epoch in range(1, self.cfg.hyperparams.max_epochs+1):
 
             dataset_train = next(dataset_train_generator)            
             loader_train = self.make_loader(dataset_train, training=True)
             
             loss_train, score_train = self.train_epoch(loader_train)
-            loss_valid, score_valid = self.test_epoch(loader_valid, y_train_valid)
+            loss_valid, score_valid = self.test_epoch(loader_valid, y_val)
 
             logger.info(f"Epoch {epoch:03d} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Val loss: {loss_valid:.4f} | Val score: {score_valid:.4f}")
 
@@ -229,23 +232,7 @@ class TrainerFinetune(BaseEstimator):
 
     def load_params(self, path):
         self.model.load_state_dict(torch.load(path))
-
-        
-    def make_dataset_split(self, x_train, y_train):
-
-        match self.cfg.task:
-            case Task.REGRESSION:
-                x_t_train, x_t_valid, y_t_train, y_t_valid = train_test_split(
-                    x_train, y_train, test_size=0.2
-                )
-            case Task.CLASSIFICATION:
-                skf = StratifiedKFold(n_splits=5, shuffle=True)
-                indices = next(skf.split(x_train, y_train))
-                x_t_train, x_t_valid = x_train[indices[0]], x_train[indices[1]]
-                y_t_train, y_t_valid = y_train[indices[0]], y_train[indices[1]]
-
-        return x_t_train, x_t_valid, y_t_train, y_t_valid
-        
+    
 
     def make_loader(self, dataset, training):
 

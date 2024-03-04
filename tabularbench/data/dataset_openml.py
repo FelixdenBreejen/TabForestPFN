@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import Iterator
+
 import numpy as np
 import xarray as xr
 from sklearn.preprocessing import QuantileTransformer
 
 from tabularbench.core.enums import FeatureType, Task
-
 
 
 class OpenMLDataset():
@@ -23,7 +23,7 @@ class OpenMLDataset():
         self.splits_train = ds['split_index_train'].values
         self.splits_val = ds['split_index_val'].values
         self.splits_test = ds['split_index_test'].values
-        self.n_splits = ds.dims['split']
+        self.n_splits = ds.sizes['split']
 
         self.X, self.y, self.categorical_indicator = self.do_basic_preprocessing(X, y, categorical_indicator)
 
@@ -80,7 +80,8 @@ class OpenMLDataset():
             categorical_indicator = self.categorical_indicator
 
             if self.feature_type == FeatureType.NUMERICAL or self.feature_type == FeatureType.MIXED:
-                qt = QuantileTransformer(output_distribution="normal")
+                n_obs, n_features = x_train.shape
+                qt = QuantileTransformer(n_quantiles=min(n_obs, 1000), output_distribution="normal")
                 x_train[:, ~categorical_indicator] = qt.fit_transform(x_train[:, ~categorical_indicator])
                 x_val[:, ~categorical_indicator] = qt.transform(x_val[:, ~categorical_indicator])
                 x_test[:, ~categorical_indicator] = qt.transform(x_test[:, ~categorical_indicator])
