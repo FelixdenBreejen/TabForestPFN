@@ -1,8 +1,9 @@
 from pathlib import Path
+from loguru import logger
 
 # Import all openml preprocessor modules.
 # NOTE: To import datasets from sources other than openml, add them using a new module
-from tabularbench.data.tabzilla_preprocessors_openml import preprocessor_dict
+from tabularbench.data.tabzilla_preprocessors_openml import create_preprocessor_dict
 
 import warnings
 
@@ -12,7 +13,27 @@ warnings.filterwarnings('ignore', category=FutureWarning ) # Openml FutureWarnin
 dataset_path = Path(PATH_TO_OPENML_DATASETS)
 
 
+def preprocess_tabzilla_data():
+
+    preprocessors = build_preprocessors_dict()
+
+    logger.info("------------------------\n")
+    logger.info("Valid dataset names:\n")
+    for i, dataset_name in enumerate(sorted(preprocessors.keys())):
+        logger.info(f"{i + 1}: {dataset_name} ")
+    logger.info("------------------------")
+
+    for dataset_name in sorted(preprocessors.keys()):
+        _ = preprocess_dataset(dataset_name, preprocessors, overwrite=True)
+        logger.info("Processed dataset {}".format(dataset_name))
+
+
+
+
 def build_preprocessors_dict():
+
+    preprocessor_dict = create_preprocessor_dict()
+
     preprocessors = {}
     duplicates = preprocessors.keys() & preprocessor_dict.keys()
     if duplicates:
@@ -23,10 +44,7 @@ def build_preprocessors_dict():
     return preprocessors
 
 
-preprocessors = build_preprocessors_dict()
-
-
-def preprocess_dataset(dataset_name, overwrite=False, verbose=True):
+def preprocess_dataset(dataset_name, preprocessors, overwrite=False, verbose=True):
     dest_path = dataset_path / dataset_name
     if not overwrite and dest_path.exists():
         if verbose:
@@ -42,16 +60,4 @@ def preprocess_dataset(dataset_name, overwrite=False, verbose=True):
 
 
 if __name__ == "__main__":
-
-    process_all = True
-
-
-    print("------------------------\n")
-    print("Valid dataset names:\n")
-    for i, dataset_name in enumerate(sorted(preprocessors.keys())):
-        print(f"{i + 1}: {dataset_name} ")
-    print("------------------------")
-
-    for dataset_name in sorted(preprocessors.keys()):
-        _ = preprocess_dataset(dataset_name, overwrite=True)
-        print("Processed dataset {}".format(dataset_name))
+    preprocess_tabzilla_data()

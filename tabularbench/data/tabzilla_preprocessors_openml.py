@@ -5,9 +5,10 @@ import openml
 import pandas as pd
 from tabularbench.data.tabzilla_preprocessor_utils import cv_n_folds, dataset_preprocessor
 
-preprocessor_dict = {}
 
 easy_import_task_file = "tabularbench/data/tabzilla_hard_benchmark_openml_ids.txt"  # Datasets identified just by their ID can be easily imported from here
+
+
 
 debug_mode = False
 
@@ -389,18 +390,25 @@ def check_tasks_from_suite(suite_id):
     return succeeded_tasks, failed_tasks
 
 
-# Call the dataset preprocessor decorator for each of the selected OpenML datasets
-for kwargs in openml_tasks:
-    # if kwargs["openml_task_id"] in [48, 50]:
-    #    continue
-    task = openml.tasks.get_task(
-        task_id=kwargs["openml_task_id"], download_data=False, download_qualities=False, download_splits=True
-    )
-    ds = openml.datasets.get_dataset(
-        task.dataset_id, download_data=False, download_qualities=False
-    )
-    dataset_name = f"openml__{ds.name}__{kwargs['openml_task_id']}"
+@functools.lru_cache(maxsize=1)
+def create_preprocessor_dict():
 
-    dataset_preprocessor(preprocessor_dict, dataset_name, generate_split=False)(
-        functools.partial(preprocess_openml, **kwargs)
-    )
+    preprocessor_dict = {}
+
+    # Call the dataset preprocessor decorator for each of the selected OpenML datasets
+    for kwargs in openml_tasks:
+        # if kwargs["openml_task_id"] in [48, 50]:
+        #    continue
+        task = openml.tasks.get_task(
+            task_id=kwargs["openml_task_id"], download_data=False, download_qualities=False, download_splits=False
+        )
+        ds = openml.datasets.get_dataset(
+            task.dataset_id, download_data=False, download_qualities=False
+        )
+        dataset_name = f"openml__{ds.name}__{kwargs['openml_task_id']}"
+
+        dataset_preprocessor(preprocessor_dict, dataset_name, generate_split=False)(
+            functools.partial(preprocess_openml, **kwargs)
+        )
+
+    return preprocessor_dict

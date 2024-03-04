@@ -10,7 +10,7 @@ from tabularbench.core.enums import DatasetSize
 from tabularbench.utils.paths_and_filenames import PATH_TO_DATA_SPLIT, PATH_TO_OPENML_DATASETS
 
 
-def main():
+def preprocess_whytrees_data():
 
     openml_ids = get_openml_ids()
     for openml_id in openml_ids:
@@ -102,4 +102,4 @@ def get_splits(openml_id: int, dataset_size: int, n_observations: int) -> tuple[
 
 
 if __name__ == "__main__":
-    main()
+    preprocess_whytrees_data()
