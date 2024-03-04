@@ -7,6 +7,7 @@ import torch.multiprocessing as mp
 from loguru import logger
 
 from tabularbench.core.enums import SearchType
+from tabularbench.data.datafile_name_maker import make_datafile_path
 from tabularbench.results.run_results import RunResults
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
@@ -72,7 +73,14 @@ def run_sweep(cfg: ConfigBenchmarkSweep):
             seed = cfg.seed + runs_attempted_dict[dataset_id]
             
         hyperparams = hyperparam_drawer.draw_config(hyperparam_search_type)
-        config_run = ConfigRun.create(cfg, seed, device, dataset_id, hyperparams, runs_attempted_dict[dataset_id])
+        config_run = ConfigRun.create(
+            cfg=cfg, 
+            seed=seed, 
+            device=device, 
+            dataset_file_path=make_datafile_path(cfg.benchmark.origin, dataset_id, cfg.benchmark.dataset_size),
+            hyperparams=hyperparams, 
+            run_id=runs_attempted_dict[dataset_id]
+        )
 
         runs_busy_dict[dataset_id] += 1
         runs_attempted_dict[dataset_id] += 1

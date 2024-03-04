@@ -29,14 +29,14 @@ class ConfigRun():
 
     @classmethod
     def create(
-            cls, 
-            cfg: ConfigBenchmarkSweep, 
-            seed: int,
-            device: torch.device, 
-            dataset_file_path: Path,
-            hyperparams: DictConfig,
-            run_id: int
-        ) -> Self:
+        cls, 
+        cfg: ConfigBenchmarkSweep, 
+        seed: int,
+        device: torch.device, 
+        dataset_file_path: Path,
+        hyperparams: DictConfig,
+        run_id: int
+    ) -> Self:
 
         dataset_size = cfg.benchmark.dataset_size
         openml_datafile = OpenmlDatafile(dataset_file_path)

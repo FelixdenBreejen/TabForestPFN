@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     cfg = ConfigRun(
         output_dir = Path("output_run_experiment"),
-        device = torch.device("cuda:6"),
+        device = torch.device("cuda:2"),
         model_name = ModelName.FOUNDATION,
         seed = 0,
         task = Task.CLASSIFICATION,
