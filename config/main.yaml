@@ -6,14 +6,15 @@ defaults:
   - hyperparams/ft_transformer: ft_transformer
   - hyperparams/tabpfn: finetune_10k
   - hyperparams/foundation: finetune_10k
+  - main_test
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [2, 3]
+devices: [2]
 n_random_runs_per_dataset: 500                  # suggested: 500 
-n_default_runs_per_dataset: 1                   # on default we also want multiple runs for the confidence bound
+n_default_runs_per_dataset: 10                   # on default we also want multiple runs for the confidence bound
 
 models:
   - FOUNDATION

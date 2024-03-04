@@ -1,6 +1,6 @@
 from pathlib import Path
-import xarray as xr
 
+import xarray as xr
 
 
 class OpenmlDatafile():
@@ -14,9 +14,9 @@ class OpenmlDatafile():
         self.categorical_indicator = self.ds['categorical_indicator'].values
         self.attribute_names = self.ds['attribute_names'].values
 
-        self.indices_train = self.ds['indices_train'].values
-        self.indices_val = self.ds['indices_val'].values
-        self.indices_test = self.ds['indices_test'].values
+        self.indices_train = self.ds['split_index_train'].values
+        self.indices_val = self.ds['split_index_val'].values
+        self.indices_test = self.ds['split_index_test'].values
 
 
 
