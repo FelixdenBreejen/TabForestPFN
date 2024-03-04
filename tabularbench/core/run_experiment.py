@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -12,6 +11,7 @@ from tabularbench.core.get_trainer import get_trainer
 from tabularbench.data.dataset_openml import OpenMLDataset
 from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.utils.config_run import ConfigRun
+from tabularbench.utils.debugger import debugger_is_active
 from tabularbench.utils.set_seed import set_seed
 
 
@@ -50,11 +50,6 @@ def run_experiment(cfg: ConfigRun) -> Optional[RunMetrics]:
     logger.info(f"average :: train: {score_train_avg:.4f}, val: {score_val_avg:.4f}, test: {score_test_avg:.4f}")
 
     return metrics
-    
-
-def debugger_is_active() -> bool:
-    """Return if the debugger is currently active"""
-    return hasattr(sys, 'gettrace') and sys.gettrace() is not None
 
 
 def run_experiment_(cfg: ConfigRun) -> RunMetrics:
@@ -75,9 +70,11 @@ def run_experiment_(cfg: ConfigRun) -> RunMetrics:
         trainer = get_trainer(cfg, model, dataset.n_classes)
         trainer.train(x_train_cut, y_train_cut, x_val_earlystop, y_val_earlystop)
 
-        loss_train, score_train = trainer.test(x_train_cut, y_train_cut, x_train, y_train)
-        loss_val, score_val = trainer.test(x_train_cut, y_train_cut, x_val_hyperparams, y_val_hyperparams)
-        loss_test, score_test = trainer.test(x_train_cut, y_train_cut, x_test, y_test)
+        loss_train, score_train = trainer.test(x_train, y_train, x_train, y_train)
+        loss_val, score_val = trainer.test(x_train, y_train, x_val_hyperparams, y_val_hyperparams)
+        loss_test, score_test = trainer.test(x_train, y_train, x_test, y_test)
+
+        logger.info(f"split_{split_i} :: train: {score_train:.4f}, val: {score_val:.4f}, test: {score_test:.4f}")
 
         metrics.append(score_train, score_val, score_test, loss_train, loss_val, loss_test)
 
@@ -98,9 +95,9 @@ if __name__ == "__main__":
         seed = 0,
         task = Task.CLASSIFICATION,
         dataset_size = DatasetSize.MEDIUM,
-        openml_dataset_id = 10,
-        openml_dataset_name = "set10",
-        datafile_path = Path("data/datasets/tabzilla_10.nc"),
+        openml_dataset_id = 44156,
+        openml_dataset_name = "electricity",
+        datafile_path = Path("data/datasets/whytrees_44156_MEDIUM.nc"),
         hyperparams = DictConfig({
             'n_features': 100,
             'n_classes': 10,
