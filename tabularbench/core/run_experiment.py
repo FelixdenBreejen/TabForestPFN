@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
 from loguru import logger
 from omegaconf import DictConfig
 
@@ -65,6 +66,8 @@ def run_experiment_(cfg: ConfigRun) -> RunMetrics:
         y_val_hyperparams = y_val
 
         x_train_cut, x_val_earlystop, y_train_cut, y_val_earlystop = make_dataset_split(x_train, y_train, task=cfg.task)
+        x_train_and_val = np.concatenate([x_train_cut, x_val_earlystop], axis=0)
+        y_train_and_val = np.concatenate([y_train_cut, y_val_earlystop], axis=0)
 
         model = get_model(cfg, x_train_cut, y_train_cut, categorical_indicator)
         trainer = get_trainer(cfg, model, dataset.n_classes)
@@ -72,7 +75,7 @@ def run_experiment_(cfg: ConfigRun) -> RunMetrics:
 
         loss_train, score_train = trainer.test(x_train, y_train, x_train, y_train)
         loss_val, score_val = trainer.test(x_train, y_train, x_val_hyperparams, y_val_hyperparams)
-        loss_test, score_test = trainer.test(x_train, y_train, x_test, y_test)
+        loss_test, score_test = trainer.test(x_train_and_val, y_train_and_val, x_test, y_test)
 
         logger.info(f"split_{split_i} :: train: {score_train:.4f}, val: {score_val:.4f}, test: {score_test:.4f}")
 
@@ -95,9 +98,9 @@ if __name__ == "__main__":
         seed = 0,
         task = Task.CLASSIFICATION,
         dataset_size = DatasetSize.MEDIUM,
-        openml_dataset_id = 44156,
-        openml_dataset_name = "electricity",
-        datafile_path = Path("data/datasets/whytrees_44156_MEDIUM.nc"),
+        openml_dataset_id = 10,
+        openml_dataset_name = "set10",
+        datafile_path = Path("data/datasets/tabzilla_10.nc"),
         hyperparams = DictConfig({
             'n_features': 100,
             'n_classes': 10,
