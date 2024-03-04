@@ -7,4 +7,4 @@ PATH_TO_ALL_BENCH_CSV = 'data/benchmark_total.csv'                          # Be
 PATH_TO_ALL_BENCH_CSV_REFORMATTED = 'data/benchmark_total_reformatted.csv'  # Same as above, but reformatted to match our results
 PATH_TO_OPENML_DATASETS = 'data/datasets/'                                  # Where downloaded OpenML datasets are stored
 CONFIG_DUPLICATE = 'config.yaml'                                            # Duplicate config inside the output dir
-PATH_TO_DATA_SPLIT = 'tabularbench/data/train_val_test_indices.npy'         # Indices for train/val/test split
+PATH_TO_DATA_SPLIT = 'tabularbench/data/whytrees_train_val_test_indices.npy'         # Indices for train/val/test split
