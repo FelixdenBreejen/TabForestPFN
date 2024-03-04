@@ -3,8 +3,9 @@ These are not callbacks, but if you look for callback most likely you look for t
 """
 
 from pathlib import Path
-import torch
+
 import numpy as np
+import torch
 
 
 class EarlyStopping():
@@ -73,3 +74,19 @@ class EpochStatistics():
 
     def get(self):
         return self.loss / self.n, self.score / self.n
+    
+
+
+class TrackOutput():
+
+    def __init__(self) -> None:
+        self.y_true = []
+        self.y_pred = []
+
+    def update(self, y_true: np.ndarray, y_pred: np.ndarray):
+        assert len(y_true.shape) == len(y_pred.shape) == 1
+        self.y_true.append(y_true)
+        self.y_pred.append(y_pred)
+
+    def get(self):
+        return np.concatenate(self.y_true, axis=0), np.concatenate(self.y_pred, axis=0)

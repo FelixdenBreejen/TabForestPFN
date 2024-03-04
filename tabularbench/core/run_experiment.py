@@ -73,11 +73,11 @@ def run_experiment_(cfg: ConfigRun) -> RunMetrics:
         trainer = get_trainer(cfg, model, dataset.n_classes)
         trainer.train(x_train_cut, y_train_cut, x_val_earlystop, y_val_earlystop)
 
-        loss_train, score_train = trainer.test(x_train, y_train, x_train, y_train)
-        loss_val, score_val = trainer.test(x_train, y_train, x_val_hyperparams, y_val_hyperparams)
-        loss_test, score_test = trainer.test(x_train_and_val, y_train_and_val, x_test, y_test)
+        prediction_metrics_train = trainer.test(x_train, y_train, x_train, y_train)
+        prediction_metrics_val = trainer.test(x_train, y_train, x_val_hyperparams, y_val_hyperparams)
+        prediction_metrics_test = trainer.test(x_train_and_val, y_train_and_val, x_test, y_test)
 
-        logger.info(f"split_{split_i} :: train: {score_train:.4f}, val: {score_val:.4f}, test: {score_test:.4f}")
+        logger.info(f"split_{split_i} :: train: {prediction_metrics_train.score:.4f}, val: {prediction_metrics_val:.4f}, test: {prediction_metrics_test:.4f}")
 
         metrics.append(score_train, score_val, score_test, loss_train, loss_val, loss_test)
 

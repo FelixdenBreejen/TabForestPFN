@@ -1,12 +1,12 @@
 from pathlib import Path
 
+import einops
 import numpy as np
 import torch
 from loguru import logger
 from sklearn.base import BaseEstimator
 
-from tabularbench.core.callbacks import (Checkpoint, EarlyStopping,
-                                         EpochStatistics)
+from tabularbench.core.callbacks import Checkpoint, EarlyStopping, TrackOutput
 from tabularbench.core.collator import CollatorWithPadding
 from tabularbench.core.enums import Task
 from tabularbench.core.get_loss import get_loss
@@ -16,6 +16,7 @@ from tabularbench.core.y_transformer import create_y_transformer
 from tabularbench.data.dataset_finetune import (DatasetFinetune,
                                                 DatasetFinetuneGenerator)
 from tabularbench.data.preprocessor import Preprocessor
+from tabularbench.results.prediction_metrics import PredictionMetrics
 from tabularbench.utils.config_run import ConfigRun
 
 
@@ -102,63 +103,12 @@ class TrainerFinetune(BaseEstimator):
 
         return self
     
-    
-    def test(self, x_train: np.ndarray, y_train: np.ndarray, x_test: np.ndarray, y_test: np.ndarray):
 
-        self.load_params(self.checkpoint.path)
-
-        y_hats = self.predict(x_train, self.y_transformer.transform(y_train), x_test)
-
-        loss_test = self.loss(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
-        score_test = self.score(torch.as_tensor(y_hats), torch.as_tensor(y_test)).item()
-
-        return loss_test, score_test
-    
-
-    def test_epoch(self, dataloader: torch.utils.data.DataLoader, y_test: np.ndarray):
-        
-        y_hat = self.predict_epoch(dataloader)
-        y_hat_finish = self.y_transformer.inverse_transform(y_hat)
-
-        loss_test = self.loss(torch.as_tensor(y_hat_finish), torch.as_tensor(y_test)).item()
-        score_test = self.score(torch.as_tensor(y_hat_finish), torch.as_tensor(y_test)).item()
-        return loss_test, score_test
-    
-
-    def predict(self, x_support: np.ndarray, y_support: np.ndarray, x_query: np.ndarray):
-
-        x_support = self.preprocessor.transform(x_support)
-        x_query = self.preprocessor.transform(x_query)
-
-        dataset = DatasetFinetune(
-            self.cfg, 
-            x_support = x_support, 
-            y_support = y_support, 
-            x_query = x_query,
-            y_query = None,
-            max_samples_support = self.cfg.hyperparams.max_samples_support,
-            max_samples_query = self.cfg.hyperparams.max_samples_query,
-        )
-
-        loader = self.make_loader(dataset, training=False)
-
-        y_hat_list = []
-
-        for _ in range(self.cfg.hyperparams.n_ensembles):
-            y_hat = self.predict_epoch(loader)
-            y_hat_list.append(y_hat)
-
-        y_hat_ensembled = sum(y_hat_list) / len(y_hat_list)
-        y_hat_finish = self.y_transformer.inverse_transform(y_hat_ensembled)
-
-        return y_hat_finish
-    
-    
-    def train_epoch(self, dataloader: torch.utils.data.DataLoader):
+    def train_epoch(self, dataloader: torch.utils.data.DataLoader) -> PredictionMetrics:
 
         self.model.train()
         
-        epoch_statistics = EpochStatistics()
+        output_tracker = TrackOutput()
 
         for batch in dataloader:
         
@@ -178,19 +128,76 @@ class TrainerFinetune(BaseEstimator):
             y_query = y_query[0, :]
 
             loss = self.loss(y_hat, y_query)
-            score = self.score(y_hat, y_query)
-
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
 
-            epoch_statistics.update(loss.item(), score, len(y_query))
+            output_tracker.update(einops.asnumpy(y_query), einops.asnumpy(y_hat))
 
-        loss, score = epoch_statistics.get()
-        return loss, score
+        y_true, y_pred = output_tracker.get()
+        y_pred = self.y_transformer.inverse_transform(y_pred)
+        prediction_metrics = PredictionMetrics(y_true, y_pred, self.cfg.task)
+        return prediction_metrics
 
+    
+    
+    def test(self, x_train: np.ndarray, y_train: np.ndarray, x_test: np.ndarray, y_test: np.ndarray) -> PredictionMetrics:
+
+        self.load_params(self.checkpoint.path)
+
+        y_hats = self.predict(x_train, self.y_transformer.transform(y_train), x_test)
+
+        prediction_metrics = PredictionMetrics(y_hats, y_test, self.cfg.task)
+        return prediction_metrics
+    
+
+    def test_epoch(self, dataloader: torch.utils.data.DataLoader, y_test: np.ndarray) -> PredictionMetrics:
+        
+        y_hat = self.predict_epoch(dataloader)
+        y_hat_finish = self.y_transformer.inverse_transform(y_hat)
+
+        prediction_metrics = PredictionMetrics(y_hat_finish, y_test, self.cfg.task)
+        return prediction_metrics
+    
+
+    def predict(self, x_support: np.ndarray, y_support: np.ndarray, x_query: np.ndarray) -> np.ndarray:
+        """
+        Give a prediction for the query set.
+        Prediction looks like y_support: it is fully post-processed.
+        """
+
+        x_support = self.preprocessor.transform(x_support)
+        x_query = self.preprocessor.transform(x_query)
+
+        dataset = DatasetFinetune(
+            self.cfg, 
+            x_support = x_support, 
+            y_support = y_support, 
+            x_query = x_query,
+            y_query = None,
+            max_samples_support = self.cfg.hyperparams.max_samples_support,
+            max_samples_query = self.cfg.hyperparams.max_samples_query,
+        )
+
+        loader = self.make_loader(dataset, training=False)
+
+        y_hat_ensembles = []
+
+        for _ in range(self.cfg.hyperparams.n_ensembles):
+            y_hat = self.predict_epoch(loader)
+            y_hat_ensembles.append(y_hat)
+
+        y_hat_ensembled = sum(y_hat_ensembles) / self.cfg.hyperparams.n_ensembles
+        y_hat_finish = self.y_transformer.inverse_transform(y_hat_ensembled)
+
+        return y_hat_finish
+    
 
     def predict_epoch(self, dataloader: torch.utils.data.DataLoader) -> np.ndarray:
+        """
+        Returns the predictions for the data in the dataloader.
+        The predictions are in the original state as they come from the model, i.e. not transformed.
+        """
 
         self.model.eval()
 
@@ -211,9 +218,9 @@ class TrainerFinetune(BaseEstimator):
                     case Task.CLASSIFICATION:
                         y_hat = y_hat[0, :, :self.n_classes]
 
-                y_hat_list.append(y_hat.cpu().numpy())
+                y_hat_list.append(einops.asnumpy(y_hat))
 
-        y_hat = np.concatenate(y_hat_list)
+        y_hat = np.concatenate(y_hat_list, axis=0)
         return y_hat
 
 
