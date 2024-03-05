@@ -71,4 +71,10 @@ class GeneratorName(StrEnum):
     NEIGHBOR = 'neighbor'
 
 
-
+class MetricName(StrEnum):
+    ACCURACY = "accuracy"
+    F1 = "f1"
+    AUC = "auc"
+    MSE = "mse"
+    R2 = "r2"
+    LOG_LOSS = "log_loss"

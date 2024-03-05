@@ -78,28 +78,32 @@ class TrainerFinetune(BaseEstimator):
         loader_valid = self.make_loader(dataset_valid, training=False)
         self.checkpoint.reset(self.model)
 
-        loss_valid, score_valid = self.test_epoch(loader_valid, y_val)
-        logger.info(f"Epoch 000 | Train loss: -.---- | Train score: -.---- | Val loss: {loss_valid:.4f} | Val score: {score_valid:.4f}")
-        self.checkpoint(self.model, loss_valid)
+        metrics_valid = self.test_epoch(loader_valid, y_val)
+        logger.info(f"Epoch 000 | Train loss: -.---- | Train score: -.---- | Val loss: {metrics_valid.loss:.4f} | Val score: {metrics_valid.score:.4f}")
+        self.checkpoint(self.model, metrics_valid.loss)
 
         for epoch in range(1, self.cfg.hyperparams.max_epochs+1):
 
             dataset_train = next(dataset_train_generator)            
             loader_train = self.make_loader(dataset_train, training=True)
             
-            loss_train, score_train = self.train_epoch(loader_train)
-            loss_valid, score_valid = self.test_epoch(loader_valid, y_val)
+            metrics_train = self.train_epoch(loader_train)
+            metrics_valid = self.test_epoch(loader_valid, y_val)
 
-            logger.info(f"Epoch {epoch:03d} | Train loss: {loss_train:.4f} | Train score: {score_train:.4f} | Val loss: {loss_valid:.4f} | Val score: {score_valid:.4f}")
+            logger.info((
+                f"Epoch {epoch:03d} "
+                f"| Train loss: {metrics_train.loss:.4f} | Train score: {metrics_train.score:.4f} "
+                f"| Val loss: {metrics_valid.loss:.4f} | Val score: {metrics_valid.score:.4f}"
+            ))
 
-            self.checkpoint(self.model, loss_valid)
+            self.checkpoint(self.model, metrics_valid.score)
             
-            self.early_stopping(loss_valid)
+            self.early_stopping(metrics_valid.loss)
             if self.early_stopping.we_should_stop():
                 logger.info("Early stopping")
                 break
 
-            self.scheduler.step(loss_valid)
+            self.scheduler.step(metrics_valid.loss)
 
         return self
     
@@ -136,7 +140,7 @@ class TrainerFinetune(BaseEstimator):
 
         y_true, y_pred = output_tracker.get()
         y_pred = self.y_transformer.inverse_transform(y_pred)
-        prediction_metrics = PredictionMetrics(y_true, y_pred, self.cfg.task)
+        prediction_metrics = PredictionMetrics.from_prediction(y_pred, y_true, self.cfg.task)
         return prediction_metrics
 
     
@@ -147,7 +151,7 @@ class TrainerFinetune(BaseEstimator):
 
         y_hats = self.predict(x_train, self.y_transformer.transform(y_train), x_test)
 
-        prediction_metrics = PredictionMetrics(y_hats, y_test, self.cfg.task)
+        prediction_metrics = PredictionMetrics.from_prediction(y_hats, y_test, self.cfg.task)
         return prediction_metrics
     
 
@@ -156,7 +160,7 @@ class TrainerFinetune(BaseEstimator):
         y_hat = self.predict_epoch(dataloader)
         y_hat_finish = self.y_transformer.inverse_transform(y_hat)
 
-        prediction_metrics = PredictionMetrics(y_hat_finish, y_test, self.cfg.task)
+        prediction_metrics = PredictionMetrics.from_prediction(y_hat_finish, y_test, self.cfg.task)
         return prediction_metrics
     
 

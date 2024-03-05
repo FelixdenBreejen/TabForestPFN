@@ -84,7 +84,6 @@ class TrackOutput():
         self.y_pred = []
 
     def update(self, y_true: np.ndarray, y_pred: np.ndarray):
-        assert len(y_true.shape) == len(y_pred.shape) == 1
         self.y_true.append(y_true)
         self.y_pred.append(y_pred)
 

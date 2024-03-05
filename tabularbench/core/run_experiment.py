@@ -6,7 +6,7 @@ from loguru import logger
 from omegaconf import DictConfig
 
 from tabularbench.core.dataset_split import make_dataset_split
-from tabularbench.core.enums import DatasetSize, ModelName, Task
+from tabularbench.core.enums import DatasetSize, DataSplit, ModelName, Task
 from tabularbench.core.get_model import get_model
 from tabularbench.core.get_trainer import get_trainer
 from tabularbench.data.dataset_openml import OpenMLDataset
@@ -41,14 +41,23 @@ def run_experiment(cfg: ConfigRun) -> Optional[RunMetrics]:
     logger.info(f"Finished experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name} doing {cfg.task.name}")
     logger.info(f"Final scores: ")
 
-    for i in range(len(metrics)):
-        logger.info(f"split_{i} :: train: {metrics.scores_train[i]:.4f}, val: {metrics.scores_val[i]:.4f}, test: {metrics.scores_test[i]:.4f}")
+    for i in range(metrics.ds.sizes['cv_split']):
+        logger.info((
+            f"cv_split_{i} :: "
+            f"train: {metrics.ds['score'].sel(data_split=DataSplit.TRAIN.value, cv_split=i):.4f}, "
+            f"val: {metrics.ds['score'].sel(data_split=DataSplit.VALID.value, cv_split=i):.4f}, "
+            f"test: {metrics.ds['score'].sel(data_split=DataSplit.TEST.value, cv_split=i):.4f}"
+        ))
 
-    score_train_avg = sum(metrics.scores_train) / len(metrics.scores_train)
-    score_val_avg = sum(metrics.scores_val) / len(metrics.scores_val)
-    score_test_avg = sum(metrics.scores_test) / len(metrics.scores_test)
+    logger.info((
+        f"cv_average :: "
+        f"train: {metrics.ds['score'].sel(data_split=DataSplit.TRAIN.value).mean():.4f}, "
+        f"val: {metrics.ds['score'].sel(data_split=DataSplit.VALID.value).mean():.4f}, "
+        f"test: {metrics.ds['score'].sel(data_split=DataSplit.TEST.value).mean():.4f}"
+    ))
 
-    logger.info(f"average :: train: {score_train_avg:.4f}, val: {score_val_avg:.4f}, test: {score_test_avg:.4f}")
+    if metrics is not None:
+        metrics.save(cfg.output_dir / "metrics.nc")
 
     return metrics
 
@@ -77,10 +86,11 @@ def run_experiment_(cfg: ConfigRun) -> RunMetrics:
         prediction_metrics_val = trainer.test(x_train, y_train, x_val_hyperparams, y_val_hyperparams)
         prediction_metrics_test = trainer.test(x_train_and_val, y_train_and_val, x_test, y_test)
 
-        logger.info(f"split_{split_i} :: train: {prediction_metrics_train.score:.4f}, val: {prediction_metrics_val:.4f}, test: {prediction_metrics_test:.4f}")
+        logger.info(f"split_{split_i} :: train: {prediction_metrics_train.score:.4f}, val: {prediction_metrics_val.score:.4f}, test: {prediction_metrics_test.score:.4f}")
 
-        metrics.append(score_train, score_val, score_test, loss_train, loss_val, loss_test)
+        metrics.append(prediction_metrics_train, prediction_metrics_val, prediction_metrics_test)
 
+    metrics.post_process()
     return metrics
 
 
@@ -93,7 +103,7 @@ if __name__ == "__main__":
 
     cfg = ConfigRun(
         output_dir = Path("output_run_experiment"),
-        device = torch.device("cuda:2"),
+        device = torch.device("cuda:1"),
         model_name = ModelName.FOUNDATION,
         seed = 0,
         task = Task.CLASSIFICATION,
@@ -112,7 +122,7 @@ if __name__ == "__main__":
             'linear_attention': False,
             'max_samples_support': 10000,
             'max_samples_query': 10000,
-            'max_epochs': 300,
+            'max_epochs': 2,
             'optimizer': 'adamw',
             'lr': 1.e-5,
             'weight_decay': 0,
