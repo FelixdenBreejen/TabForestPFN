@@ -3,7 +3,8 @@ from typing import Optional, Self
 
 import xarray as xr
 
-from tabularbench.core.enums import BenchmarkName, BenchmarkOrigin, DatasetSize, Task
+from tabularbench.core.enums import (BenchmarkName, BenchmarkOrigin,
+                                     DatasetSize, Task)
 from tabularbench.data.datafile_name_maker import make_datafile_path
 
 
@@ -45,6 +46,13 @@ class Benchmark:
 
 
 BENCHMARKS = {
+    BenchmarkName.DEBUG_CATEGORICAL_CLASSIFICATION: Benchmark.create(
+        name=BenchmarkName.DEBUG_CATEGORICAL_CLASSIFICATION,
+        origin=BenchmarkOrigin.WHYTREES,
+        task=Task.CLASSIFICATION,
+        dataset_size=DatasetSize.MEDIUM,
+        openml_dataset_ids=[44156, 44157, 44159, 45035, 45036, 45038, 45039]
+    ),
     BenchmarkName.CATEGORICAL_CLASSIFICATION: Benchmark.create(
         name=BenchmarkName.CATEGORICAL_CLASSIFICATION,
         origin=BenchmarkOrigin.WHYTREES,

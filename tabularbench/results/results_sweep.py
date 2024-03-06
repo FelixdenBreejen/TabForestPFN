@@ -36,7 +36,8 @@ class ResultsSweep():
 
     def save(self, path: Path):
         self.ds.to_netcdf(path)
-        logger.info(f"Saved results ({self.ds['runs_actual'].sum()} runs total) to {path}")
+        runs_total = self.ds['runs_actual'].sum().item()
+        logger.info(f"Saved results ({runs_total} runs total) to {path}")
 
 
 

@@ -48,6 +48,7 @@ class ModelName(StrEnum):
 
 
 class BenchmarkName(StrEnum):
+    DEBUG_CATEGORICAL_CLASSIFICATION = "debug_categorical_classification"
     CATEGORICAL_CLASSIFICATION = "categorical_classification"
     NUMERICAL_CLASSIFICATION = "numerical_classification"
     CATEGORICAL_REGRESSION = "categorical_regression"

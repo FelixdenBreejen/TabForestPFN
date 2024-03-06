@@ -3,6 +3,7 @@ hydra:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
 defaults:
+  - _self_
   - hyperparams/ft_transformer: ft_transformer
   - hyperparams/tabpfn: finetune_10k
   - hyperparams/foundation: finetune_10k
@@ -12,7 +13,7 @@ defaults:
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [2, 3, 4, 5, 6]
+devices: [6]
 n_random_runs_per_dataset: 500                  # suggested: 500 
 n_default_runs_per_dataset: 1                   # on default we also want multiple runs for the confidence bound
 
@@ -21,7 +22,8 @@ models:
 model_plot_names:
   - Foundation Finetune
 benchmarks:
-  - CATEGORICAL_CLASSIFICATION
+  - DEBUG_CATEGORICAL_CLASSIFICATION
+  # - CATEGORICAL_CLASSIFICATION
   # - NUMERICAL_CLASSIFICATION
   # - CATEGORICAL_REGRESSION
   # - NUMERICAL_REGRESSION
