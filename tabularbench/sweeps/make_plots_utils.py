@@ -8,10 +8,8 @@ from tabularbench.utils.paths_and_filenames import \
 
 def sweep_default_finished(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None:
 
-    
     for dataset_id in cfg.openml_dataset_ids_to_use:
-        df_id = results_sweep.ds['runs_actual'].sel(openml_dataset_id=dataset_id)
-        if not df_id:
+        if not dataset_id in results_sweep.ds.coords['openml_dataset_id']:
             return False
         
     all_datasets_at_least_one_run = results_sweep.ds['runs_actual'].all() 

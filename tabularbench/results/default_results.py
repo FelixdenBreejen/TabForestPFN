@@ -3,12 +3,12 @@ from __future__ import annotations
 import pandas as pd
 
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
-from tabularbench.results.reformat_benchmark import get_benchmark_csv_reformatted
+from tabularbench.results.reformat_benchmark import \
+    get_benchmark_csv_reformatted
 from tabularbench.results.scores_min_max import get_combined_normalized_scores
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.utils.paths_and_filenames import (
-    DEFAULT_RESULTS_VAL_FILE_NAME, DEFAULT_RESULTS_TEST_FILE_NAME
-)
+    DEFAULT_RESULTS_TEST_FILE_NAME, DEFAULT_RESULTS_VAL_FILE_NAME)
 
 
 def make_default_results(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame) -> None:
