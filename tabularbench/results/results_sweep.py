@@ -69,7 +69,7 @@ def make_data_vars_dict_with_empty_initialization(run_results_dict: dict[int, li
     n_cv_splits = max(cv_splits)
     n_data_splits = len(DataSplit)
 
-    var_names = get_union_of_data_var_names_of_first_run_result_of_all_datasets(run_results_dict)
+    metric_names = get_union_of_metric_names_of_first_run_result_of_all_datasets(run_results_dict)
 
     data_vars_dict = {
         "cv_splits_actual": (['openml_dataset_id'], cv_splits),
@@ -79,14 +79,14 @@ def make_data_vars_dict_with_empty_initialization(run_results_dict: dict[int, li
         "openml_dataset_name": (['openml_dataset_id'], np.full((n_datasets,), "", dtype=object)),
     }
 
-    for var_name in var_names:
-        data_vars_dict[var_name] = (['openml_dataset_id', 'run_id', 'cv_split', 'data_split'], np.full((n_datasets, n_runs, n_cv_splits, n_data_splits), np.nan))
+    for metric_name in metric_names:
+        data_vars_dict[metric_name] = (['openml_dataset_id', 'run_id', 'cv_split', 'data_split'], np.full((n_datasets, n_runs, n_cv_splits, n_data_splits), np.nan))
 
 
     return data_vars_dict
 
 
-def get_union_of_data_var_names_of_first_run_result_of_all_datasets(run_results_dict: dict[int, list[ResultsRun]]) -> list[str]:
+def get_union_of_metric_names_of_first_run_result_of_all_datasets(run_results_dict: dict[int, list[ResultsRun]]) -> list[str]:
 
     var_names = []
     for results_runs in run_results_dict.values():
