@@ -1,19 +1,22 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Self
+
 import numpy as np
+import torch
+from loguru import logger
 from omegaconf import DictConfig
 
-import torch
-
-from tabularbench.core.enums import BenchmarkName, DatasetSize, FeatureType, ModelName, Task, SearchType
+from tabularbench.core.enums import (BenchmarkName, DatasetSize, FeatureType,
+                                     ModelName, SearchType, Task)
 from tabularbench.data.benchmarks import BENCHMARKS
 from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.utils.config_run import ConfigRun
 
 
 @dataclass
-class RunResults():
+class ResultsRun():
     model_name: ModelName
     openml_dataset_id: int
     openml_dataset_name: str
@@ -22,24 +25,9 @@ class RunResults():
     search_type: SearchType
     seed: int
     device: Optional[torch.device]
-    scores_train: list[float]
-    scores_val: list[float]
-    scores_test: list[float]
-    losses_train: list[float]
-    losses_val: list[float]
-    losses_test: list[float]
+    metrics: RunMetrics
     hyperparams: DictConfig
 
-
-    def __post_init__(self):
-
-        self.score_train_mean = sum(self.scores_train) / len(self.scores_train)
-        self.score_val_mean = sum(self.scores_val) / len(self.scores_val)
-        self.score_test_mean = sum(self.scores_test) / len(self.scores_test)
-        self.loss_train_mean = sum(self.losses_train) / len(self.losses_train)
-        self.loss_val_mean = sum(self.losses_val) / len(self.losses_val)
-        self.loss_test_mean = sum(self.losses_test) / len(self.losses_test)
-        
 
     def to_dict(self):
 
@@ -57,26 +45,11 @@ class RunResults():
         for key, value in self.hyperparams.items():
             d["hp__"+str(key)] = value
 
-        d |= {
-            'score_train_mean': self.score_train_mean,
-            'score_val_mean': self.score_val_mean,
-            'score_test_mean': self.score_test_mean,
-            'loss_train_mean': self.loss_train_mean,
-            'loss_val_mean': self.loss_val_mean,
-            'loss_test_mean': self.loss_test_mean,
-            'scores_train': self.scores_train,
-            'scores_val': self.scores_val,
-            'scores_test': self.scores_test,
-            'losses_train': self.losses_train,
-            'losses_val': self.losses_val,
-            'losses_test': self.losses_test,
-        }
-
         return d
     
 
     @classmethod
-    def from_dict(cls, d: dict) -> RunResults:
+    def from_dict(cls, d: dict) -> Self:
             
         hyperparams = {}
         for key, value in d.items():
@@ -94,12 +67,6 @@ class RunResults():
             search_type=d['search_type'],
             seed=d['seed'],
             device=d['device'],
-            scores_train=d['scores_train'],
-            scores_val=d['scores_val'],
-            scores_test=d['scores_test'],
-            losses_train=d['losses_train'],
-            losses_val=d['losses_val'],
-            losses_test=d['losses_test'],
             hyperparams=hyperparams_dc,
         )
     
@@ -114,7 +81,7 @@ class RunResults():
             or not np.isfinite(row['mean_val_score'])
             or not np.isfinite(row['mean_test_score'])
         ):
-            print("Skipping row because of NaNs")
+            logger.info("Skipping row because of NaNs")
             return None
 
         task = Task.REGRESSION if row['data__regression'] else Task.CLASSIFICATION
@@ -209,7 +176,7 @@ class RunResults():
         cfg: ConfigRun, 
         search_type: SearchType,
         metrics: RunMetrics
-    ) -> RunResults:
+    ) -> ResultsRun:
 
         return cls(
             model_name=cfg.model_name,
@@ -220,12 +187,7 @@ class RunResults():
             search_type=search_type,
             seed=cfg.seed,
             device=cfg.device,
-            scores_train=metrics.scores_train,
-            scores_val=metrics.scores_val,
-            scores_test=metrics.scores_test,
-            losses_train=metrics.losses_train,
-            losses_val=metrics.losses_val,
-            losses_test=metrics.losses_test,
+            metrics=metrics,
             hyperparams=cfg.hyperparams,
         )
 

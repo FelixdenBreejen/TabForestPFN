@@ -1,26 +1,22 @@
 from __future__ import annotations
 
-import pandas as pd
-
-from tabularbench.core.enums import SearchType
+from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.utils.paths_and_filenames import \
     DEFAULT_RESULTS_TEST_FILE_NAME
 
 
-def sweep_default_finished(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame) -> None:
+def sweep_default_finished(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None:
 
-    df = df_run_results
-    df = df[ df['search_type'] == SearchType.DEFAULT.name ]
-    df = df[ df['seed'] == cfg.seed ]    # when using multiple default runs, the seed changes
-
+    
     for dataset_id in cfg.openml_dataset_ids_to_use:
-
-        df_id = df[ df['openml_dataset_id'] == dataset_id ]
-        if len(df_id) == 0:
+        df_id = results_sweep.ds['runs_actual'].sel(openml_dataset_id=dataset_id)
+        if not df_id:
             return False
-
-    return True
+        
+    all_datasets_at_least_one_run = results_sweep.ds['runs_actual'].all() 
+        
+    return all_datasets_at_least_one_run
 
 
 def default_results_not_yet_made(cfg: ConfigBenchmarkSweep) -> bool:

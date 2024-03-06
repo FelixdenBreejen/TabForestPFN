@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Self
 
 import numpy as np
+import scipy
 from sklearn.metrics import (accuracy_score, f1_score, log_loss,
                              mean_squared_error, r2_score, roc_auc_score)
 
@@ -38,13 +39,13 @@ def compute_classification_metrics(y_pred: np.ndarray, y_true: np.ndarray) -> tu
     # predictions are assumed to be log-probabilities
 
     y_pred_class = np.argmax(y_pred, axis=1)
-    y_pred_proba = np.exp(y_pred) / np.exp(y_pred).sum(axis=1, keepdims=True)
-    labels = np.arange(y_pred.shape[1])
+    y_pred_proba = scipy.special.softmax(y_pred, axis=1)
+    labels = np.arange(y_pred_proba.shape[1])
 
     metrics = {
         MetricName.ACCURACY: accuracy_score(y_true, y_pred_class),
         MetricName.F1: f1_score(y_true, y_pred_class, average="weighted"),
-        MetricName.AUC: roc_auc_score(y_true, y_pred_proba, multi_class='ovo', average='macro', labels=labels),
+        MetricName.AUC: roc_auc_score_multiclass(y_true, y_pred_proba, multi_class='ovo', average='macro', labels=labels),
         MetricName.LOG_LOSS: log_loss(y_true, y_pred_proba, labels=labels)
     }
 
@@ -52,6 +53,17 @@ def compute_classification_metrics(y_pred: np.ndarray, y_true: np.ndarray) -> tu
     score = metrics[MetricName.ACCURACY]
 
     return loss, score, metrics
+
+
+def roc_auc_score_multiclass(y_true, y_pred_proba, multi_class='ovo', average='macro', labels=None) -> float:
+    """ 
+    The roc_auc_score multi_class is not supported for binary classification
+    """
+
+    if y_pred_proba.shape[1] == 2:
+        return roc_auc_score(y_true, y_pred_proba[:, 1])
+    else:
+        return roc_auc_score(y_true, y_pred_proba, multi_class=multi_class, average=average, labels=labels)
 
 
 def compute_regression_metrics(y_pred: np.ndarray, y_true: np.ndarray) -> tuple[float, float, dict]:
