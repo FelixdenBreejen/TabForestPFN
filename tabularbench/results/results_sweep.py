@@ -152,4 +152,5 @@ def fill_ds_with_results_run(ds: xr.Dataset, results_run: ResultsRun, openml_dat
 
     for var_name in results_run.metrics.ds.data_vars:
         n_cv_splits_this_run = results_run.metrics.ds.sizes['cv_split']
-        ds[var_name].loc[dict(openml_dataset_id=openml_dataset_id, run_id=run_id, cv_split=slice(0, n_cv_splits_this_run))] = results_run.metrics.ds[var_name].values
+        cv_split_slice = slice(0, n_cv_splits_this_run - 1) # xarray slice is inclusive
+        ds[var_name].loc[dict(openml_dataset_id=openml_dataset_id, run_id=run_id, cv_split=cv_split_slice)] = results_run.metrics.ds[var_name].values

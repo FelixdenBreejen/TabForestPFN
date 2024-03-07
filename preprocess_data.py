@@ -1,9 +1,13 @@
 from pathlib import Path
+
 from loguru import logger
 
+from tabularbench.data.tabzilla_data_preprocessing import \
+    preprocess_tabzilla_data
+from tabularbench.data.whytrees_data_preprocessing import \
+    preprocess_whytrees_data
+from tabularbench.results.reformat_benchmark import reformat_benchmark
 from tabularbench.utils.paths_and_filenames import PATH_TO_OPENML_DATASETS
-from tabularbench.data.whytrees_data_preprocessing import preprocess_whytrees_data
-from tabularbench.data.tabzilla_data_preprocessing import preprocess_tabzilla_data
 
 
 def main():
@@ -21,6 +25,9 @@ def main():
     logger.info("Preprocessing tabzilla datasets...")
     preprocess_tabzilla_data()
     logger.info("Preprocessing tabzilla datasets... done.")
+    logger.info("Reformat whytrees benchmark...")
+    reformat_benchmark()
+    logger.info("Reformat whytrees benchmark... done.")
 
 
 if __name__ == "__main__":

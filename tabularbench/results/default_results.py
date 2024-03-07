@@ -3,24 +3,28 @@ from __future__ import annotations
 import pandas as pd
 
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
-from tabularbench.results.reformat_benchmark import \
-    get_benchmark_csv_reformatted
+from tabularbench.results.reformat_whytrees_benchmark import get_whytrees_benchmark_reformatted
+from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.results.scores_min_max import get_combined_normalized_scores
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
-from tabularbench.utils.paths_and_filenames import (
-    DEFAULT_RESULTS_TEST_FILE_NAME, DEFAULT_RESULTS_VAL_FILE_NAME)
+from tabularbench.utils.paths_and_filenames import DEFAULT_RESULTS_TEST_FILE_NAME, DEFAULT_RESULTS_VAL_FILE_NAME
 
 
-def make_default_results(cfg: ConfigBenchmarkSweep, df_run_results: pd.DataFrame) -> None:
+def make_default_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None:
 
     benchmark_model_names = [model_name.name for model_name in cfg.config_plotting.benchmark_model_names]
 
-    df_bench = get_benchmark_csv_reformatted()
+    df_bench = get_whytrees_benchmark_reformatted()
     df_bench = df_bench[ df_bench['openml_dataset_id'].isin(cfg.openml_dataset_ids_to_use) ]
     df_bench = df_bench[ df_bench['model'].isin(benchmark_model_names) ]
     df_bench = df_bench[ df_bench['search_type'] == SearchType.DEFAULT.name ]
     df_bench['model_plot_name'] = df_bench.apply(lambda row: ModelName[row['model']].value, axis=1)
     df_bench.sort_values(by=['model', 'openml_dataset_id'], inplace=True)
+
+    ds = results_sweep.ds
+    ds = ds.where(ds['search_type'] == 'default', drop=True)
+    ds = ds.where(ds['seed'] == cfg.seed, drop=True) # when using multiple default runs, the seed changes
+    
 
     df_run_results = df_run_results[ df_run_results['search_type'] == SearchType.DEFAULT.name ]
     df_run_results = df_run_results[ df_run_results['seed'] == cfg.seed ] # when using multiple default runs, the seed changes

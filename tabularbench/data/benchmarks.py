@@ -51,7 +51,7 @@ BENCHMARKS = {
         origin=BenchmarkOrigin.WHYTREES,
         task=Task.CLASSIFICATION,
         dataset_size=DatasetSize.MEDIUM,
-        openml_dataset_ids=[44156, 44157, 44159, 45035, 45036, 45038, 45039]
+        openml_dataset_ids=[44156, 45035, 45039]
     ),
     BenchmarkName.CATEGORICAL_CLASSIFICATION: Benchmark.create(
         name=BenchmarkName.CATEGORICAL_CLASSIFICATION,

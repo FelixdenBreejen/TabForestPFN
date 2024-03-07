@@ -3,8 +3,8 @@ import functools
 from loguru import logger
 
 from tabularbench.core.enums import DataSplit, Task
-from tabularbench.results.reformat_benchmark import \
-    get_benchmark_csv_reformatted
+from tabularbench.results.reformat_whytrees_benchmark import \
+    get_whytrees_benchmark_reformatted
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
@@ -47,7 +47,7 @@ def scores_min_max_(openml_dataset_id: int, benchmark_model_names: tuple[str], t
         case DataSplit.TEST:
             score_name = 'score_test_mean'
 
-    df_bench = get_benchmark_csv_reformatted()
+    df_bench = get_whytrees_benchmark_reformatted()
     df_bench = df_bench[ df_bench['model'].isin(benchmark_model_names) ]
     df_bench = df_bench[ df_bench['openml_dataset_id'] == openml_dataset_id ]
 
