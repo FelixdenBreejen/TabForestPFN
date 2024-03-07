@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import hydra
-from omegaconf import DictConfig
 from pathlib import Path
+
+import hydra
 import torch.multiprocessing as mp
 from loguru import logger
+from omegaconf import DictConfig
 
-
-from tabularbench.utils.config_main import ConfigMain
 from tabularbench.sweeps.run_sweep import run_sweep
-from tabularbench.utils.paths_and_filenames import PATH_TO_ALL_BENCH_CSV
+from tabularbench.utils.config_main import ConfigMain
+from tabularbench.utils.paths_and_filenames import PATH_TO_WHYTREES_BENCH_RESULTS
 from tabularbench.utils.set_seed import set_seed
-
 
 
 @hydra.main(version_base=None, config_path="config", config_name="main")
@@ -43,7 +42,7 @@ def main(cfg_hydra: DictConfig):
 
 def check_existence_of_benchmark_results_csv(cfg: ConfigMain) -> None:
 
-    results_csv = Path(PATH_TO_ALL_BENCH_CSV)
+    results_csv = Path(PATH_TO_WHYTREES_BENCH_RESULTS)
     if not results_csv.exists():
         raise FileNotFoundError(f"Could not find {results_csv}. Please download it from the link in the README.")
     
