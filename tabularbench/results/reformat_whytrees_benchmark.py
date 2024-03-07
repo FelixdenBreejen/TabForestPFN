@@ -25,7 +25,8 @@ def reformat_whytrees_benchmark():
     logger.info(f"Reading csv file...")
     df = pd.read_csv(path, low_memory=False)
     logger.info(f"Dropping rows with missing values...")
-    df = df.dropna(subset=['max_train_samples', 'data__regression', 'data__categorical', 'mean_val_score', 'mean_test_score'])
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df = df.dropna(subset=['max_train_samples', 'data__regression', 'data__categorical', 'mean_train_score', 'mean_val_score', 'mean_test_score'])
 
     logger.info(f"Retrieving benchmark names...")
     df['benchmark_name'] = df.apply(get_benchmark_name, axis=1)
@@ -118,7 +119,7 @@ def make_attr_dict(df: pd.DataFrame) -> dict[str, str]:
 
 def populate_xarray_dataset(df: pd.DataFrame, ds: xr.Dataset) -> None:
 
-    for _, row in tqdm(df.iterrows(), total=len(df)):
+    for i, row in tqdm(df.iterrows(), total=len(df)):
 
         model_name = get_model_name(row['model_name']).value
         openml_dataset_id = row['openml_dataset_id']
