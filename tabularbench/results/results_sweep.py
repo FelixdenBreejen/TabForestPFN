@@ -108,7 +108,7 @@ def make_coords_dict(run_results_dict: dict[int, list[ResultsRun]]) -> dict[str,
         'openml_dataset_id': list(run_results_dict.keys()),
         'run_id': range(n_runs),
         'cv_split': range(n_cv_splits),
-        'data_split': [data_split.value for data_split in DataSplit]
+        'data_split': [data_split.name for data_split in DataSplit]
     }
 
     return coords_dict

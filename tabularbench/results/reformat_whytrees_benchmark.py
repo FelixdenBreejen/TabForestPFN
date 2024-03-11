@@ -61,7 +61,7 @@ def make_coords_dict(df: pd.DataFrame) -> dict[str, np.ndarray]:
         'openml_dataset_id': openml_dataset_ids,
         'run_id': np.arange(n_runs_max),
         'cv_split': np.arange(n_cv_splits),
-        'data_split': [data_split.value for data_split in DataSplit],
+        'data_split': [data_split.name for data_split in DataSplit],
     }
 
 
