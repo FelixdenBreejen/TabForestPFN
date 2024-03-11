@@ -1,12 +1,13 @@
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.results.scores_min_max import scores_min_max
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
-def create_random_sequences_from_df(cfg: ConfigBenchmarkSweep, df: pd.DataFrame) -> np.ndarray: 
+def create_random_sequences_from_dataset(cfg: ConfigBenchmarkSweep, ds: xr.Dataset) -> np.ndarray:
     """
     For a given dataframe with results, we create random hpo sequences.
 

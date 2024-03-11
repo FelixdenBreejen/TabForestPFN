@@ -222,7 +222,6 @@ def get_model_name(str: str) -> ModelName:
     return model_name_dict[str]
 
 
-@functools.lru_cache(maxsize=1)
 def get_whytrees_benchmark_reformatted() -> xr.Dataset:
 
     if not Path(PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED).exists():

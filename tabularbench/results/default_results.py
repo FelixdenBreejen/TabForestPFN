@@ -5,6 +5,8 @@ import pandas as pd
 import xarray as xr
 
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
+from tabularbench.results.dataset_manipulations import (add_model_plot_names, add_placeholder_as_model_name_dim,
+                                                        select_only_the_first_default_run_of_every_model_and_dataset)
 from tabularbench.results.reformat_whytrees_benchmark import get_whytrees_benchmark_reformatted
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.results.scores_min_max import get_combined_normalized_scores
@@ -33,20 +35,16 @@ def process_whytrees_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
     ds_whytrees[vars_with_run_id] = ds_whytrees[vars_with_run_id].where(ds_whytrees['search_type'] == SearchType.DEFAULT.name, drop=True)
     ds_whytrees = ds_whytrees.sum(dim='run_id', keep_attrs=True)
 
-    model_plot_names = [ ModelName[x].value for x in ds_whytrees['model_name'].values ]
-    ds_whytrees['model_plot_name'] = xr.DataArray(model_plot_names, coords=dict(model_name=ds_whytrees.coords['model_name']))
+    add_model_plot_names(ds_whytrees)
+
     return ds_whytrees
 
 
 def process_sweep_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> xr.Dataset:
 
-    ds = results_sweep.ds
-    ds = ds.where(ds['search_type'] == SearchType.DEFAULT.name, drop=True)
-    ds = ds.where(ds['seed'] == cfg.seed, drop=True) # when using multiple default runs, the seed changes
-    ds = ds.isel(run_id=0)
-    ds = ds[['cv_splits_actual', 'runs_actual', 'score']]
-    ds[['runs_actual', 'score']] = ds[['runs_actual', 'score']].expand_dims(dim='model_name').assign_coords({'model_name': [ModelName.PLACEHOLDER.name]})
-    ds['model_plot_name'] = xr.DataArray([cfg.model_plot_name], coords=dict(model_name=ds.coords['model_name']))
+    ds = results_sweep.ds.copy()
+    add_placeholder_as_model_name_dim(ds, cfg.model_plot_name)
+    ds = select_only_the_first_default_run_of_every_model_and_dataset(cfg, ds)
     
     return ds
 
@@ -76,6 +74,7 @@ def make_df_results(cfg: ConfigBenchmarkSweep, ds: xr.Dataset, data_split: DataS
     model_plot_names = [model_name.value for model_name in cfg.config_plotting.benchmark_model_names] + [cfg.model_plot_name]
     score = score.reindex(model_plot_name = model_plot_names)
     df = score.to_pandas()
+    df = df.round(4)
     df.to_csv(cfg.output_dir / get_results_file_name(data_split), mode='w', index=True, header=True)
 
 
