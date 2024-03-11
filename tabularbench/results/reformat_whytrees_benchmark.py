@@ -51,7 +51,7 @@ def reformat_whytrees_benchmark():
 def make_coords_dict(df: pd.DataFrame) -> dict[str, np.ndarray]:
 
     model_names = df['model_name'].unique()
-    model_names = [get_model_name(model_name).value for model_name in model_names]
+    model_names = [get_model_name(model_name).name for model_name in model_names]
     openml_dataset_ids = np.sort(df['openml_dataset_id'].unique())
     n_runs_max = df.groupby(['model_name', 'openml_dataset_id']).size().max()
     n_cv_splits = get_max_n_cv_splits_of_all_datasets(df)
@@ -74,9 +74,7 @@ def make_data_vars_dict_with_empty_initialization(df: pd.DataFrame, coords_dict:
     n_data_splits = len(coords_dict['data_split'])
 
     score = np.full((n_models, n_datasets, n_runs_max, n_cv_splits, n_data_splits), np.nan)
-    accuracy = np.full((n_models, n_datasets, n_runs_max, n_cv_splits, n_data_splits), np.nan)
-    r2 = np.full((n_models, n_datasets, n_runs_max, n_cv_splits, n_data_splits), np.nan)
-    search_type = np.full((n_datasets, n_runs_max), "", dtype=object)
+    search_type = np.full((n_models, n_datasets, n_runs_max), "", dtype=object)
     task = np.full((n_datasets), "", dtype=object)
     feature_type = np.full((n_datasets), "", dtype=object)
     dataset_size = np.full((n_datasets), "", dtype=object)
@@ -87,9 +85,7 @@ def make_data_vars_dict_with_empty_initialization(df: pd.DataFrame, coords_dict:
 
     return {
         'score': (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], score),
-        'accuracy': (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], accuracy),
-        'r2': (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], r2),
-        'search_type': (['openml_dataset_id', 'run_id'], search_type),
+        'search_type': (['model_name', 'openml_dataset_id', 'run_id'], search_type),
         'task': (['openml_dataset_id'], task),
         'feature_type': (['openml_dataset_id'], feature_type),
         'dataset_size': (['openml_dataset_id'], dataset_size),
@@ -112,16 +108,17 @@ def make_attr_dict(df: pd.DataFrame) -> dict[str, str]:
             '"Why do tree-based models still outperform deep learning on tabular data?" by Grinsztasjn et al. (2022)'
         ),
         'details': (
-            'Score is the same as accuracy and r2, depending on the task (classification vs regression).'
+            'Score is the same as accuracy or r2, depending on the task (classification vs regression).'
+            'Losses are not given by the benchmark dataset.'
         )
     }
 
 
 def populate_xarray_dataset(df: pd.DataFrame, ds: xr.Dataset) -> None:
 
-    for i, row in tqdm(df.iterrows(), total=len(df)):
+    for _, row in tqdm(df.iterrows(), total=len(df)):
 
-        model_name = get_model_name(row['model_name']).value
+        model_name = get_model_name(row['model_name']).name
         openml_dataset_id = row['openml_dataset_id']
 
         search_type = SearchType.RANDOM if row['hp'] == 'random' else SearchType.DEFAULT
@@ -138,18 +135,11 @@ def populate_xarray_dataset(df: pd.DataFrame, ds: xr.Dataset) -> None:
         cv_split_slice = slice(0, n_cv_splits_actual - 1) # xarray slice is inclusive
         
         ds['score'].loc[model_name, openml_dataset_id, run_id, cv_split_slice] = score
-        
-        match task:
-            case Task.CLASSIFICATION:
-                ds['accuracy'].loc[model_name, openml_dataset_id, run_id, cv_split_slice] = score
-            case Task.REGRESSION:
-                ds['r2'].loc[model_name, openml_dataset_id, run_id, cv_split_slice] = score
-
-        ds['search_type'].loc[openml_dataset_id, run_id] = search_type.value
-        ds['task'].loc[openml_dataset_id] = task.value
-        ds['feature_type'].loc[openml_dataset_id] = feature_type.value
+        ds['search_type'].loc[model_name, openml_dataset_id, run_id] = search_type.name
+        ds['task'].loc[openml_dataset_id] = task.name
+        ds['feature_type'].loc[openml_dataset_id] = feature_type.name
         ds['dataset_size'].loc[openml_dataset_id] = dataset_size.name
-        ds['benchmark_name'].loc[openml_dataset_id] = benchmark_name.value
+        ds['benchmark_name'].loc[openml_dataset_id] = benchmark_name.name
         ds['openml_dataset_name'].loc[openml_dataset_id] = openml_dataset_name
 
         if run_id == 0:
@@ -233,14 +223,12 @@ def get_model_name(str: str) -> ModelName:
 
 
 @functools.lru_cache(maxsize=1)
-def get_whytrees_benchmark_reformatted():
+def get_whytrees_benchmark_reformatted() -> xr.Dataset:
 
     if not Path(PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED).exists():
-        raise FileNotFoundError(f"File {PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED} does not exist, did you run reformat_benchmark()?")
+        raise FileNotFoundError(f"File {PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED} does not exist, did you run reformat_whytrees_benchmark()?")
 
-    df = pd.read_csv(PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED, low_memory=False)
-    return df
-
+    return xr.open_dataset(PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED)
 
 if __name__ == "__main__":
     reformat_whytrees_benchmark()

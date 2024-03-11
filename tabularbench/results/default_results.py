@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pandas as pd
+import xarray as xr
 
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.results.reformat_whytrees_benchmark import get_whytrees_benchmark_reformatted
@@ -14,15 +15,15 @@ def make_default_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep)
 
     benchmark_model_names = [model_name.name for model_name in cfg.config_plotting.benchmark_model_names]
 
-    df_bench = get_whytrees_benchmark_reformatted()
-    df_bench = df_bench[ df_bench['openml_dataset_id'].isin(cfg.openml_dataset_ids_to_use) ]
-    df_bench = df_bench[ df_bench['model'].isin(benchmark_model_names) ]
-    df_bench = df_bench[ df_bench['search_type'] == SearchType.DEFAULT.name ]
-    df_bench['model_plot_name'] = df_bench.apply(lambda row: ModelName[row['model']].value, axis=1)
-    df_bench.sort_values(by=['model', 'openml_dataset_id'], inplace=True)
+    ds_whytrees = get_whytrees_benchmark_reformatted()
+    ds_whytrees = ds_whytrees.sel(openml_dataset_id=cfg.openml_dataset_ids_to_use, model_name=benchmark_model_names)
+    ds_whytrees = ds_whytrees.where(ds_whytrees['search_type'] == SearchType.DEFAULT.name, drop=True)
+
+    model_plot_names = [ ModelName[x].value for x in ds_whytrees['model_name'].values ]
+    ds_whytrees['model_name'] = xr.DataArray(model_plot_names, coords=dict(model_name=ds_whytrees.coords['model_name']))
 
     ds = results_sweep.ds
-    ds = ds.where(ds['search_type'] == 'default', drop=True)
+    ds = ds.where(ds['search_type'] == SearchType.DEFAULT.name, drop=True)
     ds = ds.where(ds['seed'] == cfg.seed, drop=True) # when using multiple default runs, the seed changes
     
 

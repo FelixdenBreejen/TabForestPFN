@@ -1,14 +1,14 @@
 from __future__ import annotations
+
 import copy
-from dataclasses import dataclass
 import itertools
-from loguru import logger
+from dataclasses import dataclass
 from pathlib import Path
 
-from omegaconf import DictConfig, OmegaConf
 import torch
 import yaml
-
+from loguru import logger
+from omegaconf import DictConfig, OmegaConf
 
 from tabularbench.core.enums import BenchmarkName, ModelName, SearchType
 from tabularbench.data.benchmarks import BENCHMARKS

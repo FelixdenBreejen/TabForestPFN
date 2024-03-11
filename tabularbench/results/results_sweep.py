@@ -147,7 +147,7 @@ def make_attr_dict(run_results_dict: dict[int, list[ResultsRun]]) -> dict[str, s
 def fill_ds_with_results_run(ds: xr.Dataset, results_run: ResultsRun, openml_dataset_id: int, run_id: int) -> None:
 
     ds['seed'].loc[dict(openml_dataset_id=openml_dataset_id, run_id=run_id)] = results_run.seed
-    ds['search_type'].loc[dict(openml_dataset_id=openml_dataset_id, run_id=run_id)] = results_run.search_type.value
+    ds['search_type'].loc[dict(openml_dataset_id=openml_dataset_id, run_id=run_id)] = results_run.search_type.name
     ds['openml_dataset_name'].loc[dict(openml_dataset_id=openml_dataset_id)] = results_run.openml_dataset_name
 
     for var_name in results_run.metrics.ds.data_vars:
