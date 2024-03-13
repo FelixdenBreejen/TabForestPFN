@@ -44,3 +44,17 @@ def get_var_names_depending_on_runs(ds: xr.Dataset) -> list[str]:
         var_names.append('runs_actual')
 
     return var_names
+
+
+def apply_mean_over_cv_split(ds: xr.Dataset) -> xr.Dataset:
+    """
+    Apply mean over the cv_split dimension.
+    """
+
+    ds = ds.copy()
+    metric_vars = [var for var in ds.data_vars if 'cv_split' in ds[var].dims]
+    ds[metric_vars] = ds[metric_vars].sum(dim='cv_split') / ds['cv_splits_actual']
+
+    return ds
+
+

@@ -1,8 +1,9 @@
 import numpy as np
-import pandas as pd
 import xarray as xr
+from loguru import logger
 
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
+from tabularbench.results.dataset_manipulations import apply_mean_over_cv_split
 from tabularbench.results.scores_min_max import scores_min_max
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
@@ -24,32 +25,34 @@ def create_random_sequences_from_dataset(cfg: ConfigBenchmarkSweep, ds: xr.Datas
     
     sequences_all = np.zeros((n_models, n_datasets, n_shuffles, n_runs))
 
+    ds = apply_mean_over_cv_split(ds)
+
     for dataset_i, openml_dataset_id in enumerate(cfg.openml_dataset_ids_to_use):
 
-        df_dataset = df[ df['openml_dataset_id'] == openml_dataset_id ]
+        ds_dataset = ds.sel(openml_dataset_id=openml_dataset_id)
 
         for model_i, model in enumerate(models):
 
-            df_model = df_dataset[ df_dataset['model'] == model.name ]
+            ds_model = ds_dataset.sel(model_name=model.name)
 
             if model == ModelName.PLACEHOLDER and cfg.search_type == SearchType.DEFAULT:
                 # make a confidence interval around the default instead of doing hpo
-                sequences_all[model_i, dataset_i, :, :] = compute_default_sequences_for_model(cfg, df_model)
+                sequences_all[model_i, dataset_i, :, :] = compute_default_sequences_for_model(cfg, ds_model)
             else:
-                sequences_all[model_i, dataset_i, :, :] = compute_random_sequences_for_model(cfg, df_model, model, openml_dataset_id)
+                sequences_all[model_i, dataset_i, :, :] = compute_random_sequences_for_model(cfg, ds_model, model, openml_dataset_id)
 
     return sequences_all
 
 
-def compute_default_sequences_for_model(cfg: ConfigBenchmarkSweep, df_model: pd.DataFrame) -> np.ndarray:
+def compute_default_sequences_for_model(cfg: ConfigBenchmarkSweep, ds_model: xr.Dataset) -> np.ndarray:
     """
     Fake sequence that is just the default value.
     """
 
     n_shuffles = cfg.config_plotting.n_random_shuffles
 
-    df_model_default = df_model[ df_model['search_type'] == SearchType.DEFAULT.name ]
-    results = df_model_default['score_test_mean'].values
+    ds = ds_model.sel(data_split=DataSplit.TEST.name)
+    results = ds['score'].where(ds_model['search_type'] == SearchType.DEFAULT.name, drop=True).values
 
     random_index = np.random.randint(0, len(results), size=(n_shuffles,))
     sequences = results[random_index, None]
@@ -58,29 +61,30 @@ def compute_default_sequences_for_model(cfg: ConfigBenchmarkSweep, df_model: pd.
     return sequences
 
 
-def compute_random_sequences_for_model(cfg: ConfigBenchmarkSweep, df_model: pd.DataFrame, model: str, openml_dataset_id: int) -> np.ndarray:
+def compute_random_sequences_for_model(cfg: ConfigBenchmarkSweep, ds_model: xr.Dataset, model: str, openml_dataset_id: int) -> np.ndarray:
 
-    df_model_default = df_model[ df_model['search_type'] == SearchType.DEFAULT.name ]
-    df_model_default_seed_0 = df_model_default[ df_model_default['seed'] == cfg.seed ]
+    ds_default = ds_model['score'].where(ds_model['search_type'] == SearchType.DEFAULT.name, drop=True)
+    ds_default_seed_0 = ds_default.where(ds_model['seed'] == cfg.seed, drop=True)
 
-    if len(df_model_default) == 1:
+    if ds_default.sizes['run_id'] == 1:
         # If there is one default value, we use that
-        default_value_val = df_model_default['score_val_mean'].item()
-        default_value_test = df_model_default['score_test_mean'].item()
-    elif len(df_model_default_seed_0) == 1:
+        default_value_val = ds_default.sel(data_split=DataSplit.VALID.name).item()
+        default_value_test = ds_default.sel(data_split=DataSplit.TEST.name).item()
+    elif ds_default_seed_0.sizes['run_id'] == 1:
         # If there are multiple default values, we use the one with seed 0
-        default_value_val = df_model_default_seed_0['score_val_mean'].item()
-        default_value_test = df_model_default_seed_0['score_test_mean'].item()
-    elif len(df_model_default) == 0:
+        default_value_val = ds_default_seed_0.sel(data_split=DataSplit.VALID.name).item()
+        default_value_test = ds_default_seed_0.sel(data_split=DataSplit.TEST.name).item()
+    elif ds_default.sizes['run_id'] == 0:
         logger.warning(f"No default value found for model {model} on dataset {openml_dataset_id}. We will assume 0.")
         default_value_val = 0
         default_value_test = 0
     else:
         raise ValueError(f"More than one default value found for model {model} on dataset {openml_dataset_id}")
     
-    df_model_random = df_model[ df_model['search_type'] == SearchType.RANDOM.name ]
-    random_values_val = df_model_random['score_val_mean'].values
-    random_values_test = df_model_random['score_test_mean'].values
+    ds_random = ds_model['score'].where(ds_model['search_type'] == SearchType.RANDOM.name, drop=True)
+
+    random_values_val = ds_random.sel(data_split=DataSplit.VALID.name).values
+    random_values_test = ds_random.sel(data_split=DataSplit.TEST.name).values
 
     sequences = create_random_sequences(
         default_value_val = default_value_val, 
