@@ -83,6 +83,8 @@ def make_data_vars_dict_with_empty_initialization(run_results_dict: dict[int, li
     for metric_name in metric_names:
         data_vars_dict[metric_name] = (['openml_dataset_id', 'run_id', 'cv_split', 'data_split'], np.full((n_datasets, n_runs, n_cv_splits, n_data_splits), np.nan))
 
+    for hyperparam in sample_run_result_from_run_results_dict(run_results_dict).hyperparams:
+        data_vars_dict["hp_"+hyperparam] = (['openml_dataset_id', 'run_id'], np.full((n_datasets, n_runs), float('nan'), dtype=object))
 
     return data_vars_dict
 
@@ -154,3 +156,6 @@ def fill_ds_with_results_run(ds: xr.Dataset, results_run: ResultsRun, openml_dat
         n_cv_splits_this_run = results_run.metrics.ds.sizes['cv_split']
         cv_split_slice = slice(0, n_cv_splits_this_run - 1) # xarray slice is inclusive
         ds[var_name].loc[dict(openml_dataset_id=openml_dataset_id, run_id=run_id, cv_split=cv_split_slice)] = results_run.metrics.ds[var_name].values
+
+    for hyperparam, value in results_run.hyperparams.items():
+        ds["hp_"+hyperparam].loc[dict(openml_dataset_id=openml_dataset_id, run_id=run_id)] = value

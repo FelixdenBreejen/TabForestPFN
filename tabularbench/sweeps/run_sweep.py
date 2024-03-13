@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+from copy import deepcopy
 
 import torch
 import torch.multiprocessing as mp
@@ -159,7 +160,8 @@ class SweepRunner():
         if self.no_runs_finished():
             return
         
-        results_sweep = ResultsSweep.from_run_results_dict(self.results_run_dict)
+        results_run_dict = deepcopy(self.results_run_dict)
+        results_sweep = ResultsSweep.from_run_results_dict(results_run_dict)
         results_sweep.save(self.cfg.output_dir / RESULTS_FILE_NAME)
         plot_results(self.cfg, results_sweep)
 
@@ -181,15 +183,13 @@ class SweepRunner():
 
     def get_hyperparam_search_type_and_seed(self, dataset_id: int) -> tuple[SearchType, int]:
 
-        hyperparam_search_type = self.cfg.search_type
         if len(self.results_run_dict[dataset_id]) == 0 and self.runs_busy_dict[dataset_id] == 0:
             # This is the first run for this dataset, so we draw the default hyperparams
-            hyperparam_search_type = SearchType.DEFAULT
-            seed = self.cfg.seed
+            return SearchType.DEFAULT, self.cfg.seed
         elif self.cfg.search_type == SearchType.DEFAULT:
-            seed = self.cfg.seed + self.runs_attempted_dict[dataset_id]
-
-        return hyperparam_search_type, seed
+            return SearchType.DEFAULT, self.cfg.seed + self.runs_attempted_dict[dataset_id]
+        else:
+            return SearchType.RANDOM, self.cfg.seed
 
 
 def run_a_run(

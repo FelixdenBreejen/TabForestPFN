@@ -14,7 +14,7 @@ defaults:
 output_dir: ${hydra:run.dir}
 seed: 0
 devices: [4, 5, 6]
-n_random_runs_per_dataset: 500                  # suggested: 500 
+n_random_runs_per_dataset: 3                  # suggested: 500 
 n_default_runs_per_dataset: 1                   # on default we also want multiple runs for the confidence bound
 
 models:
@@ -33,8 +33,8 @@ benchmarks:
   # - NUMERICAL_REGRESSION_LARGE
   # - TABZILLA_HARD_MAX_TEN_CLASSES
 search_types:
-  - DEFAULT
-  # - RANDOM
+  # - DEFAULT
+  - RANDOM
 
 
 openml_dataset_ids_to_ignore: []
