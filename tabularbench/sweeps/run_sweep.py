@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from copy import deepcopy
 
 import torch
 import torch.multiprocessing as mp
@@ -160,7 +159,7 @@ class SweepRunner():
         if self.no_runs_finished():
             return
         
-        results_run_dict = deepcopy(self.results_run_dict)
+        results_run_dict = {dataset_id: list(results_runs) for dataset_id, results_runs in self.results_run_dict.items()}
         results_sweep = ResultsSweep.from_run_results_dict(results_run_dict)
         results_sweep.save(self.cfg.output_dir / RESULTS_FILE_NAME)
         plot_results(self.cfg, results_sweep)

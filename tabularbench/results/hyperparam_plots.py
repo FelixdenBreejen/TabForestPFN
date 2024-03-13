@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import xarray as xr
 from matplotlib import pyplot as plt
 
 from tabularbench.core.enums import DataSplit
@@ -34,12 +35,7 @@ def make_hyperparam_plots(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep
                     xscale = 'log' if 'log' in distribution else 'linear'
                     fig = ds_dataset.plot.scatter(x=random_var_name, y='score', xscale=xscale).get_figure()
                 case {'values': values}:
-                    data = []
-                    for value in values:
-                        data.append(ds_dataset['score'].where(ds_dataset[random_var_name] == value).values)
-
-                    fig, ax = plt.subplots()
-                    ax.boxplot(data, labels=values)
+                    fig = make_boxplot(ds_dataset, values, random_var_name)
                 case _:
                     continue
 
@@ -48,3 +44,15 @@ def make_hyperparam_plots(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep
             png_path.parent.mkdir(parents=True, exist_ok=True)
             fig.savefig(png_path)
             plt.close(fig)
+
+
+def make_boxplot(ds: xr.Dataset, values: list[str], random_var_name: str) -> plt.Figure:
+    
+    data = []
+    for value in values:
+        data.append(ds['score'].where(ds[random_var_name] == value).values)
+
+    fig, ax = plt.subplots()
+    ax.boxplot(data, labels=values)
+    
+    return fig

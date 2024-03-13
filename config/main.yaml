@@ -7,7 +7,7 @@ defaults:
   - hyperparams/ft_transformer: ft_transformer
   - hyperparams/tabpfn: finetune_10k
   - hyperparams/foundation: finetune_10k
-  - main_test
+  # - main_test
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
@@ -22,8 +22,8 @@ models:
 model_plot_names:
   - Foundation Finetune
 benchmarks:
-  - DEBUG_CATEGORICAL_CLASSIFICATION
-  # - CATEGORICAL_CLASSIFICATION
+  # - DEBUG_CATEGORICAL_CLASSIFICATION
+  - CATEGORICAL_CLASSIFICATION
   # - NUMERICAL_CLASSIFICATION
   # - CATEGORICAL_REGRESSION
   # - NUMERICAL_REGRESSION
