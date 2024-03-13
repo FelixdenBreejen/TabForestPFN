@@ -44,6 +44,7 @@ class Checkpoint():
         self.id = id
         self.curr_best_loss = np.inf
         self.path = Path(self.dirname) / f"params_{self.id}.pt"
+        self.path.parent.mkdir(exist_ok=True)
 
     
     def reset(self, net):
@@ -55,7 +56,6 @@ class Checkpoint():
         
         if loss < self.curr_best_loss:
             self.curr_best_loss = loss
-            self.path.parent.mkdir(exist_ok=True)
             torch.save(net.state_dict(), self.path)
 
 

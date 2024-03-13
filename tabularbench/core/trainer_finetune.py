@@ -13,8 +13,7 @@ from tabularbench.core.get_loss import get_loss
 from tabularbench.core.get_optimizer import get_optimizer
 from tabularbench.core.get_scheduler import get_scheduler
 from tabularbench.core.y_transformer import create_y_transformer
-from tabularbench.data.dataset_finetune import (DatasetFinetune,
-                                                DatasetFinetuneGenerator)
+from tabularbench.data.dataset_finetune import DatasetFinetune, DatasetFinetuneGenerator
 from tabularbench.data.preprocessor import Preprocessor
 from tabularbench.results.prediction_metrics import PredictionMetrics
 from tabularbench.utils.config_run import ConfigRun
@@ -96,7 +95,7 @@ class TrainerFinetune(BaseEstimator):
                 f"| Val loss: {metrics_valid.loss:.4f} | Val score: {metrics_valid.score:.4f}"
             ))
 
-            self.checkpoint(self.model, metrics_valid.score)
+            self.checkpoint(self.model, metrics_valid.loss)
             
             self.early_stopping(metrics_valid.loss)
             if self.early_stopping.we_should_stop():
