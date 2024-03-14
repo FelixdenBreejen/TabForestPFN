@@ -12,7 +12,7 @@ from tabularbench.utils.paths_and_filenames import (PATH_TO_WHYTREES_BENCH_RESUL
                                                     PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED)
 
 
-def reformat_benchmark_whytrees():
+def reformat_results_whytrees():
 
     logger.info("Reformatting whytrees benchmark started")
 
@@ -224,9 +224,9 @@ def get_model_name(str: str) -> ModelName:
 def get_reformatted_results_whytrees() -> xr.Dataset:
 
     if not Path(PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED).exists():
-        raise FileNotFoundError(f"File {PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED} does not exist, did you run reformat_benchmark_whytrees()?")
+        raise FileNotFoundError(f"File {PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED} does not exist, did you run reformat_results_whytrees()?")
 
     return xr.open_dataset(PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED)
 
 if __name__ == "__main__":
-    reformat_benchmark_whytrees()
+    reformat_results_whytrees()

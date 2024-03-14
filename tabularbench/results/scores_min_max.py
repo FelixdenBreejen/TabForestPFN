@@ -3,7 +3,7 @@ import functools
 from loguru import logger
 
 from tabularbench.core.enums import DataSplit, Task
-from tabularbench.results.reformat_benchmark_whytrees import get_reformatted_results_whytrees
+from tabularbench.results.reformat_results_whytrees import get_reformatted_results_whytrees
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 

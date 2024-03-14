@@ -6,7 +6,7 @@ from tabularbench.results.dataset_manipulations import add_model_plot_names, add
 from tabularbench.results.dataset_plot_combined import make_combined_dataset_plot, make_combined_dataset_plot_data
 from tabularbench.results.dataset_plot_separate import make_separate_dataset_plot_data, make_separate_dataset_plots
 from tabularbench.results.random_sequence import create_random_sequences_from_dataset
-from tabularbench.results.reformat_benchmark_whytrees import get_reformatted_results_whytrees
+from tabularbench.results.reformat_results_whytrees import get_reformatted_results_whytrees
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 

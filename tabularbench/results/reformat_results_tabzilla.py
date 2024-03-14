@@ -8,13 +8,13 @@ from tqdm import tqdm
 
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.core.model_class import get_model_class
-from tabularbench.results.reformat_benchmark_whytrees import get_model_name
+from tabularbench.results.reformat_results_whytrees import get_model_name
 from tabularbench.utils.paths_and_filenames import (PATH_TO_TABZILLA_BENCH_RESULTS,
                                                     PATH_TO_TABZILLA_BENCH_RESULTS_REFORMATTED)
 
 TABZILLA_CV_SPLIT_COUNT = 10
 
-def reformat_benchmark_tabzilla():
+def reformat_results_tabzilla():
 
     logger.info("Reformatting tabzilla benchmark started")
 
@@ -190,9 +190,9 @@ def get_model_name(str: str) -> ModelName:
 def get_reformatted_results_tabzilla() -> xr.Dataset:
 
     if not Path(PATH_TO_TABZILLA_BENCH_RESULTS_REFORMATTED).exists():
-        raise FileNotFoundError(f"File {PATH_TO_TABZILLA_BENCH_RESULTS_REFORMATTED} does not exist, did you run reformat_benchmark_whytrees()?")
+        raise FileNotFoundError(f"File {PATH_TO_TABZILLA_BENCH_RESULTS_REFORMATTED} does not exist, did you run reformat_results_whytrees()?")
 
     return xr.open_dataset(PATH_TO_TABZILLA_BENCH_RESULTS_REFORMATTED)
 
 if __name__ == "__main__":
-    reformat_benchmark_tabzilla()
+    reformat_results_tabzilla()

@@ -7,6 +7,7 @@ import xarray as xr
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.results.dataset_manipulations import (add_model_plot_names, add_placeholder_as_model_name_dim,
                                                         select_only_the_first_default_run_of_every_model_and_dataset)
+from tabularbench.results.reformat_results_tabzilla import get_reformatted_results_tabzilla
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.results.scores_min_max import get_combined_normalized_scores
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
@@ -28,7 +29,7 @@ def process_tabzilla_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
 
     benchmark_model_names = [model_name.name for model_name in cfg.config_plotting.benchmark_model_names]
 
-    ds_whytrees = get_tabzilla_benchmark_reformatted()
+    ds_whytrees = get_reformatted_results_tabzilla()
     ds_whytrees = ds_whytrees.sel(openml_dataset_id=cfg.openml_dataset_ids_to_use, model_name=benchmark_model_names)
     vars_with_run_id = ['search_type', 'score', 'runs_actual']
     ds_whytrees[vars_with_run_id] = ds_whytrees[vars_with_run_id].where(ds_whytrees['search_type'] == SearchType.DEFAULT.name, drop=True)

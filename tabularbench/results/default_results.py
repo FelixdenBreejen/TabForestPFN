@@ -7,7 +7,7 @@ import xarray as xr
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.results.dataset_manipulations import (add_model_plot_names, add_placeholder_as_model_name_dim,
                                                         select_only_the_first_default_run_of_every_model_and_dataset)
-from tabularbench.results.reformat_benchmark_whytrees import get_reformatted_results_whytrees
+from tabularbench.results.reformat_results_whytrees import get_reformatted_results_whytrees
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.results.scores_min_max import get_combined_normalized_scores
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
