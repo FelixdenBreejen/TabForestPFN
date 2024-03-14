@@ -3,7 +3,7 @@ import functools
 from loguru import logger
 
 from tabularbench.core.enums import DataSplit, Task
-from tabularbench.results.reformat_whytrees_benchmark import get_whytrees_benchmark_reformatted
+from tabularbench.results.reformat_benchmark_whytrees import get_reformatted_results_whytrees
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
@@ -40,7 +40,7 @@ def scores_min_max(cfg: ConfigBenchmarkSweep, openml_dataset_id: int, data_split
 @functools.lru_cache(maxsize=None)
 def scores_min_max_(openml_dataset_id: int, benchmark_model_names: tuple[str], task: Task, data_split: DataSplit) -> tuple[float, float]:
 
-    ds_whytrees = get_whytrees_benchmark_reformatted()
+    ds_whytrees = get_reformatted_results_whytrees()
     ds_whytrees = ds_whytrees.sel(model_name=list(benchmark_model_names), openml_dataset_id=openml_dataset_id, data_split=data_split.name)
 
     match task:

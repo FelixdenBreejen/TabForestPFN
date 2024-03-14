@@ -36,6 +36,7 @@ class ModelName(StrEnum):
     FOUNDATION = "Foundation"
     SAINT = "SAINT"
     MLP = "MLP"
+    MLP_RTDL = "MLP-rtdl"
     RESNET = "Resnet"
     RANDOM_FOREST = "RandomForest"
     XGBOOST = "XGBoost"
@@ -45,6 +46,27 @@ class ModelName(StrEnum):
     HIST_GRADIENT_BOOSTING_TREE = "HistGradientBoostingTree"
     LOGISTIC_REGRESSION = "LogisticRegression"
     LINEAR_REGRESSION = "LinearRegression"
+    DECISION_TREE = "DecisionTree"
+    KNN = "KNN"
+    STG = "STG"
+    SVM = "SVM"
+    TABNET = "TabNet"
+    TABTRANSFORMER = "TabTransformer"
+    DEEPFM = "DeepFM"
+    VIME = "VIME"
+    DANET = "DANet"
+    NAM = "NAM"
+    NODE = "NODE"
+
+
+class ModelClass(StrEnum):
+    BASE = 'base'
+    GBDT = 'GBDT'
+    NN = 'NN'
+    ICLT = 'ICLT'
+
+
+
 
 
 class BenchmarkName(StrEnum):

@@ -6,14 +6,14 @@ from tabularbench.results.dataset_manipulations import add_model_plot_names, add
 from tabularbench.results.dataset_plot_combined import make_combined_dataset_plot, make_combined_dataset_plot_data
 from tabularbench.results.dataset_plot_separate import make_separate_dataset_plot_data, make_separate_dataset_plots
 from tabularbench.results.random_sequence import create_random_sequences_from_dataset
-from tabularbench.results.reformat_whytrees_benchmark import get_whytrees_benchmark_reformatted
+from tabularbench.results.reformat_benchmark_whytrees import get_reformatted_results_whytrees
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def make_dataset_plots(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None:
 
-    ds_whytrees = get_whytrees_benchmark_reformatted()
+    ds_whytrees = get_reformatted_results_whytrees()
     ds = combine_and_process_run_results_with_benchmark(cfg, results_sweep.ds, ds_whytrees)
     sequences_all = create_random_sequences_from_dataset(cfg, ds)
 

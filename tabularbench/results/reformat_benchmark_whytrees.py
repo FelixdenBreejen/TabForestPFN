@@ -1,4 +1,3 @@
-import functools
 from pathlib import Path
 
 import numpy as np
@@ -13,7 +12,7 @@ from tabularbench.utils.paths_and_filenames import (PATH_TO_WHYTREES_BENCH_RESUL
                                                     PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED)
 
 
-def reformat_whytrees_benchmark():
+def reformat_benchmark_whytrees():
 
     logger.info("Reformatting whytrees benchmark started")
 
@@ -222,12 +221,12 @@ def get_model_name(str: str) -> ModelName:
     return model_name_dict[str]
 
 
-def get_whytrees_benchmark_reformatted() -> xr.Dataset:
+def get_reformatted_results_whytrees() -> xr.Dataset:
 
     if not Path(PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED).exists():
-        raise FileNotFoundError(f"File {PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED} does not exist, did you run reformat_whytrees_benchmark()?")
+        raise FileNotFoundError(f"File {PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED} does not exist, did you run reformat_benchmark_whytrees()?")
 
     return xr.open_dataset(PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED)
 
 if __name__ == "__main__":
-    reformat_whytrees_benchmark()
+    reformat_benchmark_whytrees()
