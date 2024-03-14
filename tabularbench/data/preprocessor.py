@@ -28,6 +28,11 @@ class Preprocessor(TransformerMixin, BaseEstimator):
     
     def fit(self, X: np.ndarray, y: np.ndarray):
 
+        X_start = X.copy()
+
+        self.compute_pre_nan_mean(X)
+        X = self.impute_nan_features_with_mean(X)
+
         self.determine_which_features_are_singular(X)
         X = self.cutoff_singular_features(X, self.singular_features)
 
@@ -41,6 +46,9 @@ class Preprocessor(TransformerMixin, BaseEstimator):
             X = self.quantile_transformer.fit_transform(X)
         
         self.mean, self.std = self.calc_mean_std(X)
+        X = self.normalize_by_mean_std(X, self.mean, self.std)
+
+        assert np.isnan(X).sum() == 0, "There are NaNs in the data after preprocessing"
 
         return self
     
@@ -48,6 +56,7 @@ class Preprocessor(TransformerMixin, BaseEstimator):
     def transform(self, X: np.ndarray):
 
         X = self.cutoff_singular_features(X, self.singular_features)
+        X = self.impute_nan_features_with_mean(X)
         X = self.select_features(X)
 
         if self.use_quantile_transformer:
@@ -60,12 +69,14 @@ class Preprocessor(TransformerMixin, BaseEstimator):
 
         X = self.extend_feature_dim_to_max_features(X, self.max_features)
 
+        assert np.isnan(X).sum() == 0, "There are NaNs in the data after preprocessing"
+
         return X
         
 
     def determine_which_features_are_singular(self, x: np.ndarray) -> None:
 
-        self.singular_features = x.std(axis=0) == 0
+        self.singular_features = np.array([ len(np.unique(x_col)) for x_col in x.T ]) == 1
         
 
 
@@ -76,6 +87,20 @@ class Preprocessor(TransformerMixin, BaseEstimator):
 
             self.select_k_best = SelectKBest(k=self.max_features)
             self.select_k_best.fit(x, y)
+
+
+    def compute_pre_nan_mean(self, x: np.ndarray) -> None:
+        """
+        Computes the mean of the data before the NaNs are imputed
+        """
+        self.pre_nan_mean = np.nanmean(x, axis=0)
+
+
+    def impute_nan_features_with_mean(self, x: np.ndarray) -> np.ndarray:
+
+        inds = np.where(np.isnan(x))
+        x[inds] = np.take(self.pre_nan_mean, inds[1])
+        return x
 
     
     def select_features(self, x: np.ndarray) -> np.ndarray:

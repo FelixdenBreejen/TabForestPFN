@@ -32,13 +32,17 @@ class ResultsSweep():
                 fill_ds_with_results_run(ds, results_run, openml_dataset_id, run_id)
                 
         return cls(ds)
-    
 
     def save(self, path: Path):
         self.ds.to_netcdf(path)
         runs_total = self.ds['runs_actual'].sum().item()
         logger.info(f"Saved results ({runs_total} runs total) to {path}")
 
+    @classmethod
+    def load(cls, path: Path) -> Self:
+        ds = xr.open_dataset(path)
+        logger.info(f"Loaded results from {path}")
+        return cls(ds)
 
 
 def remove_ids_from_run_results_dict_that_have_no_runs(run_results_dict: dict[int, list[ResultsRun]]) -> dict[int, list[ResultsRun]]:

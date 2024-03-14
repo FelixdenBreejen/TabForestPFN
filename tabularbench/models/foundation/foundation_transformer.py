@@ -3,12 +3,13 @@ import einops
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from tabularbench.models.foundation.embedding import (FoundationEmbeddingX, FoundationEmbeddingYFloat,
+                                                      FoundationEmbeddingYInteger)
+
 # from flash_attn.bert_padding import pad_input, unpad_input
 # from flash_attn.modules.mha import MHA
 
-from tabularbench.models.foundation.embedding import (
-    FoundationEmbeddingX, FoundationEmbeddingYFloat,
-    FoundationEmbeddingYInteger)
 
 
 class FoundationTransformer(nn.Module):
