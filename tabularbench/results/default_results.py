@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 import xarray as xr
 
-from tabularbench.core.enums import DataSplit, ModelName, SearchType
+from tabularbench.core.enums import DataSplit
 from tabularbench.results.dataset_manipulations import (add_model_plot_names, add_placeholder_as_model_name_dim,
+                                                        average_out_the_cv_split, change_data_var_names,
+                                                        only_use_models_and_datasets_specified_in_cfg,
+                                                        select_only_default_runs_and_average_over_them,
                                                         select_only_the_first_default_run_of_every_model_and_dataset)
 from tabularbench.results.reformat_results_get import get_reformatted_results
 from tabularbench.results.results_sweep import ResultsSweep
-from tabularbench.results.scores_min_max import get_combined_normalized_scores
+from tabularbench.results.scores_min_max import normalize_scores
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.utils.paths_and_filenames import DEFAULT_RESULTS_TEST_FILE_NAME, DEFAULT_RESULTS_VAL_FILE_NAME
 
@@ -28,15 +30,10 @@ def make_default_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep)
 def process_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
 
     ds_benchmark = get_reformatted_results(cfg.benchmark.origin)
-
-    benchmark_model_names = [model_name.name for model_name in cfg.config_plotting.benchmark_model_names]
-    ds_benchmark = ds_benchmark.sel(model_name=benchmark_model_names, openml_dataset_id=cfg.openml_dataset_ids_to_use)
-
-    vars_with_run_id = ['search_type', 'score', 'runs_actual']
-    ds_benchmark[vars_with_run_id] = ds_benchmark[vars_with_run_id].where(ds_benchmark['search_type'] == SearchType.DEFAULT.name, drop=True)
-    ds_benchmark = ds_benchmark.mean(dim='run_id', keep_attrs=True)
-
+    ds_benchmark = only_use_models_and_datasets_specified_in_cfg(cfg, ds_benchmark)
+    ds_benchmark = select_only_default_runs_and_average_over_them(ds_benchmark)
     ds_benchmark = add_model_plot_names(ds_benchmark)
+    ds_benchmark = change_data_var_names(ds_benchmark)
 
     return ds_benchmark
 
@@ -54,30 +51,18 @@ def process_sweep_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep
 
 def make_df_results(cfg: ConfigBenchmarkSweep, ds: xr.Dataset, data_split: DataSplit) -> pd.DataFrame:
 
-    normalized_scores = calculate_normalized_scores(cfg, ds, data_split)
+    ds = average_out_the_cv_split(ds)
+    ds['normalized_accuracy'] = normalize_scores(cfg, ds['accuracy'])
+    ds = ds.sel(data_split=data_split.name).reset_coords('data_split', drop=True)
 
-    ds = ds.sel(data_split=data_split.name)
-    score = ds['score'].sum(dim='cv_split', keep_attrs=True) / ds['cv_splits_actual']
+    df = ds['accuracy'].to_pandas()
+    normalized_accuracy = ds['normalized_accuracy'].mean(dim='openml_dataset_id').to_dataframe()
 
-    score_values = score.values
-    normalized_score_values = [normalized_scores[ModelName[model_name]] for model_name in score.coords['model_name'].values]
-    normalized_score_array = np.array(normalized_score_values)[:, None]
-    score_values = np.concatenate([score_values, normalized_score_array], axis=1)
-
-    score = xr.DataArray(
-        data=score_values, 
-        dims=['model_plot_name', 'openml_dataset_id'], 
-        coords = {
-            'model_plot_name': ds['model_plot_name'].values,
-            'openml_dataset_id': ds.coords['openml_dataset_id'].values.tolist() + ['Aggregate']
-        }
-    )
-
-    model_plot_names = [model_name.value for model_name in cfg.config_plotting.benchmark_model_names] + [cfg.model_plot_name]
-    score = score.reindex(model_plot_name = model_plot_names)
-    df = score.to_pandas()
+    df['aggregate'] = normalized_accuracy['normalized_accuracy']
+    df = df.set_index(ds['model_plot_name'].values)
     df = df.round(4)
-    df.to_csv(cfg.output_dir / get_results_file_name(data_split), mode='w', index=True, header=True)
+
+    df.to_csv(cfg.output_dir / get_results_file_name(data_split), mode='w', header=True)
 
 
 def get_results_file_name(data_split: DataSplit):
@@ -87,22 +72,3 @@ def get_results_file_name(data_split: DataSplit):
             return DEFAULT_RESULTS_VAL_FILE_NAME
         case DataSplit.TEST:
             return DEFAULT_RESULTS_TEST_FILE_NAME
-
-
-def calculate_normalized_scores(cfg: ConfigBenchmarkSweep, ds: xr.Dataset, data_split: DataSplit) -> dict[ModelName, float]:
-
-    benchmark_model_names = [model_name for model_name in cfg.config_plotting.benchmark_model_names] + [ModelName.PLACEHOLDER]
-    
-    normalized_scores = {}
-    for model_name in benchmark_model_names:
-
-        scores = ds['score'].sel(model_name=model_name.name, data_split=data_split.name)
-        scores = scores.sum(dim='cv_split') / ds['cv_splits_actual']
-        scores = scores.values.tolist()
-
-        openml_dataset_ids = ds.coords['openml_dataset_id'].values.tolist()
-
-        normalized_score = get_combined_normalized_scores(cfg, openml_dataset_ids, data_split, scores)
-        normalized_scores[model_name] = normalized_score
-
-    return normalized_scores

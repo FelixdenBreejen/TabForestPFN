@@ -31,10 +31,20 @@ def add_placeholder_as_model_name_dim(ds: xr.Dataset, model_plot_name: str) -> x
 
 def select_only_the_first_default_run_of_every_model_and_dataset(cfg: ConfigBenchmarkSweep, ds: xr.Dataset) -> xr.Dataset:
     
+    ds = ds.copy()
     var_names_with_run_id = get_var_names_depending_on_runs(ds)
     ds[var_names_with_run_id] = ds[var_names_with_run_id].where(ds['search_type'] == SearchType.DEFAULT.name, drop=True)
     ds[var_names_with_run_id] = ds[var_names_with_run_id].where(ds['seed'] == cfg.seed, drop=True) # when using multiple default runs, the seed changes
     ds = ds.isel(run_id=0).reset_coords('run_id', drop=True)
+
+    return ds
+
+def select_only_default_runs_and_average_over_them(ds: xr.Dataset) -> xr.Dataset:
+
+    ds = ds.copy()
+    vars_with_run_id = ['search_type', 'score', 'runs_actual']
+    ds[vars_with_run_id] = ds[vars_with_run_id].where(ds['search_type'] == SearchType.DEFAULT.name, drop=True)
+    ds = ds.mean(dim='run_id', keep_attrs=True)
 
     return ds
 
@@ -85,3 +95,11 @@ def take_run_with_best_validation_loss(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
+def change_data_var_names(ds: xr.Dataset) -> xr.Dataset:
+    # TODO: fix in the reformatting benchmark results preprocessing step
+
+    ds = ds.rename_vars({
+        'acc': 'accuracy'
+    })
+    ds['loss'] = ds['log_loss']
+    return ds
