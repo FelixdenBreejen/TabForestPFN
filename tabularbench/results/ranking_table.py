@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 import pandas as pd
 import xarray as xr
 
@@ -12,6 +11,7 @@ from tabularbench.results.dataset_manipulations import (add_model_plot_names, ad
                                                         take_run_with_best_validation_loss)
 from tabularbench.results.reformat_results_get import get_reformatted_results
 from tabularbench.results.results_sweep import ResultsSweep
+from tabularbench.results.scores_min_max import normalize_scores
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.utils.paths_and_filenames import RANKING_TABLE_FILE_NAME
 
@@ -60,9 +60,16 @@ def change_data_var_names(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
+def custom_function(x, y):
+    # Your custom non-vectorized function here
+    scalar_output = x * 2
+    return scalar_output
+
 def make_ranking_table_(cfg: ConfigBenchmarkSweep, ds: xr.Dataset) -> None:
 
-    ds = ds.sel(data_split=DataSplit.TEST.name)
+    ds['normalized_accuracy'] = normalize_scores(cfg, ds['accuracy'])
+
+    ds = ds.sel(data_split=DataSplit.TEST.name, )
 
     metrics = {}
 
@@ -72,8 +79,8 @@ def make_ranking_table_(cfg: ConfigBenchmarkSweep, ds: xr.Dataset) -> None:
     metrics['rank_mean'] = ranks.mean(dim='openml_dataset_id').round(1).values
     metrics['rank_median'] = ranks.median(dim='openml_dataset_id').values
 
-    metrics['acc_mean'] = ds['accuracy'].mean(dim='openml_dataset_id').round(3).values
-    metrics['acc_median'] = ds['accuracy'].median(dim='openml_dataset_id').round(3).values
+    metrics['acc_mean'] = ds['normalized_accuracy'].mean(dim='openml_dataset_id').round(3).values
+    metrics['acc_median'] = ds['normalized_accuracy'].median(dim='openml_dataset_id').round(3).values
 
     df = pd.DataFrame(metrics, index=ds['model_plot_name'].values)
     df.sort_values(by='rank_mean', inplace=True)
