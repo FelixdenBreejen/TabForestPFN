@@ -1,8 +1,16 @@
-max_samples_support: 10000             
-max_samples_query: 10000
-max_features: 100
+n_features: 100
+n_classes: 10
+dim: 512
+n_layers: 12
+n_heads: 4
+attn_dropout: 0.0
+y_as_float_embedding: True
+linear_attention: False
 
-max_epochs: 0
+max_samples_support: 8192
+max_samples_query: 1024
+
+max_epochs: 300
 optimizer: adamw
 lr:
   distribution: log_uniform_values
@@ -17,7 +25,7 @@ lr_scheduler_patience: 30
 early_stopping_patience: 40
 
 use_pretrained_weights: True
-path_to_weights: null
+path_to_weights: outputs_done/foundation_tabpfn_big_300k/weights/model_step_300000.pt
 n_ensembles: 1
 
 use_quantile_transformer: True
