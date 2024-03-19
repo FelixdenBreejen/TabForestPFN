@@ -8,8 +8,8 @@ import torch
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 
-from tabularbench.core.enums import BenchmarkName, ModelName, SearchType
-from tabularbench.data.benchmarks import BENCHMARKS
+from tabularbench.core.enums import BenchmarkName, BenchmarkOrigin, ModelName, SearchType
+from tabularbench.data.benchmarks import BENCHMARKS, Benchmark
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep, ConfigPlotting
 from tabularbench.utils.config_save_load_mixin import ConfigSaveLoadMixin
 
@@ -43,21 +43,11 @@ class ConfigMain(ConfigSaveLoadMixin):
         benchmark_names = [BenchmarkName[benchmark] for benchmark in cfg_hydra.benchmarks]
         models = [ModelName[model] for model in cfg_hydra.models]
         search_types = [SearchType[search_type] for search_type in cfg_hydra.search_types]
-
         devices = [torch.device(device) for device in cfg_hydra.devices]
 
         assert len(models) == len(cfg_hydra.model_plot_names), f"Please provide a plot name for each model. Got {len(models)} models and {len(cfg_hydra.model_plot_names)} plot names."
         models_with_plot_name = zip(models, cfg_hydra.model_plot_names)
         sweep_details = itertools.product(models_with_plot_name, search_types, benchmark_names)
-
-        config_plotting = ConfigPlotting(
-            n_runs=cfg_hydra.plotting.n_runs,
-            n_random_shuffles=cfg_hydra.plotting.n_random_shuffles,
-            confidence_bound=cfg_hydra.plotting.confidence_bound,
-            plot_default_value=cfg_hydra.plotting.plot_default_value,
-            
-            benchmark_model_names=[ModelName[model] for model in cfg_hydra.plotting.benchmark_models],
-        )
 
         benchmark_sweep_configs = []
 
@@ -79,7 +69,7 @@ class ConfigMain(ConfigSaveLoadMixin):
                 model_name=model_name,
                 model_plot_name=model_plot_name,
                 search_type=search_type,
-                config_plotting=config_plotting,
+                config_plotting=create_config_plotting(cfg_hydra, benchmark),
                 n_random_runs_per_dataset=cfg_hydra.n_random_runs_per_dataset,
                 n_default_runs_per_dataset=cfg_hydra.n_default_runs_per_dataset,
                 openml_dataset_ids_to_ignore=dataset_ids_to_ignore,
@@ -93,8 +83,23 @@ class ConfigMain(ConfigSaveLoadMixin):
 
 
 
+def create_config_plotting(cfg_hydra: DictConfig, benchmark: Benchmark) -> ConfigPlotting:
 
+    match benchmark.origin:
+        case BenchmarkOrigin.TABZILLA:
+            benchmark_model_strs = cfg_hydra.plotting.benchmark_models_tabzilla
+        case BenchmarkOrigin.WHYTREES:
+            benchmark_model_strs = cfg_hydra.plotting.benchmark_models_whytrees
 
+    benchmark_model_names = [ModelName[model_name] for model_name in benchmark_model_strs]
+
+    return ConfigPlotting(
+        n_runs=cfg_hydra.plotting.n_runs,
+        n_random_shuffles=cfg_hydra.plotting.n_random_shuffles,
+        confidence_bound=cfg_hydra.plotting.confidence_bound,
+        plot_default_value=cfg_hydra.plotting.plot_default_value,
+        benchmark_model_names=benchmark_model_names
+    )
 
 
 

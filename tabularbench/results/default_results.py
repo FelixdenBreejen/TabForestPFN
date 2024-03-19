@@ -7,7 +7,7 @@ import xarray as xr
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.results.dataset_manipulations import (add_model_plot_names, add_placeholder_as_model_name_dim,
                                                         select_only_the_first_default_run_of_every_model_and_dataset)
-from tabularbench.results.reformat_results_whytrees import get_reformatted_results_whytrees
+from tabularbench.results.reformat_results_get import get_reformatted_results
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.results.scores_min_max import get_combined_normalized_scores
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
@@ -16,28 +16,30 @@ from tabularbench.utils.paths_and_filenames import DEFAULT_RESULTS_TEST_FILE_NAM
 
 def make_default_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None:
 
-    ds_whytrees = process_whytrees_benchmark_results(cfg)
+    ds_benchmark = process_benchmark_results(cfg)
     ds_sweep = process_sweep_results(cfg, results_sweep)
 
-    ds = xr.merge([ds_whytrees, ds_sweep])
+    ds = xr.merge([ds_benchmark, ds_sweep])
 
     make_df_results(cfg, ds, DataSplit.VALID)
     make_df_results(cfg, ds, DataSplit.TEST)
 
 
-def process_whytrees_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
+def process_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
+
+    ds_benchmark = get_reformatted_results(cfg.benchmark.origin)
 
     benchmark_model_names = [model_name.name for model_name in cfg.config_plotting.benchmark_model_names]
+    ds_benchmark = ds_benchmark.sel(model_name=benchmark_model_names, openml_dataset_id=cfg.openml_dataset_ids_to_use)
 
-    ds_whytrees = get_reformatted_results_whytrees()
-    ds_whytrees = ds_whytrees.sel(openml_dataset_id=cfg.openml_dataset_ids_to_use, model_name=benchmark_model_names)
     vars_with_run_id = ['search_type', 'score', 'runs_actual']
-    ds_whytrees[vars_with_run_id] = ds_whytrees[vars_with_run_id].where(ds_whytrees['search_type'] == SearchType.DEFAULT.name, drop=True)
-    ds_whytrees = ds_whytrees.sum(dim='run_id', keep_attrs=True)
+    ds_benchmark[vars_with_run_id] = ds_benchmark[vars_with_run_id].where(ds_benchmark['search_type'] == SearchType.DEFAULT.name, drop=True)
+    ds_benchmark = ds_benchmark.sum(dim='run_id', keep_attrs=True)
 
-    add_model_plot_names(ds_whytrees)
+    add_model_plot_names(ds_benchmark)
 
-    return ds_whytrees
+    return ds_benchmark
+
 
 
 def process_sweep_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> xr.Dataset:

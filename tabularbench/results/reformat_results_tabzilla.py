@@ -187,12 +187,6 @@ def get_model_name(str: str) -> ModelName:
     return model_name_dict[str]
 
 
-def get_reformatted_results_tabzilla() -> xr.Dataset:
-
-    if not Path(PATH_TO_TABZILLA_BENCH_RESULTS_REFORMATTED).exists():
-        raise FileNotFoundError(f"File {PATH_TO_TABZILLA_BENCH_RESULTS_REFORMATTED} does not exist, did you run reformat_results_whytrees()?")
-
-    return xr.open_dataset(PATH_TO_TABZILLA_BENCH_RESULTS_REFORMATTED)
 
 if __name__ == "__main__":
     reformat_results_tabzilla()

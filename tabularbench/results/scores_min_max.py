@@ -2,8 +2,8 @@ import functools
 
 from loguru import logger
 
-from tabularbench.core.enums import DataSplit, Task
-from tabularbench.results.reformat_results_whytrees import get_reformatted_results_whytrees
+from tabularbench.core.enums import BenchmarkOrigin, DataSplit, Task
+from tabularbench.results.reformat_results_get import get_reformatted_results
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
@@ -31,16 +31,22 @@ def scores_min_max(cfg: ConfigBenchmarkSweep, openml_dataset_id: int, data_split
     """
 
     benchmark_model_names = tuple(model_name.name for model_name in cfg.config_plotting.benchmark_model_names)
-    score_min, score_max = scores_min_max_(openml_dataset_id, benchmark_model_names, cfg.benchmark.task, data_split)
+    score_min, score_max = scores_min_max_(openml_dataset_id, benchmark_model_names, cfg.benchmark.task, data_split, cfg.benchmark.origin)
 
     return score_min, score_max
 
 
 
 @functools.lru_cache(maxsize=None)
-def scores_min_max_(openml_dataset_id: int, benchmark_model_names: tuple[str], task: Task, data_split: DataSplit) -> tuple[float, float]:
+def scores_min_max_(
+        openml_dataset_id: int, 
+        benchmark_model_names: tuple[str], 
+        task: Task, 
+        data_split: DataSplit, 
+        benchmark_origin: BenchmarkOrigin
+    ) -> tuple[float, float]:
 
-    ds_whytrees = get_reformatted_results_whytrees()
+    ds_whytrees = get_reformatted_results(benchmark_origin)
     ds_whytrees = ds_whytrees.sel(model_name=list(benchmark_model_names), openml_dataset_id=openml_dataset_id, data_split=data_split.name)
 
     match task:
