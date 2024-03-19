@@ -15,13 +15,13 @@ from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
 from tabularbench.sweeps.make_plots import plot_results
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.utils.config_run import ConfigRun
-from tabularbench.utils.paths_and_filenames import RESULTS_FILE_NAME
+from tabularbench.utils.paths_and_filenames import CONFIG_BENCHMARK_SWEEP_FILE_NAME, RESULTS_FILE_NAME
 
 
 def run_sweep(cfg: ConfigBenchmarkSweep):
 
     logger.info(f"Start {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
-    cfg.save()
+    cfg.save(path=cfg.output_dir / CONFIG_BENCHMARK_SWEEP_FILE_NAME)
 
     log_ignore_datasets(cfg)
 

@@ -1,22 +1,21 @@
 from __future__ import annotations
 
-import copy
 import itertools
 from dataclasses import dataclass
 from pathlib import Path
 
 import torch
-import yaml
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 
 from tabularbench.core.enums import BenchmarkName, ModelName, SearchType
 from tabularbench.data.benchmarks import BENCHMARKS
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep, ConfigPlotting
+from tabularbench.utils.config_save_load_mixin import ConfigSaveLoadMixin
 
 
 @dataclass
-class ConfigMain():
+class ConfigMain(ConfigSaveLoadMixin):
     output_dir: Path
     seed: int
     configs_benchmark_sweep: list[ConfigBenchmarkSweep]
@@ -66,6 +65,7 @@ class ConfigMain():
 
             benchmark = BENCHMARKS[benchmark_name]
             hyperparams_object = cfg_hydra.hyperparams[model_name.name.lower()]
+            hyperparams_object = OmegaConf.to_container(hyperparams_object, resolve=True)
 
             output_dir_benchmark = output_dir / f'{model_name.value.lower()}-{search_type.value}-{benchmark_name.value}'
           
@@ -92,17 +92,8 @@ class ConfigMain():
         return benchmark_sweep_configs
 
 
-    def save(self) -> None:
-        
-        config_path = Path(self.output_dir) / 'config_main.yaml'
 
-        cfg = copy.deepcopy(self)
 
-        for cfg_benchmark_sweep in cfg.configs_benchmark_sweep:
-            cfg_benchmark_sweep.hyperparams_object = OmegaConf.to_container(cfg_benchmark_sweep.hyperparams_object, resolve=True)
-
-        with open(config_path, 'w') as f:        
-            yaml.dump(cfg, f, default_flow_style=False)
 
 
 

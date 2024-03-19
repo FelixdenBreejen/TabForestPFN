@@ -71,6 +71,8 @@ class ModelClass(StrEnum):
 
 class BenchmarkName(StrEnum):
     DEBUG_CATEGORICAL_CLASSIFICATION = "debug_categorical_classification"
+    DEBUG_TABZILLA = "debug_tabzilla"
+
     CATEGORICAL_CLASSIFICATION = "categorical_classification"
     NUMERICAL_CLASSIFICATION = "numerical_classification"
     CATEGORICAL_REGRESSION = "categorical_regression"
@@ -79,6 +81,7 @@ class BenchmarkName(StrEnum):
     NUMERICAL_CLASSIFICATION_LARGE = "numerical_classification_large"
     CATEGORICAL_REGRESSION_LARGE = "categorical_regression_large"
     NUMERICAL_REGRESSION_LARGE = "numerical_regression_large"
+    
     TABZILLA_HARD = "tabzilla_hard"
     TABZILLA_HARD_MAX_TEN_CLASSES = "tabzilla_hard_max_ten_classes"
 

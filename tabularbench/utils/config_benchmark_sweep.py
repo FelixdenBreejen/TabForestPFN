@@ -1,19 +1,18 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
-import dataclasses
 from pathlib import Path
 
-from omegaconf import DictConfig, OmegaConf
 import torch
 import yaml
 
 from tabularbench.core.enums import ModelName, SearchType
 from tabularbench.data.benchmarks import Benchmark
-
+from tabularbench.utils.config_save_load_mixin import ConfigSaveLoadMixin
 
 
 @dataclass
-class ConfigBenchmarkSweep():
+class ConfigBenchmarkSweep(ConfigSaveLoadMixin, yaml.YAMLObject):
     output_dir: Path
     seed: int
     devices: list[torch.device]
@@ -25,7 +24,7 @@ class ConfigBenchmarkSweep():
     n_random_runs_per_dataset: int
     n_default_runs_per_dataset: int
     openml_dataset_ids_to_ignore: list[int]
-    hyperparams_object: DictConfig
+    hyperparams_object: dict
 
 
     def __post_init__(self):
@@ -36,16 +35,7 @@ class ConfigBenchmarkSweep():
         self.openml_dataset_ids_to_use.sort()
 
 
-    def save(self):
-        self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        # make sure the hyperparams are saved as a dict, not as an OmegaConf object
-        # OmegaConf object looks ugly when saved as yaml
-        hyperparams_dict = OmegaConf.to_container(self.hyperparams_object, resolve=True)
-        self_to_save = dataclasses.replace(self, hyperparams_object=hyperparams_dict)
-    
-        with open(self.output_dir / "config_benchmark_sweep.yaml", 'w') as f:
-            yaml.dump(self_to_save, f, default_flow_style=False)
 
 
 @dataclass

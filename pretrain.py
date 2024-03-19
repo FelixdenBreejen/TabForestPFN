@@ -12,6 +12,7 @@ from omegaconf import DictConfig
 from main import check_existence_of_benchmark_results_csv
 from tabularbench.core.trainer_pretrain import TrainerPretrain
 from tabularbench.utils.config_pretrain import ConfigPretrain
+from tabularbench.utils.paths_and_filenames import CONFIG_PRETRAIN_FILE_NAME
 from tabularbench.utils.set_seed import set_seed
 
 
@@ -28,7 +29,7 @@ def main(cfg_hydra: DictConfig):
     logger.info("Finished creating pretrain config")
 
     check_existence_of_benchmark_results_csv(cfg)
-    cfg.save()
+    cfg.save(path=cfg.output_dir / CONFIG_PRETRAIN_FILE_NAME)
     setup_gpus(cfg)
     set_seed(cfg.seed)
 

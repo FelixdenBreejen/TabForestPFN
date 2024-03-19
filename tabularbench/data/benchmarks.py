@@ -3,8 +3,7 @@ from typing import Optional, Self
 
 import xarray as xr
 
-from tabularbench.core.enums import (BenchmarkName, BenchmarkOrigin,
-                                     DatasetSize, Task)
+from tabularbench.core.enums import BenchmarkName, BenchmarkOrigin, DatasetSize, Task
 from tabularbench.data.datafile_name_maker import make_datafile_path
 
 
@@ -122,7 +121,13 @@ BENCHMARKS = {
         task=Task.CLASSIFICATION,
         dataset_size=None,
         openml_dataset_ids=[10, 11, 14, 22, 25, 29, 31, 45, 50, 53, 219, 3561, 3711, 3797, 3896, 3917, 9890, 9910, 9952, 9957, 9977, 9981, 14964, 14969, 146065, 146606, 146607, 146818, 167119, 168335, 168337, 168911, 189354, 189356]
-    
+    ),
+    BenchmarkName.DEBUG_TABZILLA: Benchmark.create(
+        name=BenchmarkName.DEBUG_TABZILLA,
+        origin=BenchmarkOrigin.TABZILLA,
+        task=Task.CLASSIFICATION,
+        dataset_size=None,
+        openml_dataset_ids=[10, 11, 14]
     )
 }
 

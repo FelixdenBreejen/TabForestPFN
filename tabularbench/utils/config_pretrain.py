@@ -12,10 +12,11 @@ from omegaconf import DictConfig, OmegaConf
 
 from tabularbench.core.enums import GeneratorName, ModelName
 from tabularbench.utils.config_benchmark_sweep import ConfigPlotting
+from tabularbench.utils.config_save_load_mixin import ConfigSaveLoadMixin
 
 
 @dataclass
-class ConfigPretrain():
+class ConfigPretrain(ConfigSaveLoadMixin):
     output_dir: Path
     seed: int
     devices: list[torch.device]

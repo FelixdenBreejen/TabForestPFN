@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 
 from tabularbench.sweeps.run_sweep import run_sweep
 from tabularbench.utils.config_main import ConfigMain
-from tabularbench.utils.paths_and_filenames import PATH_TO_WHYTREES_BENCH_RESULTS
+from tabularbench.utils.paths_and_filenames import CONFIG_MAIN_FILE_NAME, PATH_TO_WHYTREES_BENCH_RESULTS
 from tabularbench.utils.set_seed import set_seed
 
 
@@ -24,7 +24,7 @@ def main(cfg_hydra: DictConfig):
     logger.info("Finished creating main config")
 
     check_existence_of_benchmark_results_csv(cfg)
-    cfg.save()
+    cfg.save(path=cfg.output_dir / CONFIG_MAIN_FILE_NAME)
     set_seed(cfg.seed)
 
 

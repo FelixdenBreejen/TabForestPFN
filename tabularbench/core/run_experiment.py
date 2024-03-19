@@ -13,12 +13,13 @@ from tabularbench.data.dataset_openml import OpenMLDataset
 from tabularbench.results.run_metrics import RunMetrics
 from tabularbench.utils.config_run import ConfigRun
 from tabularbench.utils.debugger import debugger_is_active
+from tabularbench.utils.paths_and_filenames import CONFIG_RUN_FILE_NAME
 from tabularbench.utils.set_seed import set_seed
 
 
 def run_experiment(cfg: ConfigRun) -> Optional[RunMetrics]:
 
-    cfg.save()
+    cfg.save(cfg.output_dir / CONFIG_RUN_FILE_NAME)
 
     logger.info(f"Start experiment on {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.value} doing {cfg.task.value}")
 

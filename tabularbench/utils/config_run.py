@@ -1,20 +1,19 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
-import dataclasses
 from pathlib import Path
 from typing import Self
-from omegaconf import DictConfig, OmegaConf
 
 import torch
-import yaml
 
-from tabularbench.core.enums import ModelName, Task, DatasetSize
+from tabularbench.core.enums import DatasetSize, ModelName, Task
 from tabularbench.data.datafile_openml import OpenmlDatafile
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.utils.config_save_load_mixin import ConfigSaveLoadMixin
 
 
 @dataclass
-class ConfigRun():
+class ConfigRun(ConfigSaveLoadMixin):
     output_dir: Path
     device: torch.device
     seed: int
@@ -24,7 +23,7 @@ class ConfigRun():
     openml_dataset_id: int
     openml_dataset_name: str
     datafile_path: Path
-    hyperparams: DictConfig
+    hyperparams: dict
 
 
     @classmethod
@@ -34,7 +33,7 @@ class ConfigRun():
         seed: int,
         device: torch.device, 
         dataset_file_path: Path,
-        hyperparams: DictConfig,
+        hyperparams: dict,
         run_id: int
     ) -> Self:
 
@@ -57,14 +56,5 @@ class ConfigRun():
             datafile_path=dataset_file_path,
             hyperparams=hyperparams
         )
-    
-    def save(self) -> None:
-        
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-
-        cfg = dataclasses.replace(self, hyperparams=OmegaConf.to_container(self.hyperparams, resolve=True))
-
-        with open(self.output_dir / "config_run.yaml", "w") as f:
-            yaml.dump(cfg, f, default_flow_style=False)
 
             
