@@ -25,7 +25,7 @@ def plot_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None
 
 if __name__ == "__main__":
 
-    path = Path('outputs/2024-03-19/14-25-45/foundation-default-debug_tabzilla')
+    path = Path('outputs/2024-03-19/15-44-37/foundation-default-debug_tabzilla')
     results_sweep = ResultsSweep.load(path / RESULTS_FILE_NAME)
     cfg = ConfigBenchmarkSweep.load(path / CONFIG_BENCHMARK_SWEEP_FILE_NAME)
 

@@ -35,7 +35,7 @@ def process_tabzilla_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
     ds_whytrees[vars_with_run_id] = ds_whytrees[vars_with_run_id].where(ds_whytrees['search_type'] == SearchType.DEFAULT.name, drop=True)
     ds_whytrees = ds_whytrees.sum(dim='run_id', keep_attrs=True)
 
-    add_model_plot_names(ds_whytrees)
+    ds_whytrees = add_model_plot_names(ds_whytrees)
 
     return ds_whytrees
 
@@ -43,7 +43,7 @@ def process_tabzilla_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
 def process_sweep_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> xr.Dataset:
 
     ds = results_sweep.ds.copy()
-    add_placeholder_as_model_name_dim(ds, cfg.model_plot_name)
+    ds = add_placeholder_as_model_name_dim(ds, cfg.model_plot_name)
     ds = select_only_the_first_default_run_of_every_model_and_dataset(cfg, ds)
     
     return ds

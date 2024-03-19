@@ -3,9 +3,9 @@ from __future__ import annotations
 from loguru import logger
 
 from tabularbench.core.enums import SearchType
-from tabularbench.results.dataset_plot import make_dataset_plots
 from tabularbench.results.default_results import make_default_results
 from tabularbench.results.hyperparam_plots import make_hyperparam_plots
+from tabularbench.results.ranking_table import make_ranking_table
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.sweeps.make_plots_utils import default_results_not_yet_made, sweep_default_finished
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
@@ -26,8 +26,8 @@ def plot_results_tabzilla(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep
     
     
     if sweep_default_finished(cfg, results_sweep):
-        logger.info(f"Start making dataset plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
-        make_dataset_plots(cfg, results_sweep)
-        logger.info(f"Finished making dataset plots for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
+        logger.info(f"Start making ranking table for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
+        make_ranking_table(cfg, results_sweep)
+        logger.info(f"Finished making ranking table for {cfg.search_type.value} search for {cfg.model_name.value} on {cfg.benchmark.name}")
 
 

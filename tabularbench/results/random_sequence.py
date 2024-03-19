@@ -3,7 +3,7 @@ import xarray as xr
 from loguru import logger
 
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
-from tabularbench.results.dataset_manipulations import apply_mean_over_cv_split
+from tabularbench.results.dataset_manipulations import average_out_the_cv_split
 from tabularbench.results.scores_min_max import scores_min_max
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
@@ -25,7 +25,7 @@ def create_random_sequences_from_dataset(cfg: ConfigBenchmarkSweep, ds: xr.Datas
     
     sequences_all = np.zeros((n_models, n_datasets, n_shuffles, n_runs))
 
-    ds = apply_mean_over_cv_split(ds)
+    ds = average_out_the_cv_split(ds)
 
     for dataset_i, openml_dataset_id in enumerate(cfg.openml_dataset_ids_to_use):
 

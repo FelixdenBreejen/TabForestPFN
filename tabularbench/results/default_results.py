@@ -34,9 +34,9 @@ def process_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
 
     vars_with_run_id = ['search_type', 'score', 'runs_actual']
     ds_benchmark[vars_with_run_id] = ds_benchmark[vars_with_run_id].where(ds_benchmark['search_type'] == SearchType.DEFAULT.name, drop=True)
-    ds_benchmark = ds_benchmark.sum(dim='run_id', keep_attrs=True)
+    ds_benchmark = ds_benchmark.mean(dim='run_id', keep_attrs=True)
 
-    add_model_plot_names(ds_benchmark)
+    ds_benchmark = add_model_plot_names(ds_benchmark)
 
     return ds_benchmark
 
@@ -45,7 +45,7 @@ def process_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
 def process_sweep_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> xr.Dataset:
 
     ds = results_sweep.ds.copy()
-    add_placeholder_as_model_name_dim(ds, cfg.model_plot_name)
+    ds = add_placeholder_as_model_name_dim(ds, cfg.model_plot_name)
     ds = select_only_the_first_default_run_of_every_model_and_dataset(cfg, ds)
     
     return ds

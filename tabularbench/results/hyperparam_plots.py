@@ -4,7 +4,7 @@ import xarray as xr
 from matplotlib import pyplot as plt
 
 from tabularbench.core.enums import DataSplit
-from tabularbench.results.dataset_manipulations import apply_mean_over_cv_split
+from tabularbench.results.dataset_manipulations import average_out_the_cv_split
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
@@ -13,7 +13,7 @@ def make_hyperparam_plots(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep
 
     ds = results_sweep.ds
     ds = ds.sel(data_split=DataSplit.VALID.name)
-    ds = apply_mean_over_cv_split(ds)
+    ds = average_out_the_cv_split(ds)
 
     for dataset_id in cfg.openml_dataset_ids_to_use:
 
