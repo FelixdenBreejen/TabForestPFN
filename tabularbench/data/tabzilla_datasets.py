@@ -217,6 +217,7 @@ class TabularDataset(object):
             attrs={
                 'openml_dataset_id': openml_dataset_id,
                 'openml_dataset_name': openml_dataset_name,
+                'n_classes': self.num_classes,
             }
         )
     

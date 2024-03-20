@@ -109,9 +109,9 @@ if __name__ == "__main__":
         seed = 0,
         task = Task.CLASSIFICATION,
         dataset_size = DatasetSize.MEDIUM,
-        openml_dataset_id = 5,
+        openml_dataset_id = 145984,
         openml_dataset_name = "wiwi",
-        datafile_path = Path("data/datasets/tabzilla_5.nc"),
+        datafile_path = Path("data/datasets/tabzilla_145984.nc"),
         hyperparams = DictConfig({
             'n_features': 100,
             'n_classes': 10,

@@ -76,6 +76,7 @@ def make_data_vars_dict_with_empty_initialization(df: pd.DataFrame, coords_dict:
     n_data_splits = len(coords_dict['data_split'])
 
     score = np.full((n_models, n_datasets, n_runs_max, n_cv_splits, n_data_splits), np.nan)
+    loss = np.full((n_models, n_datasets, n_runs_max, n_cv_splits, n_data_splits), np.nan)
     search_type = np.full((n_models, n_datasets, n_runs_max), "", dtype=object)
     log_loss = np.full((n_models, n_datasets, n_runs_max, n_cv_splits, n_data_splits), np.nan)
     auc = np.full((n_models, n_datasets, n_runs_max, n_cv_splits, n_data_splits), np.nan)
@@ -91,11 +92,12 @@ def make_data_vars_dict_with_empty_initialization(df: pd.DataFrame, coords_dict:
 
     return {
         'score': (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], score),
+        'loss': (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], loss),
         'search_type': (['model_name', 'openml_dataset_id', 'run_id'], search_type),
-        'log_loss': (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], log_loss),
-        'auc': (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], auc),
-        'acc': (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], acc),
-        'f1': (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], f1),
+        MetricName.LOG_LOSS.value: (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], log_loss),
+        MetricName.AUC.value: (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], auc),
+        MetricName.ACCURACY.value: (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], acc),
+        MetricName.F1.value: (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], f1),
         'time_training': (['model_name', 'openml_dataset_id', 'run_id', 'cv_split'], time_training),
         'time_eval': (['model_name', 'openml_dataset_id', 'run_id', 'cv_split', 'data_split'], time_eval),
         'openml_dataset_name': (['openml_dataset_id'], openml_dataset_name),
@@ -113,7 +115,7 @@ def make_attr_dict(df: pd.DataFrame) -> dict[str, str]:
             '"When Do Neural Nets Outperform Boosted Trees on Tabular Data?" by McElfresh et al. (2023)'
         ),
         'details': (
-            'Score is the same as accuracy.'
+            'Score is the same as accuracy, loss is the same as LogLoss.'
             'Task is Classification for the whole dataset, even though the paper itself makes a distinction between binary and classification.'
         )
     }
