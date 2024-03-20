@@ -3,8 +3,7 @@ from typing import Self
 
 import numpy as np
 import scipy
-from sklearn.metrics import (accuracy_score, f1_score, log_loss,
-                             mean_squared_error, r2_score, roc_auc_score)
+from sklearn.metrics import accuracy_score, f1_score, log_loss, mean_squared_error, r2_score, roc_auc_score
 
 from tabularbench.core.enums import MetricName, Task
 

@@ -6,7 +6,7 @@ import xarray as xr
 from loguru import logger
 from tqdm import tqdm
 
-from tabularbench.core.enums import DataSplit, ModelName, SearchType
+from tabularbench.core.enums import DataSplit, MetricName, ModelName, SearchType
 from tabularbench.core.model_class import get_model_class
 from tabularbench.results.reformat_results_whytrees import get_model_name
 from tabularbench.utils.paths_and_filenames import (PATH_TO_TABZILLA_BENCH_RESULTS,
@@ -145,11 +145,12 @@ def populate_xarray_dataset(df: pd.DataFrame, ds: xr.Dataset) -> None:
         ds['runs_actual'].loc[model_name.name, openml_dataset_id] = runs_actual.sel(model_name=model_name.name, openml_dataset_id=openml_dataset_id).max()
         
         ds['score'].loc[model_name.name, openml_dataset_id, run_id, cv_split] = [ row['Accuracy__train'], row['Accuracy__val'], row['Accuracy__test'] ]
+        ds['loss'].loc[model_name.name, openml_dataset_id, run_id, cv_split] = [ row['Log Loss__train'], row['Log Loss__val'], row['Log Loss__test'] ]
         ds['search_type'].loc[model_name.name, openml_dataset_id, run_id] = search_type.name
-        ds['log_loss'].loc[model_name.name, openml_dataset_id, run_id, cv_split] = [ row['Log Loss__train'], row['Log Loss__val'], row['Log Loss__test'] ]
-        ds['auc'].loc[model_name.name, openml_dataset_id, run_id, cv_split] = [ row['AUC__train'], row['AUC__val'], row['AUC__test'] ]
-        ds['acc'].loc[model_name.name, openml_dataset_id, run_id, cv_split] = [ row['Accuracy__train'], row['Accuracy__val'], row['Accuracy__test'] ]
-        ds['f1'].loc[model_name.name, openml_dataset_id, run_id, cv_split] = [ row['F1__train'], row['F1__val'], row['F1__test'] ]
+        ds[MetricName.LOG_LOSS.value].loc[model_name.name, openml_dataset_id, run_id, cv_split] = [ row['Log Loss__train'], row['Log Loss__val'], row['Log Loss__test'] ]
+        ds[MetricName.AUC.value].loc[model_name.name, openml_dataset_id, run_id, cv_split] = [ row['AUC__train'], row['AUC__val'], row['AUC__test'] ]
+        ds[MetricName.ACCURACY.value].loc[model_name.name, openml_dataset_id, run_id, cv_split] = [ row['Accuracy__train'], row['Accuracy__val'], row['Accuracy__test'] ]
+        ds[MetricName.F1.value].loc[model_name.name, openml_dataset_id, run_id, cv_split] = [ row['F1__train'], row['F1__val'], row['F1__test'] ]
         ds['time_training'].loc[model_name.name, openml_dataset_id, run_id, cv_split] = row['training_time']
         ds['time_eval'].loc[model_name.name, openml_dataset_id, run_id, cv_split] = [ row['eval-time__train'], row['eval-time__val'], row['eval-time__test'] ]
 
