@@ -5,7 +5,8 @@ import xarray as xr
 
 from tabularbench.core.enums import DataSplit
 from tabularbench.results.dataset_manipulations import (add_model_plot_names, add_placeholder_as_model_name_dim,
-                                                        average_out_the_cv_split, only_use_models_and_datasets_specified_in_cfg,
+                                                        average_out_the_cv_split,
+                                                        only_use_models_and_datasets_specified_in_cfg,
                                                         select_only_the_first_default_run_of_every_model_and_dataset,
                                                         take_run_with_best_validation_loss)
 from tabularbench.results.reformat_results_get import get_reformatted_results
@@ -23,7 +24,8 @@ def make_ranking_table(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -
 
     ds = xr.merge([ds_benchmark, ds_sweep], combine_attrs='drop')
 
-    make_ranking_table_(cfg, ds)
+    df = make_ranking_table_(cfg, ds)
+    df.to_csv(cfg.output_dir / RANKING_TABLE_FILE_NAME)
 
 
 def process_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
@@ -48,7 +50,7 @@ def process_sweep_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep
     return ds
 
 
-def make_ranking_table_(cfg: ConfigBenchmarkSweep, ds: xr.Dataset) -> None:
+def make_ranking_table_(cfg: ConfigBenchmarkSweep, ds: xr.Dataset) -> pd.DataFrame:
 
     ds['normalized_accuracy'] = normalize_scores(cfg, ds['accuracy'])
 
@@ -67,4 +69,5 @@ def make_ranking_table_(cfg: ConfigBenchmarkSweep, ds: xr.Dataset) -> None:
 
     df = pd.DataFrame(metrics, index=ds['model_plot_name'].values)
     df.sort_values(by='rank_mean', inplace=True)
-    df.to_csv(cfg.output_dir / RANKING_TABLE_FILE_NAME)
+    
+    return df
