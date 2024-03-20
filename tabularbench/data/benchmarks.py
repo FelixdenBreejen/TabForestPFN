@@ -108,6 +108,13 @@ BENCHMARKS = {
         dataset_size=DatasetSize.LARGE,
         openml_dataset_ids=[44089, 44120, 44121, 44122, 44123, 44125, 44126, 44128, 44129, 44130, 45022, 45021, 45020, 45019, 45028, 45026]
     ),
+    BenchmarkName.DEBUG_TABZILLA: Benchmark.create(
+        name=BenchmarkName.DEBUG_TABZILLA,
+        origin=BenchmarkOrigin.TABZILLA,
+        task=Task.CLASSIFICATION,
+        dataset_size=None,
+        openml_dataset_ids=[10, 11, 14],
+    ),
     BenchmarkName.TABZILLA_HARD: Benchmark.create(
         name=BenchmarkName.TABZILLA_HARD,
         origin=BenchmarkOrigin.TABZILLA,

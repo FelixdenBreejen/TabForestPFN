@@ -13,14 +13,14 @@ defaults:
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [2, 6, 7]
+devices: [4, 5]
 n_random_runs_per_dataset: 500                  # suggested: 500 
 n_default_runs_per_dataset: 1                  # on default we also want multiple runs for the confidence bound
 
 models:
   - TABPFN
 model_plot_names:
-  - OurTabPFN
+  - TabPFN_original
 benchmarks:
   # - DEBUG_CATEGORICAL_CLASSIFICATION
   # - DEBUG_TABZILLA
@@ -32,7 +32,8 @@ benchmarks:
   # - NUMERICAL_CLASSIFICATION_LARGE
   # - CATEGORICAL_REGRESSION_LARGE
   # - NUMERICAL_REGRESSION_LARGE
-  - TABZILLA_HARD_MAX_TEN_CLASSES
+  # - TABZILLA_HARD_MAX_TEN_CLASSES
+  - TABZILLA_HAS_COMPLETED_RUNS
 search_types:
   - DEFAULT
   # - RANDOM
