@@ -1,6 +1,6 @@
 import xarray as xr
 
-from tabularbench.core.enums import ModelName, SearchType
+from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
@@ -87,19 +87,9 @@ def take_run_with_best_validation_loss(ds: xr.Dataset) -> xr.Dataset:
     Take the run with the best validation loss.
     """
 
-    loss = ds.sel(data_split='VALID')['log_loss']
+    loss = ds.sel(data_split=DataSplit.VALID.name)['log_loss']
     loss = loss.fillna(float('inf'))
     best_runs = loss.argmin('run_id').reset_coords('data_split', drop=True)
     ds = ds.sel(run_id=best_runs).reset_coords('run_id', drop=True)
 
-    return ds
-
-
-def change_data_var_names(ds: xr.Dataset) -> xr.Dataset:
-    # TODO: fix in the reformatting benchmark results preprocessing step
-
-    ds = ds.rename_vars({
-        'acc': 'accuracy'
-    })
-    ds['loss'] = ds['log_loss']
     return ds

@@ -5,7 +5,7 @@ import xarray as xr
 
 from tabularbench.core.enums import DataSplit
 from tabularbench.results.dataset_manipulations import (add_model_plot_names, add_placeholder_as_model_name_dim,
-                                                        average_out_the_cv_split, change_data_var_names,
+                                                        average_out_the_cv_split,
                                                         only_use_models_and_datasets_specified_in_cfg,
                                                         select_only_default_runs_and_average_over_them,
                                                         select_only_the_first_default_run_of_every_model_and_dataset)
@@ -33,7 +33,6 @@ def process_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
     ds_benchmark = only_use_models_and_datasets_specified_in_cfg(cfg, ds_benchmark)
     ds_benchmark = select_only_default_runs_and_average_over_them(ds_benchmark)
     ds_benchmark = add_model_plot_names(ds_benchmark)
-    ds_benchmark = change_data_var_names(ds_benchmark)
 
     return ds_benchmark
 
