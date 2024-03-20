@@ -200,9 +200,10 @@ def run_a_run(
     search_type: SearchType
 ):
 
-
     logger.add(cfg.output_dir / "log.log", enqueue=True)
     metrics = run_experiment(cfg)
+
+    runs_busy_dict[cfg.openml_dataset_id] -= 1
 
     if metrics is None:
         logger.info(f"Run crashed for {cfg.model_name.value} on {cfg.openml_dataset_name} with dataset {cfg.openml_dataset_id}")
@@ -211,7 +212,6 @@ def run_a_run(
 
     run_result = ResultsRun.from_run_config(cfg, search_type, metrics)
     run_results_dict[cfg.openml_dataset_id].append(run_result)
-    runs_busy_dict[cfg.openml_dataset_id] -= 1
     device_queue.put(device)
 
 
