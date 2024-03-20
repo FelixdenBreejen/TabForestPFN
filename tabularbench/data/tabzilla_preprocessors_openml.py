@@ -3,10 +3,10 @@ import functools
 import numpy as np
 import openml
 import pandas as pd
+
 from tabularbench.data.tabzilla_preprocessor_utils import cv_n_folds, dataset_preprocessor
 
-
-easy_import_task_file = "tabularbench/data/tabzilla_hard_benchmark_openml_ids.txt"  # Datasets identified just by their ID can be easily imported from here
+easy_import_task_file = "tabularbench/data/tabzilla_openml_ids_has_completed_runs.txt"  # Datasets identified just by their ID can be easily imported from here
 
 
 

@@ -84,6 +84,7 @@ class BenchmarkName(StrEnum):
     
     TABZILLA_HARD = "tabzilla_hard"
     TABZILLA_HARD_MAX_TEN_CLASSES = "tabzilla_hard_max_ten_classes"
+    TABZILLA_HAS_COMPLETED_RUNS = "tabzilla_has_completed_runs"
 
 
 class BenchmarkOrigin(StrEnum):
