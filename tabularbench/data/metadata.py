@@ -3,8 +3,23 @@ from pathlib import Path
 import pandas as pd
 import xarray as xr
 
+from tabularbench.core.enums import BenchmarkOrigin
+from tabularbench.utils.paths_and_filenames import (DATASETS_TABZILLA_GLOB, DATASETS_WHYTREES_GLOB,
+                                                    PATH_TO_OPENML_DATASETS)
 
-def create_metadata(list_of_dataset_paths: list[Path]) -> pd.DataFrame:
+
+def create_metadata(benchmark_origin: BenchmarkOrigin):
+
+    match benchmark_origin:
+        case BenchmarkOrigin.TABZILLA:
+            list_of_paths = list(Path(PATH_TO_OPENML_DATASETS).glob(DATASETS_TABZILLA_GLOB))
+        case BenchmarkOrigin.WHYTREES:
+            list_of_paths = list(Path(PATH_TO_OPENML_DATASETS).glob(DATASETS_WHYTREES_GLOB))
+    
+    return create_metadata_(list_of_paths)
+
+
+def create_metadata_(list_of_dataset_paths: list[Path]) -> pd.DataFrame:
 
     dss = [xr.open_dataset(path) for path in list_of_dataset_paths]
 

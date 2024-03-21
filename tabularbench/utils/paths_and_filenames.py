@@ -14,3 +14,6 @@ CONFIG_BENCHMARK_SWEEP_FILE_NAME = 'config_benchmark_sweep.yaml'                
 CONFIG_PRETRAIN_FILE_NAME = 'config_pretrain.yaml'                                         # Pretraining config file
 CONFIG_RUN_FILE_NAME = 'config_run.yaml'                                                   # Run config file
 PATH_TO_DATA_SPLIT = 'tabularbench/data/whytrees_train_val_test_indices.npy'               # Indices for train/val/test split
+
+DATASETS_TABZILLA_GLOB = 'tabzilla_*.nc'
+DATASETS_WHYTREES_GLOB = 'whytrees_*_MEDIUM.nc'

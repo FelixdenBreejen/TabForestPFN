@@ -6,21 +6,21 @@ defaults:
   - _self_
   - hyperparams/ft_transformer: ft_transformer
   - hyperparams/tabpfn: zeroshot_10k
-  - hyperparams/foundation: finetune_10k_forest
+  - hyperparams/foundation: zeroshot_10k_forest
   # - main_test
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [3, 4, 5, 6]
+devices: [0, 1, 3, 4, 5, 6]
 n_random_runs_per_dataset: 500                  # suggested: 500 
 n_default_runs_per_dataset: 1                  # on default we also want multiple runs for the confidence bound
 
 models:
   - FOUNDATION
 model_plot_names:
-  - TabSGFD_finetune
+  - TabSGFD_zeroshot
 benchmarks:
   # - DEBUG_CATEGORICAL_CLASSIFICATION
   # - DEBUG_TABZILLA
