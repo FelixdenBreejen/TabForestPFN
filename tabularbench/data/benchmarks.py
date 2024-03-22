@@ -36,12 +36,15 @@ class Benchmark:
     
     @functools.cached_property
     def openml_dataset_names(self) -> list[str]:
+        # cached property necessary because benchmarks can be important before the data is downloaded.
 
         dataset_names = []
         for openml_dataset_id in self.openml_dataset_ids:
             datafile_path = make_datafile_path(self.origin, openml_dataset_id, self.dataset_size)
             dataset_name = xr.open_dataset(datafile_path).attrs['openml_dataset_name']
             dataset_names.append(dataset_name)
+
+        return dataset_names
 
 
 
