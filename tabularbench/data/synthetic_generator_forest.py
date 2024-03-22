@@ -1,6 +1,6 @@
 import numpy as np
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.preprocessing import QuantileTransformer
+from sklearn.tree import DecisionTreeRegressor
 from tqdm import tqdm
 
 

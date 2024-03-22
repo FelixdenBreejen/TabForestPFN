@@ -5,18 +5,16 @@ hydra:
 defaults:
   - _self_
   - hyperparams/tabpfn: finetune_10k
-  - hyperparams/foundation: finetune_10k
+  - hyperparams/foundation: finetune_10k_forest
   - pretrain_model: foundation
   # - pretrain_continue
-  # - pretrain_test
-  - big
-  # - size_change
+  - pretrain_test
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [0, 1, 2, 3]
+devices: [2, 3, 4, 5]
 workers_per_gpu: 16
 
 optim:
@@ -36,7 +34,7 @@ optim:
   path_to_weights: outputs_done/foundation_key_att/weights/model_step_500000.pt               # Path to a checkpoint to load weights from
 
 data:
-  generator: tabpfn             # tabpfn or forest or neighbor
+  generator: mix             # tabpfn, forest, mix or neighbor
   min_samples_support: 128
   max_samples_support: 1024            
   n_samples_query: 256

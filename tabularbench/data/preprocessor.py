@@ -28,8 +28,6 @@ class Preprocessor(TransformerMixin, BaseEstimator):
     
     def fit(self, X: np.ndarray, y: np.ndarray):
 
-        X_start = X.copy()
-
         self.compute_pre_nan_mean(X)
         X = self.impute_nan_features_with_mean(X)
 

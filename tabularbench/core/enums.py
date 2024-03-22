@@ -96,6 +96,7 @@ class GeneratorName(StrEnum):
     TABPFN = 'tabpfn'
     FOREST = 'forest'
     NEIGHBOR = 'neighbor'
+    MIX = 'mix'
 
 
 class MetricName(StrEnum):

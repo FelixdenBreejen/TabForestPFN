@@ -115,6 +115,9 @@ def synthetic_dataset_generator_tabpfn(
         if torch.isnan(x).sum() or torch.isnan(y).sum():
             continue
 
+        x = x.numpy()
+        y = y.numpy()
+
         yield x, y
 
 

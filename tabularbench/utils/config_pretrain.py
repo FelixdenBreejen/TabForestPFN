@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import copy
-import dataclasses
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 import torch
-import yaml
 from omegaconf import DictConfig, OmegaConf
 
 from tabularbench.core.enums import GeneratorName, ModelName
@@ -28,21 +25,10 @@ class ConfigPretrain(ConfigSaveLoadMixin):
     preprocessing: ConfigPreprocessing
     testing: ConfigTesting
     plotting: ConfigPlotting
-    hyperparams_finetuning: DictConfig
+    hyperparams_finetuning: dict
 
     device: Optional[torch.device] = None   # initialized later by ddp
     is_main_process: bool = True            # initialized later by ddp
-
-    def save(self) -> None:
-        
-        config_path = Path(self.output_dir) / 'config_pretrain.yaml'
-
-        cfg = copy.deepcopy(self)
-        cfg = dataclasses.replace(cfg, hyperparams_finetuning=OmegaConf.to_container(cfg.hyperparams_finetuning))
-        cfg = dataclasses.replace(cfg, model=OmegaConf.to_container(cfg.model))
-
-        with open(config_path, 'w') as f:        
-            yaml.dump(cfg, f, default_flow_style=False)
 
 
     @classmethod
