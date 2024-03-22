@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import functools
 from typing import Optional, Self
 
 import xarray as xr
@@ -14,7 +15,6 @@ class Benchmark:
     task: Task
     dataset_size: Optional[DatasetSize]
     openml_dataset_ids: list[int]
-    openml_dataset_names: list[str]
 
     @classmethod
     def create(
@@ -26,20 +26,22 @@ class Benchmark:
         dataset_size: Optional[DatasetSize],
     ) -> Self:
 
-        dataset_names = []
-        for openml_dataset_id in openml_dataset_ids:
-            datafile_path = make_datafile_path(origin, openml_dataset_id, dataset_size)
-            dataset_name = xr.open_dataset(datafile_path).attrs['openml_dataset_name']
-            dataset_names.append(dataset_name)
-
         return cls(
             name=name,
             origin=origin,
             task=task,
             dataset_size=dataset_size,
-            openml_dataset_ids=openml_dataset_ids,
-            openml_dataset_names=dataset_names
+            openml_dataset_ids=openml_dataset_ids
         )
+    
+    @functools.cached_property
+    def openml_dataset_names(self) -> list[str]:
+
+        dataset_names = []
+        for openml_dataset_id in self.openml_dataset_ids:
+            datafile_path = make_datafile_path(self.origin, openml_dataset_id, self.dataset_size)
+            dataset_name = xr.open_dataset(datafile_path).attrs['openml_dataset_name']
+            dataset_names.append(dataset_name)
 
 
 
