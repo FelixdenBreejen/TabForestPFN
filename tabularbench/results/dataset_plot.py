@@ -36,7 +36,8 @@ def combine_and_process_run_results_with_benchmark(cfg: ConfigBenchmarkSweep, ds
 
     ds_whytrees = ds_whytrees.sel(openml_dataset_id=cfg.openml_dataset_ids_to_use, model_name=benchmark_model_names)
     ds_whytrees = add_model_plot_names(ds_whytrees)
-    ds_whytrees = add_placeholder_as_model_name_dim(ds_results, cfg.model_plot_name)
+    
+    ds_results = add_placeholder_as_model_name_dim(ds_results, cfg.model_plot_name)
 
     ds = xr.merge([ds_whytrees, ds_results])
 

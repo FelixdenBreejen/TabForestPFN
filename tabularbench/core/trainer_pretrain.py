@@ -230,6 +230,23 @@ class TrainerPretrain(BaseEstimator):
         )
         run_sweep(cfg_sweep)
 
+        output_dir = self.cfg.output_dir / 'test-tabzilla'
+        cfg_sweep = ConfigBenchmarkSweep(
+            output_dir=output_dir,
+            seed=self.cfg.seed,
+            devices=self.cfg.devices,
+            benchmark=BENCHMARKS[BenchmarkName.TABZILLA_HAS_COMPLETED_RUNS],
+            model_name=self.cfg.model.name,
+            model_plot_name=plot_name,
+            search_type=SearchType.DEFAULT,
+            config_plotting=self.cfg.plotting,
+            n_random_runs_per_dataset=1,
+            n_default_runs_per_dataset=1,
+            openml_dataset_ids_to_ignore=self.cfg.testing.openml_dataset_ids_to_ignore,
+            hyperparams_object=hyperparams_finetuning
+        )
+        run_sweep(cfg_sweep)
+
 
 
 

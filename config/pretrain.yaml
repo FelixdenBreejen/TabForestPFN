@@ -14,7 +14,7 @@ defaults:
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [2, 3, 4, 5]
+devices: [2, 3, 4, 6]
 workers_per_gpu: 16
 
 optim:
@@ -55,13 +55,13 @@ preprocessing:
 testing:
   n_default_runs_per_dataset_valid: 1
   n_default_runs_per_dataset_test: 10                  
-  openml_dataset_ids_to_ignore:
+  openml_dataset_ids_to_ignore: []
     # - 44089  # missing SAINT hyperparameter search in original benchmark results
-    - 44135  # isolet numerical regression (613 features)
-    - 44061  # mercedes_benz categorical regression (359 features)
-    - 45041  # topo categorical regression (255 features)
-    - 45046  # allstate_claims categorical regression (124 features)
-    - 45019  # bioresponse numerical classification (419 features)
+    # - 44135  # isolet numerical regression (613 features)
+    # - 44061  # mercedes_benz categorical regression (359 features)
+    # - 45041  # topo categorical regression (255 features)
+    # - 45046  # allstate_claims categorical regression (124 features)
+    # - 45019  # bioresponse numerical classification (419 features)
 
 
 plotting:

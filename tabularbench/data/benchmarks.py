@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import functools
+from dataclasses import dataclass
 from typing import Optional, Self
 
 import xarray as xr
@@ -36,7 +36,7 @@ class Benchmark:
     
     @functools.cached_property
     def openml_dataset_names(self) -> list[str]:
-        # cached property necessary because benchmarks can be important before the data is downloaded.
+        # cached property necessary because benchmarks can be imported before the data is downloaded.
 
         dataset_names = []
         for openml_dataset_id in self.openml_dataset_ids:
