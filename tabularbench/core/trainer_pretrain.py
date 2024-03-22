@@ -135,7 +135,7 @@ class TrainerPretrain(BaseEstimator):
                     state_dict = self.model_.state_dict()
                     torch.save(state_dict, weights_path)
 
-                    normalized_accuracies = self.validate(output_dir, weights_path, plot_name=f"{self.cfg.model.name.value} Pretrain Step {step}")
+                    normalized_accuracies = self.validate(output_dir, weights_path, plot_name=f"{self.cfg.model_name.value} Pretrain Step {step}")
 
                     logger.info(f"Finished validation sweep")
                     logger.info(f"Normalized Validation Accuracy: {normalized_accuracies[DataSplit.VALID]:.4f}")
@@ -163,7 +163,7 @@ class TrainerPretrain(BaseEstimator):
             seed=self.cfg.seed,
             devices=self.cfg.devices,
             benchmark=BENCHMARKS[BenchmarkName.CATEGORICAL_CLASSIFICATION],
-            model_name=self.cfg.model.name,
+            model_name=self.cfg.model_name,
             model_plot_name=plot_name,
             search_type=SearchType.DEFAULT,
             config_plotting=self.cfg.plotting,
@@ -192,7 +192,7 @@ class TrainerPretrain(BaseEstimator):
         torch.cuda.empty_cache()
 
         weights_path = self.last_weights_path
-        plot_name = f"{self.cfg.model.name.value} Pretrain Test"
+        plot_name = f"{self.cfg.model_name.value} Pretrain Test"
 
         hyperparams_finetuning = self.make_hyperparams_finetuning_dict(weights_path)
 
@@ -202,7 +202,7 @@ class TrainerPretrain(BaseEstimator):
             seed=self.cfg.seed,
             devices=self.cfg.devices,
             benchmark=BENCHMARKS[BenchmarkName.CATEGORICAL_CLASSIFICATION],
-            model_name=self.cfg.model.name,
+            model_name=self.cfg.model_name,
             model_plot_name=plot_name,
             search_type=SearchType.DEFAULT,
             config_plotting=self.cfg.plotting,
@@ -219,7 +219,7 @@ class TrainerPretrain(BaseEstimator):
             seed=self.cfg.seed,
             devices=self.cfg.devices,
             benchmark=BENCHMARKS[BenchmarkName.NUMERICAL_CLASSIFICATION],
-            model_name=self.cfg.model.name,
+            model_name=self.cfg.model_name,
             model_plot_name=plot_name,
             search_type=SearchType.DEFAULT,
             config_plotting=self.cfg.plotting,
@@ -236,7 +236,7 @@ class TrainerPretrain(BaseEstimator):
             seed=self.cfg.seed,
             devices=self.cfg.devices,
             benchmark=BENCHMARKS[BenchmarkName.TABZILLA_HAS_COMPLETED_RUNS],
-            model_name=self.cfg.model.name,
+            model_name=self.cfg.model_name,
             model_plot_name=plot_name,
             search_type=SearchType.DEFAULT,
             config_plotting=self.cfg.plotting,
@@ -258,7 +258,7 @@ class TrainerPretrain(BaseEstimator):
         hyperparams_finetuning['use_quantile_transformer'] = self.cfg.preprocessing.use_quantile_transformer
         hyperparams_finetuning['use_feature_count_scaling'] = self.cfg.preprocessing.use_feature_count_scaling
 
-        if self.cfg.model.name == ModelName.FOUNDATION:
+        if self.cfg.model_name == ModelName.FOUNDATION:
             with open_dict(hyperparams_finetuning):
                 hyperparams_finetuning['n_features'] = self.cfg.data.max_features
                 hyperparams_finetuning['n_classes'] = self.cfg.data.max_classes

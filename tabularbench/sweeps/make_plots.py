@@ -25,7 +25,7 @@ def plot_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None
 
 if __name__ == "__main__":
 
-    path = Path('outputs_done/tabpfn_original_tabzilla/tabpfn-default-tabzilla_hard_max_ten_classes')
+    path = Path('outputs/2024-03-22/21-53-25/step_50')
     results_sweep = ResultsSweep.load(path / RESULTS_FILE_NAME)
     cfg = ConfigBenchmarkSweep.load(path / CONFIG_BENCHMARK_SWEEP_FILE_NAME)
     cfg.output_dir = path

@@ -23,7 +23,6 @@ class FoundationTransformer(nn.Module):
             n_heads: int,
             attn_dropout: float,
             y_as_float_embedding: bool,
-            linear_attention: bool,
             use_pretrained_weights: bool,
             path_to_weights: str,
         ) -> None:
@@ -37,7 +36,6 @@ class FoundationTransformer(nn.Module):
         self.n_heads = n_heads
         self.attn_dropout = attn_dropout
         self.y_as_float_embedding = y_as_float_embedding
-        self.linear_attention = linear_attention
 
         self.x_embedding = FoundationEmbeddingX(dim, n_features)
 
@@ -151,7 +149,6 @@ class MultiheadAttention(torch.nn.Module):
         self.n_heads = n_heads
 
         self.att = nn.MultiheadAttention(dim, n_heads, dropout=0.0, batch_first=True)
-        # self.att = MHA(embed_dim = dim, num_heads=n_heads, cross_attn=True, use_flash_attn=self.use_flash_attention)
 
 
 
@@ -182,14 +179,7 @@ class MultiheadAttention(torch.nn.Module):
         output will be (b, n, d)
         """
 
-        assert torch.all(key == value)
-
-        # if self.use_flash_attention:
-        #     key, indices, cu_seqlens, max_seqlens = unpad_input(key, key_padding_mask)
-        #     output = self.att(query, key)
-        #     output = pad_input(output, indices, cu_seqlens, max_seqlens)
-
-        output = self.att(query, key, key, key_padding_mask=key_padding_mask)[0]
+        output = self.att(query, key, value, key_padding_mask=key_padding_mask)[0]
         return output
 
 

@@ -19,7 +19,8 @@ class ConfigPretrain(ConfigSaveLoadMixin):
     devices: list[torch.device]
     use_ddp: bool
     workers_per_gpu: int
-    model: DictConfig
+    model: dict
+    model_name: ModelName
     data: ConfigData
     optim: ConfigOptim
     preprocessing: ConfigPreprocessing
@@ -40,7 +41,7 @@ class ConfigPretrain(ConfigSaveLoadMixin):
         pretrain_model_name = ModelName[cfg_hydra.pretrain_model.name]
         hyperparams_finetuning = cfg_hydra.hyperparams[pretrain_model_name.name.lower()]
         model_settings = cfg_hydra.pretrain_model
-        model_settings.name = pretrain_model_name
+
 
 
         return cls(
@@ -49,7 +50,8 @@ class ConfigPretrain(ConfigSaveLoadMixin):
             use_ddp=len(devices) > 1,
             seed=cfg_hydra.seed,
             workers_per_gpu=cfg_hydra.workers_per_gpu,
-            model = model_settings,
+            model = OmegaConf.to_container(model_settings),
+            model_name = pretrain_model_name,
             hyperparams_finetuning = hyperparams_finetuning,
             data = ConfigData(
                 generator=GeneratorName(cfg_hydra.data.generator),

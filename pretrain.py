@@ -52,15 +52,15 @@ def main_experiment(gpu: int, cfg: ConfigPretrain, barrier: mp.Barrier) -> None:
     trainer = TrainerPretrain(cfg, barrier)
 
     if cfg.is_main_process:
-        logger.info(f"Trainer of {cfg.model.name.value} created, start training")
+        logger.info(f"Trainer of {cfg.model_name.value} created, start training")
     
     trainer.train()
 
     if cfg.is_main_process:
-        logger.info(f"Finished training of {cfg.model.name.value}")
-        logger.info(f"Start testing of {cfg.model.name.value}")
+        logger.info(f"Finished training of {cfg.model_name.value}")
+        logger.info(f"Start testing of {cfg.model_name.value}")
         trainer.test()
-        logger.info(f"Finished testing of {cfg.model.name.value}")
+        logger.info(f"Finished testing of {cfg.model_name.value}")
 
 
 def setup_gpus(cfg: ConfigPretrain) -> None:
