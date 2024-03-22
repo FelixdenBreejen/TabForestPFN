@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -72,20 +73,15 @@ def run_experiment_(cfg: ConfigRun) -> RunMetrics:
 
         logger.info(f"Start split {split_i+1}/{dataset.n_splits} of {cfg.openml_dataset_name} (id={cfg.openml_dataset_id}) with {cfg.model_name.name} doing {cfg.task.name}")
 
-        x_val_hyperparams = x_val
-        y_val_hyperparams = y_val
+        data = Data.from_standard_datasplits(x_train, x_val, x_test, y_train, y_val, y_test, cfg.task)
 
-        x_train_cut, x_val_earlystop, y_train_cut, y_val_earlystop = make_dataset_split(x_train, y_train, task=cfg.task)
-        x_train_and_val = np.concatenate([x_train_cut, x_val_earlystop], axis=0)
-        y_train_and_val = np.concatenate([y_train_cut, y_val_earlystop], axis=0)
-
-        model = get_model(cfg, x_train_cut, y_train_cut, categorical_indicator)
+        model = get_model(cfg, data.x_train_cut, data.y_train_cut, categorical_indicator)
         trainer = get_trainer(cfg, model, dataset.n_classes)
-        trainer.train(x_train_cut, y_train_cut, x_val_earlystop, y_val_earlystop)
+        trainer.train(data.x_train_cut, data.y_train_cut, data.x_val_earlystop, data.y_val_earlystop)
 
-        prediction_metrics_train = trainer.test(x_train, y_train, x_train, y_train)
-        prediction_metrics_val = trainer.test(x_train, y_train, x_val_hyperparams, y_val_hyperparams)
-        prediction_metrics_test = trainer.test(x_train_and_val, y_train_and_val, x_test, y_test)
+        prediction_metrics_train = trainer.test(data.x_train, data.y_train, data.x_train, data.y_train)
+        prediction_metrics_val = trainer.test(data.x_train, data.y_train, data.x_val_hyperparams, data.y_val_hyperparams)
+        prediction_metrics_test = trainer.test(data.x_train_and_val, data.y_train_and_val, data.x_test, data.y_test)
 
         logger.info(f"split_{split_i} :: train: {prediction_metrics_train.score:.4f}, val: {prediction_metrics_val.score:.4f}, test: {prediction_metrics_test.score:.4f}")
 
@@ -93,6 +89,44 @@ def run_experiment_(cfg: ConfigRun) -> RunMetrics:
 
     metrics.post_process()
     return metrics
+
+
+@dataclass
+class Data():
+    x_train: np.ndarray
+    x_train_cut: np.ndarray
+    x_train_and_val: np.ndarray
+    x_val_earlystop: np.ndarray
+    x_val_hyperparams: np.ndarray
+    x_test: np.ndarray
+    y_train: np.ndarray
+    y_train_cut: np.ndarray
+    y_train_and_val: np.ndarray
+    y_val_earlystop: np.ndarray
+    y_val_hyperparams: np.ndarray
+    y_test: np.ndarray
+
+
+    @classmethod
+    def from_standard_datasplits(cls, x_train, x_val, x_test, y_train, y_val, y_test, task: Task):
+        x_train_cut, x_val_earlystop, y_train_cut, y_val_earlystop = make_dataset_split(x_train, y_train, task=task)
+        x_train_and_val = np.concatenate([x_train_cut, x_val_earlystop], axis=0)
+        y_train_and_val = np.concatenate([y_train_cut, y_val_earlystop], axis=0)
+
+        return cls(
+            x_train=x_train,
+            x_train_cut=x_train_cut,
+            x_train_and_val=x_train_and_val,
+            x_val_earlystop=x_val_earlystop,
+            x_val_hyperparams=x_val,
+            x_test=x_test,
+            y_train=y_train,
+            y_train_cut=y_train_cut,
+            y_train_and_val=y_train_and_val,
+            y_val_earlystop=y_val_earlystop,
+            y_val_hyperparams=y_val,
+            y_test=y_test
+        )
 
 
 
