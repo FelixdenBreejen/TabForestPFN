@@ -4,7 +4,6 @@ import pandas as pd
 import torch
 import torch.multiprocessing as mp
 from loguru import logger
-from omegaconf import open_dict
 from sklearn.base import BaseEstimator
 from transformers import get_constant_schedule_with_warmup, get_cosine_schedule_with_warmup
 
@@ -259,12 +258,11 @@ class TrainerPretrain(BaseEstimator):
         hyperparams_finetuning['use_feature_count_scaling'] = self.cfg.preprocessing.use_feature_count_scaling
 
         if self.cfg.model_name == ModelName.FOUNDATION:
-            with open_dict(hyperparams_finetuning):
-                hyperparams_finetuning['n_features'] = self.cfg.data.max_features
-                hyperparams_finetuning['n_classes'] = self.cfg.data.max_classes
+            hyperparams_finetuning['n_features'] = self.cfg.data.max_features
+            hyperparams_finetuning['n_classes'] = self.cfg.data.max_classes
 
-                for key, value in self.cfg.model.items():
-                    hyperparams_finetuning[key] = value
+            for key, value in self.cfg.model.items():
+                hyperparams_finetuning[key] = value
 
         return hyperparams_finetuning
 

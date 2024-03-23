@@ -52,7 +52,7 @@ class ConfigPretrain(ConfigSaveLoadMixin):
             workers_per_gpu=cfg_hydra.workers_per_gpu,
             model = OmegaConf.to_container(model_settings),
             model_name = pretrain_model_name,
-            hyperparams_finetuning = hyperparams_finetuning,
+            hyperparams_finetuning = OmegaConf.to_container(hyperparams_finetuning),
             data = ConfigData(
                 generator=GeneratorName(cfg_hydra.data.generator),
                 min_samples_support=cfg_hydra.data.min_samples_support,
