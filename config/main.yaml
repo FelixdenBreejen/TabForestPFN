@@ -8,7 +8,7 @@ defaults:
   - hyperparams/tabpfn: zeroshot_10k
   - hyperparams/foundation: finetune_10k_forest
   - plotting: plotting_default
-  - main_test
+  # - main_test
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
@@ -25,8 +25,8 @@ model_plot_names:
 benchmarks:
   # - DEBUG_CATEGORICAL_CLASSIFICATION
   # - DEBUG_TABZILLA
-  - CATEGORICAL_CLASSIFICATION
-  # - NUMERICAL_CLASSIFICATION
+  # - CATEGORICAL_CLASSIFICATION
+  - NUMERICAL_CLASSIFICATION
   # - CATEGORICAL_REGRESSION
   # - NUMERICAL_REGRESSION
   # - CATEGORICAL_CLASSIFICATION_LARGE

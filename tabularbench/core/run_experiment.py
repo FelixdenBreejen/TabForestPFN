@@ -133,8 +133,6 @@ if __name__ == "__main__":
 
     import torch
 
-
-
     cfg = ConfigRun(
         output_dir = Path("output_run_experiment"),
         device = torch.device("cuda:6"),
@@ -142,9 +140,9 @@ if __name__ == "__main__":
         seed = 0,
         task = Task.CLASSIFICATION,
         dataset_size = DatasetSize.MEDIUM,
-        openml_dataset_id = 44157,
-        openml_dataset_name = "eye-movements",
-        datafile_path = Path("data/datasets/whytrees_44157_MEDIUM.nc"),
+        openml_dataset_id = 44156,
+        openml_dataset_name = "electricity",
+        datafile_path = Path("data/datasets/whytrees_44156_MEDIUM.nc"),
         hyperparams = dict({
             'n_features': 100,
             'n_classes': 10,
@@ -153,10 +151,9 @@ if __name__ == "__main__":
             'n_heads': 4,
             'attn_dropout': 0.0,
             'y_as_float_embedding': True,
-            'linear_attention': False,
             'max_samples_support': 8192,
             'max_samples_query': 1024,
-            'max_epochs': 2,
+            'max_epochs': 10,
             'optimizer': 'adamw',
             'lr': 1.e-5,
             'weight_decay': 0,

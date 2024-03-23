@@ -6,6 +6,7 @@ from tabularbench.config.config_pretrain import ConfigPretrain
 
 
 def get_scheduler(hyperparams: dict, optimizer: torch.optim.Optimizer):
+#TODO: Is this scheduler good?
 
     if hyperparams['lr_scheduler']:      
         scheduler = ReduceLROnPlateau(
