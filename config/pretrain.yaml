@@ -9,13 +9,13 @@ defaults:
   - pretrain_model: foundation
   - plotting: plotting_default
   # - pretrain_continue
-  - pretrain_test
+  # - pretrain_test
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [2, 3, 6, 7]
+devices: [0, 1, 2, 3, 4, 5, 6, 7]
 workers_per_gpu: 16
 
 optim:
@@ -35,7 +35,7 @@ optim:
   path_to_weights: outputs_done/foundation_key_att/weights/model_step_500000.pt               # Path to a checkpoint to load weights from
 
 data:
-  generator: mix             # tabpfn, forest, mix or neighbor
+  generator: forest             # tabpfn, forest, mix or neighbor
   min_samples_support: 128
   max_samples_support: 1024            
   n_samples_query: 256
