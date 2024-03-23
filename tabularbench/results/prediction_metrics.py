@@ -59,6 +59,10 @@ def roc_auc_score_multiclass(y_true, y_pred_proba, multi_class='ovo', average='m
     The roc_auc_score multi_class is not supported for binary classification
     """
 
+    if np.unique(y_true).shape[0] == 1:
+        # AUC is not defined if there is only one class
+        return float('nan')
+
     if y_pred_proba.shape[1] == 2:
         return roc_auc_score(y_true, y_pred_proba[:, 1])
     else:

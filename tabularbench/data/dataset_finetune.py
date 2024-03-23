@@ -113,6 +113,7 @@ def DatasetFinetuneGenerator(
     The dataset fine-tune generator is a generator that yields a dataset for fine-tuning.
     The idea is to split the training dataset into a support and query set.
     Every single iteration, the generator yields a different support and query set split.
+    The dataset made always has exactly one batch.
     """
         
     while True:

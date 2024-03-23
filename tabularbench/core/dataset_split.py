@@ -18,6 +18,10 @@ def make_dataset_split(x: np.ndarray, y: np.ndarray, task: Task) -> tuple[np.nda
 
 def make_stratified_dataset_split(x, y):
 
+    # Stratify doesn't shuffle the data, so we shuffle it first
+    permutation = np.random.permutation(len(y))
+    x, y = x[permutation], y[permutation]
+
     skf = StratifiedKFold(n_splits=5, shuffle=True)
     indices = next(skf.split(x, y))
     x_t_train, x_t_valid = x[indices[0]], x[indices[1]]
