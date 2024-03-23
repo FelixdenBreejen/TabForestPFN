@@ -9,17 +9,17 @@ defaults:
   - pretrain_model: foundation
   - plotting: plotting_default
   # - pretrain_continue
-  # - pretrain_test
+  - pretrain_test
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [2, 3, 4, 5]
+devices: [2, 3, 6, 7]
 workers_per_gpu: 16
 
 optim:
-  max_steps: 300_000                # Every step completes batch_size * gradient_accumulation_steps samples
+  max_steps: 600_000                # Every step completes batch_size * gradient_accumulation_steps samples
   warmup_steps: 10_000
   log_every_n_steps: 10
   eval_every_n_steps: 20_000
