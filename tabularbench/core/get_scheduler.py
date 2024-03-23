@@ -1,17 +1,16 @@
 import torch
-from omegaconf import DictConfig
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from transformers import get_constant_schedule_with_warmup, get_cosine_schedule_with_warmup
 
 from tabularbench.config.config_pretrain import ConfigPretrain
 
 
-def get_scheduler(hyperparams: DictConfig, optimizer: torch.optim.Optimizer):
+def get_scheduler(hyperparams: dict, optimizer: torch.optim.Optimizer):
 
-    if hyperparams.lr_scheduler:      
+    if hyperparams['lr_scheduler']:      
         scheduler = ReduceLROnPlateau(
             optimizer, 
-            patience=hyperparams.lr_scheduler_patience, 
+            patience=hyperparams['lr_scheduler_patience'], 
             min_lr=2e-5, 
             factor=0.2
         )

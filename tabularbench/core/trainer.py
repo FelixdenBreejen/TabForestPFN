@@ -33,7 +33,7 @@ class Trainer(BaseEstimator):
         self.optimizer = get_optimizer(self.cfg.hyperparams, self.model)
         self.scheduler = get_scheduler(self.cfg.hyperparams, self.optimizer)
 
-        self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams.early_stopping_patience)
+        self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams['early_stopping_patience'])
         self.checkpoint = Checkpoint(Path("temp_weights"), id=str(self.cfg.device))
 
 
@@ -49,7 +49,7 @@ class Trainer(BaseEstimator):
         dataloader_train = self.make_loader(dataset_train, training=True)
         dataloader_valid = self.make_loader(dataset_valid, training=False)
 
-        for epoch in range(self.cfg.hyperparams.max_epochs):
+        for epoch in range(self.cfg.hyperparams['max_epochs']):
             loss_train, score_train = self.train_epoch(dataloader_train)
             loss_valid, score_valid = self.test_epoch(dataloader_valid, y_train_val)
 
@@ -199,11 +199,11 @@ class Trainer(BaseEstimator):
 
     def make_loader(self, dataset, training):
 
-        drop_last = training and self.cfg.hyperparams.batch_size > len(dataset)
+        drop_last = training and self.cfg.hyperparams['batch_size'] > len(dataset)
 
         return torch.utils.data.DataLoader(
             dataset,
-            batch_size=self.cfg.hyperparams.batch_size,
+            batch_size=self.cfg.hyperparams['batch_size'],
             shuffle=training,
             pin_memory=True,
             drop_last=drop_last

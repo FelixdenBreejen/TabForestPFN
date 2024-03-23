@@ -4,7 +4,6 @@ from typing import Optional
 
 import numpy as np
 from loguru import logger
-from omegaconf import DictConfig
 
 from tabularbench.config.config_run import ConfigRun
 from tabularbench.core.dataset_split import make_dataset_split
@@ -143,10 +142,10 @@ if __name__ == "__main__":
         seed = 0,
         task = Task.CLASSIFICATION,
         dataset_size = DatasetSize.MEDIUM,
-        openml_dataset_id = 145984,
-        openml_dataset_name = "wiwi",
-        datafile_path = Path("data/datasets/tabzilla_145984.nc"),
-        hyperparams = DictConfig({
+        openml_dataset_id = 44157,
+        openml_dataset_name = "eye-movements",
+        datafile_path = Path("data/datasets/whytrees_44157_MEDIUM.nc"),
+        hyperparams = dict({
             'n_features': 100,
             'n_classes': 10,
             'dim': 512,

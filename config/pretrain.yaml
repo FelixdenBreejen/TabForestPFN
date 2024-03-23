@@ -5,7 +5,7 @@ hydra:
 defaults:
   - _self_
   - hyperparams/tabpfn: finetune_10k
-  - hyperparams/foundation: finetune_10k_forest
+  - hyperparams/foundation: finetune_10k
   - pretrain_model: foundation
   - plotting: plotting_default
   # - pretrain_continue
@@ -54,7 +54,7 @@ preprocessing:
   use_feature_count_scaling: True        # TabPFN: True
 
 testing:
-  n_default_runs_per_dataset_valid: 1
+  n_default_runs_per_dataset_valid: 1           # Only applicable to the WHYTREES benchmark          
   n_default_runs_per_dataset_test: 10           # Only applicable to the WHYTREES benchmark           
   openml_dataset_ids_to_ignore: []
     # - 44089  # missing SAINT hyperparameter search in original benchmark results

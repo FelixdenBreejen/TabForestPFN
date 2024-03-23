@@ -141,9 +141,8 @@ class TrainerPretrain(BaseEstimator):
 
     def update_metrics(self, pred: torch.Tensor, y_query: torch.Tensor):
         
-        with torch.no_grad():
-            self.metrics_train.update(pred, y_query)
-            self.metrics_val.update(pred, y_query)
+        self.metrics_train.update(pred, y_query)
+        self.metrics_val.update(pred, y_query)
 
 
     def move_model_to_cpu(self):

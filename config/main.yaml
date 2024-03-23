@@ -8,7 +8,7 @@ defaults:
   - hyperparams/tabpfn: zeroshot_10k
   - hyperparams/foundation: finetune_10k_forest
   - plotting: plotting_default
-  # - main_test
+  - main_test
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
@@ -19,14 +19,14 @@ n_random_runs_per_dataset: 500                  # suggested: 500
 n_default_runs_per_dataset: 1                  # on default we also want multiple runs for the confidence bound
 
 models:
-  - TABPFN
+  - FOUNDATION
 model_plot_names:
-  - TabPFNreproduce
+  - FoundationCheck
 benchmarks:
   # - DEBUG_CATEGORICAL_CLASSIFICATION
   # - DEBUG_TABZILLA
   - CATEGORICAL_CLASSIFICATION
-  - NUMERICAL_CLASSIFICATION
+  # - NUMERICAL_CLASSIFICATION
   # - CATEGORICAL_REGRESSION
   # - NUMERICAL_REGRESSION
   # - CATEGORICAL_CLASSIFICATION_LARGE
@@ -34,7 +34,7 @@ benchmarks:
   # - CATEGORICAL_REGRESSION_LARGE
   # - NUMERICAL_REGRESSION_LARGE
   # - TABZILLA_HARD_MAX_TEN_CLASSES
-  - TABZILLA_HAS_COMPLETED_RUNS
+  # - TABZILLA_HAS_COMPLETED_RUNS
 search_types:
   - DEFAULT
   # - RANDOM

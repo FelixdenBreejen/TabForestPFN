@@ -37,12 +37,12 @@ class TrainerFinetune(BaseEstimator):
         self.optimizer = get_optimizer(self.cfg.hyperparams, self.model)
         self.scheduler = get_scheduler(self.cfg.hyperparams, self.optimizer)
 
-        self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams.early_stopping_patience)
+        self.early_stopping = EarlyStopping(patience=self.cfg.hyperparams['early_stopping_patience'])
         self.checkpoint = Checkpoint(Path("temp_weights"), id=str(self.cfg.device))
         self.preprocessor = Preprocessor( 
-            use_quantile_transformer=self.cfg.hyperparams.use_quantile_transformer,
-            use_feature_count_scaling=self.cfg.hyperparams.use_feature_count_scaling,
-            max_features=self.cfg.hyperparams.n_features,
+            use_quantile_transformer=self.cfg.hyperparams['use_quantile_transformer'],
+            use_feature_count_scaling=self.cfg.hyperparams['use_feature_count_scaling'],
+            max_features=self.cfg.hyperparams['n_features'],
         )
 
 
@@ -59,8 +59,8 @@ class TrainerFinetune(BaseEstimator):
             x = x_train,
             y = self.y_transformer.transform(y_train),
             task = self.cfg.task,
-            max_samples_support = self.cfg.hyperparams.max_samples_support,
-            max_samples_query = self.cfg.hyperparams.max_samples_query,
+            max_samples_support = self.cfg.hyperparams['max_samples_support'],
+            max_samples_query = self.cfg.hyperparams['max_samples_query'],
             split = 0.8
         )
 
@@ -70,8 +70,8 @@ class TrainerFinetune(BaseEstimator):
             y_support = self.y_transformer.transform(y_train), 
             x_query = x_val,
             y_query = y_val,
-            max_samples_support = self.cfg.hyperparams.max_samples_support,
-            max_samples_query = self.cfg.hyperparams.max_samples_query,
+            max_samples_support = self.cfg.hyperparams['max_samples_support'],
+            max_samples_query = self.cfg.hyperparams['max_samples_query'],
         )
 
         loader_valid = self.make_loader(dataset_valid, training=False)
@@ -81,7 +81,7 @@ class TrainerFinetune(BaseEstimator):
         logger.info(f"Epoch 000 | Train loss: -.---- | Train score: -.---- | Val loss: {metrics_valid.loss:.4f} | Val score: {metrics_valid.score:.4f}")
         self.checkpoint(self.model, metrics_valid.loss)
 
-        for epoch in range(1, self.cfg.hyperparams.max_epochs+1):
+        for epoch in range(1, self.cfg.hyperparams['max_epochs']+1):
 
             dataset_train = next(dataset_train_generator)            
             loader_train = self.make_loader(dataset_train, training=True)
@@ -178,19 +178,19 @@ class TrainerFinetune(BaseEstimator):
             y_support = y_support, 
             x_query = x_query,
             y_query = None,
-            max_samples_support = self.cfg.hyperparams.max_samples_support,
-            max_samples_query = self.cfg.hyperparams.max_samples_query,
+            max_samples_support = self.cfg.hyperparams['max_samples_support'],
+            max_samples_query = self.cfg.hyperparams['max_samples_query'],
         )
 
         loader = self.make_loader(dataset, training=False)
 
         y_hat_ensembles = []
 
-        for _ in range(self.cfg.hyperparams.n_ensembles):
+        for _ in range(self.cfg.hyperparams['n_ensembles']):
             y_hat = self.predict_epoch(loader)
             y_hat_ensembles.append(y_hat)
 
-        y_hat_ensembled = sum(y_hat_ensembles) / self.cfg.hyperparams.n_ensembles
+        y_hat_ensembled = sum(y_hat_ensembles) / self.cfg.hyperparams['n_ensembles']
         y_hat_finish = self.y_transformer.inverse_transform(y_hat_ensembled)
 
         return y_hat_finish

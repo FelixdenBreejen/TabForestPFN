@@ -1,6 +1,5 @@
 import numpy as np
 import random
-from omegaconf import DictConfig
 
 from tabularbench.core.enums import SearchType
 
@@ -13,7 +12,7 @@ class HyperparameterDrawer:
         self.search_objects = [RandomSearchObject(name, cfg) for name, cfg in cfg.items()]
             
     
-    def draw_config(self, search_type: SearchType) -> DictConfig:
+    def draw_config(self, search_type: SearchType) -> dict:
         
         config = {}
 
@@ -29,8 +28,7 @@ class HyperparameterDrawer:
             if isinstance(v, float):
                 config[k] = float(v)
 
-        dict_config = DictConfig(config)
-        return dict_config
+        return config
 
 
 
