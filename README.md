@@ -2,14 +2,17 @@
 
 Welcome to the TabSGFD repository!
 
-Setup a new environment using python 3.11, then install the requirements:
+Setup a new environment using python 3.11, then install the requirements and the package:
 
 ```
 pip install -r requirements.txt
+
+pip install -e .
 ```
 
-
 ## Benchmark Results
+
+First make a dictory named `data/`
 
 For Whytrees, the benchmark results are available with:
 
