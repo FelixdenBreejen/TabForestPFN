@@ -97,7 +97,7 @@ def create_config_plotting(cfg_hydra: DictConfig) -> ConfigPlotting:
         tabzilla = ConfigPlottingTabzilla(
             benchmark_model_names=[ModelName[model] for model in cfg_hydra.plotting.tabzilla.benchmark_models],
         )
-    ),
+    )
 
 
 
