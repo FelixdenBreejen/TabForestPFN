@@ -17,7 +17,6 @@ from tabularbench.utils.paths_and_filenames import RANKING_TABLE_FILE_NAME
 
 
 def make_ranking_table(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None:
-    pass
 
     ds_benchmark = process_benchmark_results(cfg)
     ds_sweep = process_sweep_results(cfg, results_sweep)
