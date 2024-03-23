@@ -2,7 +2,8 @@ import numpy as np
 import xarray as xr
 from matplotlib import pyplot as plt
 
-from tabularbench.results.dataset_manipulations import add_model_plot_names, add_placeholder_as_model_name_dim
+from tabularbench.results.dataset_manipulations import (add_model_plot_names, add_placeholder_as_model_name_dim,
+                                                        only_use_models_and_datasets_specified_in_cfg)
 from tabularbench.results.dataset_plot_combined import make_combined_dataset_plot, make_combined_dataset_plot_data
 from tabularbench.results.dataset_plot_separate import make_separate_dataset_plot_data, make_separate_dataset_plots
 from tabularbench.results.random_sequence import create_random_sequences_from_dataset
@@ -32,9 +33,7 @@ def make_dataset_plots(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -
 
 def combine_and_process_run_results_with_benchmark(cfg: ConfigBenchmarkSweep, ds_results: xr.Dataset, ds_whytrees: xr.Dataset) -> xr.Dataset:
     
-    benchmark_model_names = [model_name.name for model_name in cfg.config_plotting.benchmark_model_names]
-
-    ds_whytrees = ds_whytrees.sel(openml_dataset_id=cfg.openml_dataset_ids_to_use, model_name=benchmark_model_names)
+    ds_whytrees = only_use_models_and_datasets_specified_in_cfg(cfg, ds_whytrees)
     ds_whytrees = add_model_plot_names(ds_whytrees)
     
     ds_results = add_placeholder_as_model_name_dim(ds_results, cfg.model_plot_name)

@@ -57,7 +57,13 @@ def average_out_the_cv_split(ds: xr.Dataset) -> xr.Dataset:
     ds = ds.copy()
     metric_vars = [var for var in ds.data_vars if 'cv_split' in ds[var].dims]
     ds[metric_vars] = ds[metric_vars] / ds['cv_splits_actual']
-    ds = ds.sum(dim='cv_split', skipna=False, keep_attrs=True)
+    mask = ds[metric_vars].mean(dim='cv_split', skipna=True, keep_attrs=True)
+    # When using sum with skipna=True, it will set all nan values to zero when calculating
+    # This is great when the max cv_split = 10 but we only have 3 splits: it will ignore the remaining 7
+    # However, when we have zero splits (no runs) it will also set the value to zero, which is not what we want
+    # So we need to set the value to nan again when sum outputs zero, which we do with the mean function
+    ds = ds.sum(dim='cv_split', skipna=True, keep_attrs=True) 
+    ds[metric_vars] = ds[metric_vars] * mask / mask
 
     return ds
 

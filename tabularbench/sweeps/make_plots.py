@@ -25,7 +25,7 @@ def plot_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None
 
 if __name__ == "__main__":
 
-    path = Path('outputs/2024-03-23/08-48-04/step_50')
+    path = Path('outputs/2024-03-23/08-58-41/step_50')
     results_sweep = ResultsSweep.load(path / RESULTS_FILE_NAME)
     cfg = ConfigBenchmarkSweep.load(path / CONFIG_BENCHMARK_SWEEP_FILE_NAME)
     cfg.output_dir = path
