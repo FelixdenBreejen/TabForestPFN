@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from loguru import logger
 
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.core.enums import SearchType
 from tabularbench.results.default_results import make_default_results
 from tabularbench.results.hyperparam_plots import make_hyperparam_plots
 from tabularbench.results.ranking_table import make_ranking_table
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.sweeps.make_plots_utils import default_results_not_yet_made, sweep_default_finished
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def plot_results_tabzilla(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None:

@@ -6,13 +6,13 @@ import numpy as np
 from loguru import logger
 from omegaconf import DictConfig
 
+from tabularbench.config.config_run import ConfigRun
 from tabularbench.core.dataset_split import make_dataset_split
 from tabularbench.core.enums import DatasetSize, DataSplit, ModelName, Task
 from tabularbench.core.get_model import get_model
 from tabularbench.core.get_trainer import get_trainer
 from tabularbench.data.dataset_openml import OpenMLDataset
 from tabularbench.results.run_metrics import RunMetrics
-from tabularbench.utils.config_run import ConfigRun
 from tabularbench.utils.debugger import debugger_is_active
 from tabularbench.utils.paths_and_filenames import CONFIG_RUN_FILE_NAME
 from tabularbench.utils.set_seed import set_seed

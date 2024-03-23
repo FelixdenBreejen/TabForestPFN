@@ -4,13 +4,13 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.results.dataset_manipulations import (add_model_plot_names, add_placeholder_as_model_name_dim,
                                                         select_only_the_first_default_run_of_every_model_and_dataset)
-from tabularbench.results.reformat_results_tabzilla import get_reformatted_results_tabzilla
+from tabularbench.results.reformat_results_get import get_reformatted_results_tabzilla
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.results.scores_min_max import get_combined_normalized_scores
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.utils.paths_and_filenames import DEFAULT_RESULTS_TEST_FILE_NAME, DEFAULT_RESULTS_VAL_FILE_NAME
 
 
@@ -27,7 +27,7 @@ def make_default_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep)
 
 def process_tabzilla_benchmark_results(cfg: ConfigBenchmarkSweep) -> xr.Dataset:
 
-    benchmark_model_names = [model_name.name for model_name in cfg.config_plotting.benchmark_model_names]
+    benchmark_model_names = [model_name.name for model_name in cfg.plotting.tabzilla.benchmark_model_names]
 
     ds_whytrees = get_reformatted_results_tabzilla()
     ds_whytrees = ds_whytrees.sel(openml_dataset_id=cfg.openml_dataset_ids_to_use, model_name=benchmark_model_names)
@@ -71,7 +71,8 @@ def make_df_results(cfg: ConfigBenchmarkSweep, ds: xr.Dataset, data_split: DataS
         }
     )
 
-    model_plot_names = [model_name.value for model_name in cfg.config_plotting.benchmark_model_names] + [cfg.model_plot_name]
+    benchmark_model_names =  cfg.plotting.get_benchmark_model_names(cfg.benchmark.origin)
+    model_plot_names = [model_name.value for model_name in benchmark_model_names] + [cfg.model_plot_name]
     score = score.reindex(model_plot_name = model_plot_names)
     df = score.to_pandas()
     df = df.round(4)
@@ -89,7 +90,7 @@ def get_results_file_name(data_split: DataSplit):
 
 def calculate_normalized_scores(cfg: ConfigBenchmarkSweep, ds: xr.Dataset, data_split: DataSplit) -> dict[ModelName, float]:
 
-    benchmark_model_names = [model_name for model_name in cfg.config_plotting.benchmark_model_names] + [ModelName.PLACEHOLDER]
+    benchmark_model_names = cfg.plotting.get_benchmark_model_names(cfg.benchmark.origin) + [ModelName.PLACEHOLDER]
     
     normalized_scores = {}
     for model_name in benchmark_model_names:

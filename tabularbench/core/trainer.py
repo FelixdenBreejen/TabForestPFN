@@ -1,17 +1,18 @@
 from pathlib import Path
+
+import numpy as np
+import torch
+from loguru import logger
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import StratifiedKFold, train_test_split
-import torch
-import numpy as np
-from loguru import logger
 
-from tabularbench.core.callbacks import EarlyStopping, Checkpoint, EpochStatistics
+from tabularbench.config.config_run import ConfigRun
+from tabularbench.core.callbacks import Checkpoint, EarlyStopping, EpochStatistics
 from tabularbench.core.enums import Task
 from tabularbench.core.get_loss import get_loss
 from tabularbench.core.get_optimizer import get_optimizer
 from tabularbench.core.get_scheduler import get_scheduler
 from tabularbench.core.y_transformer import create_y_transformer
-from tabularbench.utils.config_run import ConfigRun
 
 
 class Trainer(BaseEstimator):

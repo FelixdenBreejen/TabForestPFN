@@ -6,10 +6,10 @@ from typing import Self
 
 import torch
 
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.config.config_save_load_mixin import ConfigSaveLoadMixin
 from tabularbench.core.enums import DatasetSize, ModelName, Task
 from tabularbench.data.datafile_openml import OpenmlDatafile
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
-from tabularbench.utils.config_save_load_mixin import ConfigSaveLoadMixin
 
 
 @dataclass

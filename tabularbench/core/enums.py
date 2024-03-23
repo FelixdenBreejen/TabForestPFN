@@ -29,6 +29,12 @@ class DataSplit(StrEnum):
     TEST = "test"
 
 
+class Phase(StrEnum):
+    TRAINING = "training"
+    VALIDATION = "validation"
+    TESTING = "testing"
+
+
 class ModelName(StrEnum):
     PLACEHOLDER = "_placeholder_"   # This is a placeholder for the current running model
     FT_TRANSFORMER = "FT_Transformer"

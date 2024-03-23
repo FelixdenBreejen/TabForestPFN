@@ -6,9 +6,9 @@ from typing import Optional
 import torch
 from omegaconf import DictConfig
 
+from tabularbench.config.config_run import ConfigRun
 from tabularbench.core.enums import DatasetSize, ModelName, SearchType, Task
 from tabularbench.results.run_metrics import RunMetrics
-from tabularbench.utils.config_run import ConfigRun
 
 
 @dataclass

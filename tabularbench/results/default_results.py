@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import xarray as xr
 
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.core.enums import DataSplit
 from tabularbench.results.dataset_manipulations import (add_model_plot_names, add_placeholder_as_model_name_dim,
                                                         average_out_the_cv_split,
@@ -12,7 +13,6 @@ from tabularbench.results.dataset_manipulations import (add_model_plot_names, ad
 from tabularbench.results.reformat_results_get import get_reformatted_results
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.results.scores_min_max import normalize_scores
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.utils.paths_and_filenames import DEFAULT_RESULTS_TEST_FILE_NAME, DEFAULT_RESULTS_VAL_FILE_NAME
 
 
@@ -51,13 +51,13 @@ def process_sweep_results(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep
 def make_df_results(cfg: ConfigBenchmarkSweep, ds: xr.Dataset, data_split: DataSplit) -> pd.DataFrame:
 
     ds = average_out_the_cv_split(ds)
-    ds['normalized_accuracy'] = normalize_scores(cfg, ds['accuracy'])
+    ds['normalized_score'] = normalize_scores(cfg, ds['score'])
     ds = ds.sel(data_split=data_split.name).reset_coords('data_split', drop=True)
 
-    df = ds['accuracy'].to_pandas()
-    normalized_accuracy = ds['normalized_accuracy'].mean(dim='openml_dataset_id').to_dataframe()
+    df = ds['score'].to_pandas()
+    normalized_score = ds['normalized_score'].mean(dim='openml_dataset_id').to_dataframe()
 
-    df['aggregate'] = normalized_accuracy['normalized_accuracy']
+    df['aggregate'] = normalized_score['normalized_score']
     df = df.set_index(ds['model_plot_name'].values)
     df = df.round(4)
 

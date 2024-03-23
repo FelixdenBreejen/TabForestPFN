@@ -7,8 +7,8 @@ import torch.multiprocessing as mp
 from loguru import logger
 from omegaconf import DictConfig
 
+from tabularbench.config.config_main import ConfigMain
 from tabularbench.sweeps.run_sweep import run_sweep
-from tabularbench.utils.config_main import ConfigMain
 from tabularbench.utils.paths_and_filenames import (CONFIG_MAIN_FILE_NAME, PATH_TO_TABZILLA_BENCH_RESULTS_REFORMATTED,
                                                     PATH_TO_WHYTREES_BENCH_RESULTS_REFORMATTED)
 from tabularbench.utils.set_seed import set_seed

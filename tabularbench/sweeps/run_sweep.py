@@ -6,6 +6,8 @@ import torch
 import torch.multiprocessing as mp
 from loguru import logger
 
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
+from tabularbench.config.config_run import ConfigRun
 from tabularbench.core.enums import SearchType
 from tabularbench.core.run_experiment import run_experiment
 from tabularbench.data.datafile_name_maker import make_datafile_path
@@ -13,8 +15,6 @@ from tabularbench.results.results_run import ResultsRun
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.sweeps.hyperparameter_drawer import HyperparameterDrawer
 from tabularbench.sweeps.make_plots import plot_results
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
-from tabularbench.utils.config_run import ConfigRun
 from tabularbench.utils.paths_and_filenames import CONFIG_BENCHMARK_SWEEP_FILE_NAME, RESULTS_FILE_NAME
 
 

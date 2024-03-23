@@ -7,6 +7,7 @@ defaults:
   - hyperparams/ft_transformer: ft_transformer
   - hyperparams/tabpfn: finetune_10k
   - hyperparams/foundation: zeroshot_10k_forest
+  - plotting: plotting_default
   # - main_test
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
@@ -48,44 +49,6 @@ openml_dataset_ids_to_ignore: []
   # - 45041  # topo categorical regression (255 features)
   # - 45046  # allstate_claims categorical regression (124 features)
   # - 45019  # bioresponse numerical classification (419 features)
-
-
-plotting:
-  n_runs: 1000                 # Number of runs to consider for plotting
-  n_random_shuffles: 100       # Number of random shuffles for plotting the confidence boundaries
-  confidence_bound: 0.90       # Confidence bounds ratio for plotting the confidence boundaries
-  plot_default_value: True     # Plot the default value as run #1 
-
-  benchmark_models_whytrees:   # Which models do we include in all the comparison analysis
-    - MLP
-    - RESNET
-    - SAINT
-    - FT_TRANSFORMER
-    - RANDOM_FOREST
-    - XGBOOST
-    - GRADIENT_BOOSTING_TREE
-
-  benchmark_models_tabzilla:
-    - CATBOOST
-    - RESNET
-    - RANDOM_FOREST
-    - SAINT
-    - FT_TRANSFORMER
-    - XGBOOST
-    - NODE
-    - SVM
-    - MLP_RTDL
-    - LIGHTGBM
-    - LINEAR_REGRESSION
-    - DANET
-    - DECISION_TREE
-    - MLP
-    - STG
-    - KNN
-    - TABNET
-    - VIME
-
-
 
 
   

@@ -1,8 +1,9 @@
 import math
-from matplotlib import pyplot as plt
-import numpy as np
 
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
+import numpy as np
+from matplotlib import pyplot as plt
+
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def make_separate_dataset_plot_data(cfg: ConfigBenchmarkSweep, sequences_all: np.ndarray) -> np.ndarray:
@@ -10,15 +11,15 @@ def make_separate_dataset_plot_data(cfg: ConfigBenchmarkSweep, sequences_all: np
     n_dataset_ids = len(cfg.openml_dataset_ids_to_use)
     n_models = sequences_all.shape[0]
 
-    plot_data = np.empty((3, n_models, n_dataset_ids, cfg.config_plotting.n_runs))
+    plot_data = np.empty((3, n_models, n_dataset_ids, cfg.plotting.whytrees.n_runs))
     
     for dataset_i in range(n_dataset_ids):
         for model_i in range(n_models):
 
             sequences = sequences_all[model_i, dataset_i, :, :]
             sequence_mean = np.mean(sequences, axis=0)
-            sequence_lower_bound = np.quantile(sequences, q=1-cfg.config_plotting.confidence_bound, axis=0)
-            sequence_upper_bound = np.quantile(sequences, q=cfg.config_plotting.confidence_bound, axis=0)
+            sequence_lower_bound = np.quantile(sequences, q=1-cfg.plotting.whytrees.confidence_bound, axis=0)
+            sequence_upper_bound = np.quantile(sequences, q=cfg.plotting.whytrees.confidence_bound, axis=0)
 
             plot_data[0, model_i, dataset_i, :] = sequence_mean
             plot_data[1, model_i, dataset_i, :] = sequence_lower_bound
@@ -29,7 +30,7 @@ def make_separate_dataset_plot_data(cfg: ConfigBenchmarkSweep, sequences_all: np
 
 def make_separate_dataset_plots(cfg: ConfigBenchmarkSweep, plot_data: np.ndarray) -> plt.Figure:
 
-    models = cfg.config_plotting.benchmark_model_names + [cfg.model_plot_name]
+    models = cfg.plotting.whytrees.benchmark_model_names + [cfg.model_plot_name]
     n_dataset_ids = len(cfg.openml_dataset_ids_to_use)
 
     num_horizontal_subplots = math.ceil(math.sqrt(n_dataset_ids))
@@ -47,7 +48,7 @@ def make_separate_dataset_plots(cfg: ConfigBenchmarkSweep, plot_data: np.ndarray
             sequence_lower_bound = plot_data[1, model_i, dataset_i, :]
             sequence_upper_bound = plot_data[2, model_i, dataset_i, :]
 
-            epochs = np.arange(len(sequence_mean)) + cfg.config_plotting.plot_default_value
+            epochs = np.arange(len(sequence_mean)) + cfg.plotting.whytrees.plot_default_value
 
             ax.plot(epochs, sequence_mean, label=model, linewidth=6)
             ax.fill_between(
@@ -74,7 +75,7 @@ def make_separate_dataset_plots(cfg: ConfigBenchmarkSweep, plot_data: np.ndarray
 
         ax.set_ylim([min_y, max_y])
         ax.set_xscale('log')
-        ax.set_xlim([1, cfg.config_plotting.n_runs])
+        ax.set_xlim([1, cfg.plotting.whytrees.n_runs])
         ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: int(x)))
 
 

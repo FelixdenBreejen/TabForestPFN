@@ -6,6 +6,7 @@ import torch
 from loguru import logger
 from sklearn.base import BaseEstimator
 
+from tabularbench.config.config_run import ConfigRun
 from tabularbench.core.callbacks import Checkpoint, EarlyStopping, TrackOutput
 from tabularbench.core.collator import CollatorWithPadding
 from tabularbench.core.enums import Task
@@ -16,7 +17,6 @@ from tabularbench.core.y_transformer import create_y_transformer
 from tabularbench.data.dataset_finetune import DatasetFinetune, DatasetFinetuneGenerator
 from tabularbench.data.preprocessor import Preprocessor
 from tabularbench.results.prediction_metrics import PredictionMetrics
-from tabularbench.utils.config_run import ConfigRun
 
 
 class TrainerFinetune(BaseEstimator):

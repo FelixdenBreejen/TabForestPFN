@@ -3,10 +3,10 @@ from __future__ import annotations
 import xarray as xr
 from matplotlib import pyplot as plt
 
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.core.enums import DataSplit
 from tabularbench.results.dataset_manipulations import average_out_the_cv_split
 from tabularbench.results.results_sweep import ResultsSweep
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def make_hyperparam_plots(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None:

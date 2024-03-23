@@ -7,9 +7,14 @@ from typing import Optional
 import torch
 from omegaconf import DictConfig, OmegaConf
 
-from tabularbench.core.enums import GeneratorName, ModelName
-from tabularbench.utils.config_benchmark_sweep import ConfigPlotting
-from tabularbench.utils.config_save_load_mixin import ConfigSaveLoadMixin
+from tabularbench.config.config_benchmark_sweep import ConfigPlotting
+from tabularbench.config.config_data import ConfigData
+from tabularbench.config.config_optim import ConfigOptim
+from tabularbench.config.config_plotting import ConfigPlottingTabzilla, ConfigPlottingWhytrees
+from tabularbench.config.config_preprocessing import ConfigPreprocessing
+from tabularbench.config.config_save_load_mixin import ConfigSaveLoadMixin
+from tabularbench.config.config_testing import ConfigTesting
+from tabularbench.core.enums import BenchmarkName, GeneratorName, ModelName
 
 
 @dataclass
@@ -41,7 +46,6 @@ class ConfigPretrain(ConfigSaveLoadMixin):
         pretrain_model_name = ModelName[cfg_hydra.pretrain_model.name]
         hyperparams_finetuning = cfg_hydra.hyperparams[pretrain_model_name.name.lower()]
         model_settings = cfg_hydra.pretrain_model
-
 
 
         return cls(
@@ -87,58 +91,26 @@ class ConfigPretrain(ConfigSaveLoadMixin):
                 n_default_runs_per_dataset_valid=cfg_hydra.testing.n_default_runs_per_dataset_valid,
                 n_default_runs_per_dataset_test=cfg_hydra.testing.n_default_runs_per_dataset_test,
                 openml_dataset_ids_to_ignore=OmegaConf.to_container(cfg_hydra.testing.openml_dataset_ids_to_ignore),
+                benchmarks=[BenchmarkName[benchmark] for benchmark in cfg_hydra.testing.benchmarks],
             ),
             plotting = ConfigPlotting(
-                n_runs=cfg_hydra.plotting.n_runs,
-                n_random_shuffles=cfg_hydra.plotting.n_random_shuffles,
-                confidence_bound=cfg_hydra.plotting.confidence_bound,
-                plot_default_value=cfg_hydra.plotting.plot_default_value,
-                benchmark_model_names=[ModelName[model] for model in cfg_hydra.plotting.benchmark_models],
+                whytrees = ConfigPlottingWhytrees(                    
+                    n_runs=cfg_hydra.plotting.whytrees.n_runs,
+                    n_random_shuffles=cfg_hydra.plotting.whytrees.n_random_shuffles,
+                    confidence_bound=cfg_hydra.plotting.whytrees.confidence_bound,
+                    plot_default_value=cfg_hydra.plotting.whytrees.plot_default_value,
+                    benchmark_model_names=[ModelName[model] for model in cfg_hydra.plotting.whytrees.benchmark_models]
+                ),
+                tabzilla = ConfigPlottingTabzilla(
+                    benchmark_model_names=[ModelName[model] for model in cfg_hydra.plotting.tabzilla.benchmark_models],
+                )
             ),
         )
     
 
-@dataclass
-class ConfigOptim():
-    max_steps: int
-    log_every_n_steps: int
-    eval_every_n_steps: int
-    batch_size: int
-    gradient_accumulation_steps: int
-    lr: float
-    weight_decay: float
-    beta1: float
-    beta2: float
-    warmup_steps: int
-    cosine_scheduler: bool
-    max_grad_norm: float
-    use_pretrained_weights: bool
-    path_to_weights: str
 
 
-@dataclass
-class ConfigData():
-    generator: GeneratorName
-    min_samples_support: int
-    max_samples_support: int
-    n_samples_query: int
-    min_features: int
-    max_features: int
-    max_classes: int
-    generator_hyperparams: dict
 
-
-@dataclass
-class ConfigPreprocessing():
-    use_quantile_transformer: bool
-    use_feature_count_scaling: bool
-
-
-@dataclass
-class ConfigTesting():
-    n_default_runs_per_dataset_valid: int
-    n_default_runs_per_dataset_test: int               
-    openml_dataset_ids_to_ignore: list[int]
 
 
 

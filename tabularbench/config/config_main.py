@@ -8,10 +8,11 @@ import torch
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 
-from tabularbench.core.enums import BenchmarkName, BenchmarkOrigin, ModelName, SearchType
-from tabularbench.data.benchmarks import BENCHMARKS, Benchmark
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep, ConfigPlotting
-from tabularbench.utils.config_save_load_mixin import ConfigSaveLoadMixin
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep, ConfigPlotting
+from tabularbench.config.config_plotting import ConfigPlottingTabzilla, ConfigPlottingWhytrees
+from tabularbench.config.config_save_load_mixin import ConfigSaveLoadMixin
+from tabularbench.core.enums import BenchmarkName, ModelName, SearchType
+from tabularbench.data.benchmarks import BENCHMARKS
 
 
 @dataclass
@@ -69,7 +70,7 @@ class ConfigMain(ConfigSaveLoadMixin):
                 model_name=model_name,
                 model_plot_name=model_plot_name,
                 search_type=search_type,
-                config_plotting=create_config_plotting(cfg_hydra, benchmark),
+                plotting=create_config_plotting(cfg_hydra),
                 n_random_runs_per_dataset=cfg_hydra.n_random_runs_per_dataset,
                 n_default_runs_per_dataset=cfg_hydra.n_default_runs_per_dataset,
                 openml_dataset_ids_to_ignore=dataset_ids_to_ignore,
@@ -83,23 +84,20 @@ class ConfigMain(ConfigSaveLoadMixin):
 
 
 
-def create_config_plotting(cfg_hydra: DictConfig, benchmark: Benchmark) -> ConfigPlotting:
-
-    match benchmark.origin:
-        case BenchmarkOrigin.TABZILLA:
-            benchmark_model_strs = cfg_hydra.plotting.benchmark_models_tabzilla
-        case BenchmarkOrigin.WHYTREES:
-            benchmark_model_strs = cfg_hydra.plotting.benchmark_models_whytrees
-
-    benchmark_model_names = [ModelName[model_name] for model_name in benchmark_model_strs]
+def create_config_plotting(cfg_hydra: DictConfig) -> ConfigPlotting:
 
     return ConfigPlotting(
-        n_runs=cfg_hydra.plotting.n_runs,
-        n_random_shuffles=cfg_hydra.plotting.n_random_shuffles,
-        confidence_bound=cfg_hydra.plotting.confidence_bound,
-        plot_default_value=cfg_hydra.plotting.plot_default_value,
-        benchmark_model_names=benchmark_model_names
-    )
+        whytrees = ConfigPlottingWhytrees(                    
+            n_runs=cfg_hydra.plotting.whytrees.n_runs,
+            n_random_shuffles=cfg_hydra.plotting.whytrees.n_random_shuffles,
+            confidence_bound=cfg_hydra.plotting.whytrees.confidence_bound,
+            plot_default_value=cfg_hydra.plotting.whytrees.plot_default_value,
+            benchmark_model_names=[ModelName[model] for model in cfg_hydra.plotting.whytrees.benchmark_models]
+        ),
+        tabzilla = ConfigPlottingTabzilla(
+            benchmark_models_tabzilla=[ModelName[model] for model in cfg_hydra.plotting.tabzilla.benchmark_models],
+        )
+    ),
 
 
 

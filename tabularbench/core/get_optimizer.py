@@ -1,6 +1,8 @@
-from omegaconf import DictConfig
 import torch
-from torch.optim import AdamW, Adam, SGD
+from omegaconf import DictConfig
+from torch.optim import SGD, Adam, AdamW
+
+from tabularbench.config.config_pretrain import ConfigPretrain
 
 
 def get_optimizer(hyperparams: DictConfig, model: torch.nn.Module) -> torch.optim.Optimizer:
@@ -29,5 +31,33 @@ def get_optimizer(hyperparams: DictConfig, model: torch.nn.Module) -> torch.opti
         )
     else:
         raise ValueError("Optimizer not recognized")
+    
+    return optimizer
+
+
+def get_optimizer_pretrain(cfg: ConfigPretrain, model: torch.nn.Module) -> torch.optim.Optimizer:
+
+    parameters = [(name, param) for name, param in model.named_parameters()]
+
+    parameters_with_weight_decay = []
+    parameters_without_weight_decay = []
+
+    for name, param in parameters:
+        if name.endswith("bias") or 'norm' in name:
+            parameters_without_weight_decay.append(param)
+        else:
+            parameters_with_weight_decay.append(param)
+
+    optimizer_parameters = [
+        {"params": parameters_with_weight_decay, "weight_decay": cfg.optim.weight_decay},
+        {"params": parameters_without_weight_decay, "weight_decay": 0.0},
+    ]
+
+    optimizer = torch.optim.Adam(
+        optimizer_parameters, 
+        lr=cfg.optim.lr,
+        betas=(cfg.optim.beta1, cfg.optim.beta2),
+        weight_decay=cfg.optim.weight_decay
+    )
     
     return optimizer

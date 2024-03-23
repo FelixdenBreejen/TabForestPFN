@@ -2,12 +2,12 @@
 import numpy as np
 import torch
 
+from tabularbench.config.config_pretrain import ConfigPretrain
+from tabularbench.config.config_run import ConfigRun
 from tabularbench.core.enums import ModelName
 from tabularbench.models.foundation.foundation_transformer import FoundationTransformer
 from tabularbench.models.ft_transformer.ft_transformer import FTTransformer
 from tabularbench.models.tabPFN.tabpfn_transformer import TabPFN
-from tabularbench.utils.config_pretrain import ConfigPretrain
-from tabularbench.utils.config_run import ConfigRun
 
 
 def get_model(cfg: ConfigRun, x_train: np.ndarray, y_train: np.ndarray, categorical_indicator: np.ndarray) -> torch.nn.Module:

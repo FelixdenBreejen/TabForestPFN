@@ -1,9 +1,9 @@
 import torch
+
+from tabularbench.config.config_run import ConfigRun
 from tabularbench.core.enums import ModelName
 from tabularbench.core.trainer import Trainer
 from tabularbench.core.trainer_finetune import TrainerFinetune
-
-from tabularbench.utils.config_run import ConfigRun
 
 
 def get_trainer(cfg: ConfigRun, model: torch.nn.Module, n_classes: int):

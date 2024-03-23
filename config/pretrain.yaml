@@ -7,6 +7,7 @@ defaults:
   - hyperparams/tabpfn: finetune_10k
   - hyperparams/foundation: finetune_10k_forest
   - pretrain_model: foundation
+  - plotting: plotting_default
   # - pretrain_continue
   - pretrain_test
   - override hydra/hydra_logging: disabled  
@@ -54,7 +55,7 @@ preprocessing:
 
 testing:
   n_default_runs_per_dataset_valid: 1
-  n_default_runs_per_dataset_test: 10                  
+  n_default_runs_per_dataset_test: 10           # Only applicable to the WHYTREES benchmark           
   openml_dataset_ids_to_ignore: []
     # - 44089  # missing SAINT hyperparameter search in original benchmark results
     # - 44135  # isolet numerical regression (613 features)
@@ -63,18 +64,16 @@ testing:
     # - 45046  # allstate_claims categorical regression (124 features)
     # - 45019  # bioresponse numerical classification (419 features)
 
-
-plotting:
-  n_runs: 500                   # Number of runs to consider for plotting
-  n_random_shuffles: 100         # Number of random shuffles for plotting the confidence boundaries
-  confidence_bound: 0.90       # Confidence bounds ratio for plotting the confidence boundaries
-  plot_default_value: True     # Plot the default value of the model
-
-  benchmark_models:   # Based on which models do we normalize the accuracy and R2
-    - MLP
-    - RESNET
-    - SAINT
-    - FT_TRANSFORMER
-    - RANDOM_FOREST
-    - XGBOOST
-    - GRADIENT_BOOSTING_TREE
+  benchmarks:
+    # - DEBUG_CATEGORICAL_CLASSIFICATION
+    # - DEBUG_TABZILLA
+    - CATEGORICAL_CLASSIFICATION
+    - NUMERICAL_CLASSIFICATION
+    # - CATEGORICAL_REGRESSION
+    # - NUMERICAL_REGRESSION
+    # - CATEGORICAL_CLASSIFICATION_LARGE
+    # - NUMERICAL_CLASSIFICATION_LARGE
+    # - CATEGORICAL_REGRESSION_LARGE
+    # - NUMERICAL_REGRESSION_LARGE
+    # - TABZILLA_HARD_MAX_TEN_CLASSES
+    - TABZILLA_HAS_COMPLETED_RUNS

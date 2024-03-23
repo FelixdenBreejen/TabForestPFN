@@ -4,9 +4,9 @@ import numpy as np
 import xarray as xr
 from loguru import logger
 
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.core.enums import BenchmarkOrigin, DataSplit, Task
 from tabularbench.results.reformat_results_get import get_reformatted_results
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def get_combined_normalized_scores(cfg: ConfigBenchmarkSweep, openml_ids: list[int], data_split: DataSplit, scores: list[float]) -> float:
@@ -26,26 +26,29 @@ def get_combined_normalized_scores(cfg: ConfigBenchmarkSweep, openml_ids: list[i
     return combined_normalized_score
 
 
-def normalize_scores(cfg: ConfigBenchmarkSweep, ds: xr.Dataset) -> xr.Dataset:
+def normalize_scores(cfg: ConfigBenchmarkSweep, da: xr.DataArray) -> xr.Dataset:
     """
     Normalize a score based on the benchmark results.
     """
 
-    boundaries = np.full((2, ds.sizes['openml_dataset_id'], ds.sizes['data_split']), np.nan)
+    boundaries = np.full((2, da.sizes['openml_dataset_id'], da.sizes['data_split']), np.nan)
 
-    for i_id, openml_dataset_id in enumerate(ds.coords['openml_dataset_id'].values):
-        for i_split, data_split_str in enumerate(ds.coords['data_split'].values):
+    for i_id, openml_dataset_id in enumerate(da.coords['openml_dataset_id'].values):
+        for i_split, data_split_str in enumerate(da.coords['data_split'].values):
 
             data_split = DataSplit[data_split_str]
             boundaries[:, i_id, i_split] = scores_min_max(cfg, openml_dataset_id, data_split)
 
-    boundaries = xr.DataArray(boundaries, dims=('min_max', 'openml_dataset_id', 'data_split'), coords=dict(min_max=['min', 'max']))
+    boundaries = xr.DataArray(
+        boundaries, 
+        dims=('min_max', 'openml_dataset_id', 'data_split'), 
+        coords=dict(min_max=['min', 'max'], openml_dataset_id=da.coords['openml_dataset_id'], data_split=da.coords['data_split']))
 
-    ds = (ds - boundaries.sel(min_max='min')) / (boundaries.sel(min_max='max') - boundaries.sel(min_max='min'))
-    ds = ds.where(ds >= 0.0, float('nan'))
-    ds = ds.drop_vars('min_max')
+    da = (da - boundaries.sel(min_max='min')) / (boundaries.sel(min_max='max') - boundaries.sel(min_max='min'))
+    da = xr.where(da < 0, 0, da)
+    da = da.drop_vars('min_max')
 
-    return ds
+    return da
 
 
 
@@ -55,7 +58,7 @@ def scores_min_max(cfg: ConfigBenchmarkSweep, openml_dataset_id: int, data_split
     Returns the min and max scores to normalize with
     """
 
-    benchmark_model_names = tuple(model_name.name for model_name in cfg.config_plotting.benchmark_model_names)
+    benchmark_model_names = tuple(model_name.name for model_name in cfg.plotting.get_benchmark_model_names(cfg.benchmark.origin))
     score_min, score_max = scores_min_max_(openml_dataset_id, benchmark_model_names, cfg.benchmark.task, data_split, cfg.benchmark.origin)
 
     return score_min, score_max
@@ -82,6 +85,6 @@ def scores_min_max_(
 
     score_max = ds_benchmark['score'].max().values.item()
 
-    logger.info(f"For dataset id {openml_dataset_id} and split {data_split}, we will normalize with min {score_min:.4f} and max {score_max:.4f}")
+    logger.debug(f"For dataset id {openml_dataset_id} and split {data_split}, we will normalize with min {score_min:.4f} and max {score_max:.4f}")
 
     return score_min, score_max

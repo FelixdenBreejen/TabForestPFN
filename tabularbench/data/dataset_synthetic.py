@@ -3,10 +3,10 @@ from typing import Generator, Iterator
 import numpy as np
 import torch
 
+from tabularbench.config.config_pretrain import ConfigPretrain
 from tabularbench.core.enums import GeneratorName
 from tabularbench.data.preprocessor import Preprocessor
 from tabularbench.data.synthetic_generator_selector import SyntheticDatasetGeneratorSelectorMixin
-from tabularbench.utils.config_pretrain import ConfigPretrain
 
 
 class SyntheticDataset(torch.utils.data.IterableDataset, SyntheticDatasetGeneratorSelectorMixin):

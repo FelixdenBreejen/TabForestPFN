@@ -2,10 +2,10 @@ import numpy as np
 import xarray as xr
 from loguru import logger
 
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
 from tabularbench.results.dataset_manipulations import average_out_the_cv_split
 from tabularbench.results.scores_min_max import scores_min_max
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def create_random_sequences_from_dataset(cfg: ConfigBenchmarkSweep, ds: xr.Dataset) -> np.ndarray:
@@ -16,12 +16,12 @@ def create_random_sequences_from_dataset(cfg: ConfigBenchmarkSweep, ds: xr.Datas
         sequences_all: np.ndarray of shape (n_models, n_datasets, n_shuffles, n_runs)
     """
     
-    models = cfg.config_plotting.benchmark_model_names + [ModelName.PLACEHOLDER]
+    models = cfg.plotting.whytrees.benchmark_model_names + [ModelName.PLACEHOLDER]
 
     n_models = len(models)
     n_datasets = len(cfg.openml_dataset_ids_to_use)
-    n_shuffles = cfg.config_plotting.n_random_shuffles
-    n_runs = cfg.config_plotting.n_runs
+    n_shuffles = cfg.plotting.whytrees.n_random_shuffles
+    n_runs = cfg.plotting.whytrees.n_runs
     
     sequences_all = np.zeros((n_models, n_datasets, n_shuffles, n_runs))
 
@@ -49,7 +49,7 @@ def compute_default_sequences_for_model(cfg: ConfigBenchmarkSweep, ds_model: xr.
     Fake sequence that is just the default value.
     """
 
-    n_shuffles = cfg.config_plotting.n_random_shuffles
+    n_shuffles = cfg.plotting.whytrees.n_random_shuffles
 
     ds = ds_model.sel(data_split=DataSplit.TEST.name)
     results = ds['score'].where(ds_model['search_type'] == SearchType.DEFAULT.name, drop=True).values
@@ -91,8 +91,8 @@ def compute_random_sequences_for_model(cfg: ConfigBenchmarkSweep, ds_model: xr.D
         default_value_test = default_value_test,
         random_values_val = random_values_val,
         random_values_test = random_values_test,
-        sequence_length = cfg.config_plotting.n_runs,
-        n_shuffles = cfg.config_plotting.n_random_shuffles
+        sequence_length = cfg.plotting.whytrees.n_runs,
+        n_shuffles = cfg.plotting.whytrees.n_random_shuffles
     )
     sequences = sequences.clip(min=0)
 

@@ -10,8 +10,8 @@ from loguru import logger
 from omegaconf import DictConfig
 
 from main import check_existence_of_benchmark_results_csv
+from tabularbench.config.config_pretrain import ConfigPretrain
 from tabularbench.core.trainer_pretrain import TrainerPretrain
-from tabularbench.utils.config_pretrain import ConfigPretrain
 from tabularbench.utils.paths_and_filenames import CONFIG_PRETRAIN_FILE_NAME
 from tabularbench.utils.set_seed import set_seed
 
@@ -19,28 +19,17 @@ from tabularbench.utils.set_seed import set_seed
 @hydra.main(version_base=None, config_path="config", config_name="pretrain")
 def main(cfg_hydra: DictConfig):
     
-    mp.set_start_method('spawn')
-
-    if debugger_is_active():
-        os.environ['CUDA_LAUNCH_BLOCKING']='1'
-
     cfg = ConfigPretrain.from_hydra(cfg_hydra)
-    logger.add(cfg.output_dir / "log.log", enqueue=True)
-    logger.info("Finished creating pretrain config")
+    barrier = setup_multiprocessing(cfg)
+    setup_logger(cfg)
 
     check_existence_of_benchmark_results_csv(cfg)
     cfg.save(path=cfg.output_dir / CONFIG_PRETRAIN_FILE_NAME)
     setup_gpus(cfg)
     set_seed(cfg.seed)
 
-    barrier = mp.Barrier(len(cfg.devices))
-
-    if cfg.use_ddp:
-        logger.info(f"Training with {len(cfg.devices)} GPUs")
-        mp.spawn(main_experiment, nprocs=len(cfg.devices), args=(cfg,barrier))
-    else:
-        logger.info(f"Training with one GPU")
-        mp.spawn(main_experiment, nprocs=1, args=(cfg,barrier))
+    logger.info(f"Training with {len(cfg.devices)} GPU(s)")
+    mp.spawn(main_experiment, nprocs=len(cfg.devices), args=(cfg,barrier))
 
 
 def main_experiment(gpu: int, cfg: ConfigPretrain, barrier: mp.Barrier) -> None:
@@ -61,6 +50,23 @@ def main_experiment(gpu: int, cfg: ConfigPretrain, barrier: mp.Barrier) -> None:
         logger.info(f"Start testing of {cfg.model_name.value}")
         trainer.test()
         logger.info(f"Finished testing of {cfg.model_name.value}")
+
+
+def setup_multiprocessing(cfg: ConfigPretrain) -> mp.Barrier:
+
+    mp.set_start_method('spawn')
+
+    if debugger_is_active():
+        os.environ['CUDA_LAUNCH_BLOCKING']='1'
+
+    return mp.Barrier(len(cfg.devices))
+
+
+def setup_logger(cfg: ConfigPretrain) -> None:
+    # Should be called after setting up the multiprocessing, because enqueue is used
+
+    logger.add(cfg.output_dir / "log.log", enqueue=True)
+    logger.info("Finished creating pretrain config")
 
 
 def setup_gpus(cfg: ConfigPretrain) -> None:

@@ -5,18 +5,19 @@ import torch
 import torch.multiprocessing as mp
 from loguru import logger
 from sklearn.base import BaseEstimator
-from transformers import get_constant_schedule_with_warmup, get_cosine_schedule_with_warmup
 
+from tabularbench.config.config_pretrain import ConfigPretrain
 from tabularbench.core.collator import CollatorWithPadding
-from tabularbench.core.enums import BenchmarkName, DataSplit, ModelName, SearchType
+from tabularbench.core.enums import BenchmarkName, DataSplit, Phase
 from tabularbench.core.get_model import get_model_pretrain
+from tabularbench.core.get_optimizer import get_optimizer_pretrain
+from tabularbench.core.get_scheduler import get_scheduler_pretrain
 from tabularbench.core.losses import CrossEntropyLossExtraBatch
 from tabularbench.core.metrics import MetricsTraining, MetricsValidation
+from tabularbench.core.trainer_pretrain_evaluate import create_config_benchmark_sweep
 from tabularbench.data.benchmarks import BENCHMARKS
 from tabularbench.data.dataset_synthetic import SyntheticDataset
 from tabularbench.sweeps.run_sweep import run_sweep
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
-from tabularbench.utils.config_pretrain import ConfigPretrain
 from tabularbench.utils.paths_and_filenames import DEFAULT_RESULTS_TEST_FILE_NAME, DEFAULT_RESULTS_VAL_FILE_NAME
 from tabularbench.utils.set_seed import seed_worker
 
@@ -67,9 +68,9 @@ class TrainerPretrain(BaseEstimator):
         )
 
 
-        self.optimizer = self.select_optimizer()
-        self.scheduler = self.select_scheduler()
-        self.loss = self.select_loss()
+        self.optimizer = get_optimizer_pretrain(cfg, self.model)
+        self.scheduler = get_scheduler_pretrain(cfg, self.optimizer)
+        self.loss = CrossEntropyLossExtraBatch()
         
 
     def train(self):
@@ -155,33 +156,25 @@ class TrainerPretrain(BaseEstimator):
 
     def validate(self, output_dir: Path, weights_path: Path, plot_name: str) -> dict[DataSplit, float]:
 
-        hyperparams_finetuning = self.make_hyperparams_finetuning_dict(weights_path)
-
-        cfg_sweep = ConfigBenchmarkSweep(
-            output_dir=output_dir,
-            seed=self.cfg.seed,
-            devices=self.cfg.devices,
+        cfg_sweep = create_config_benchmark_sweep(
+            cfg=self.cfg,
             benchmark=BENCHMARKS[BenchmarkName.CATEGORICAL_CLASSIFICATION],
-            model_name=self.cfg.model_name,
-            model_plot_name=plot_name,
-            search_type=SearchType.DEFAULT,
-            config_plotting=self.cfg.plotting,
-            n_random_runs_per_dataset=1,
-            n_default_runs_per_dataset=self.cfg.testing.n_default_runs_per_dataset_valid,
-            openml_dataset_ids_to_ignore=self.cfg.testing.openml_dataset_ids_to_ignore,
-            hyperparams_object=hyperparams_finetuning
+            output_dir=output_dir,
+            weights_path=weights_path,
+            plot_name=plot_name,
+            phase=Phase.VALIDATION
         )
         run_sweep(cfg_sweep)
 
         default_results_val = pd.read_csv(output_dir / DEFAULT_RESULTS_VAL_FILE_NAME, index_col=0)
-        normalized_accuracy_val = default_results_val.loc[plot_name].iloc[-1]
+        normalized_score_val = default_results_val.loc[plot_name].iloc[-1]
 
         default_results_test = pd.read_csv(output_dir / DEFAULT_RESULTS_TEST_FILE_NAME, index_col=0)
-        normalized_accuracy_test = default_results_test.loc[plot_name].iloc[-1]
+        normalized_score_test = default_results_test.loc[plot_name].iloc[-1]
 
         return {
-            DataSplit.VALID: normalized_accuracy_val,
-            DataSplit.TEST: normalized_accuracy_test
+            DataSplit.VALID: normalized_score_val,
+            DataSplit.TEST: normalized_score_test
         }
     
 
@@ -190,127 +183,18 @@ class TrainerPretrain(BaseEstimator):
         self.model = self.model.to('cpu')
         torch.cuda.empty_cache()
 
-        weights_path = self.last_weights_path
-        plot_name = f"{self.cfg.model_name.value} Pretrain Test"
+        for benchmark_name in self.cfg.testing.benchmarks:
+                
+            benchmark = BENCHMARKS[benchmark_name]
+            output_dir = self.cfg.output_dir / f"test_{benchmark_name.value}"
 
-        hyperparams_finetuning = self.make_hyperparams_finetuning_dict(weights_path)
-
-        output_dir = self.cfg.output_dir / 'test-categorical-classification'
-        cfg_sweep = ConfigBenchmarkSweep(
-            output_dir=output_dir,
-            seed=self.cfg.seed,
-            devices=self.cfg.devices,
-            benchmark=BENCHMARKS[BenchmarkName.CATEGORICAL_CLASSIFICATION],
-            model_name=self.cfg.model_name,
-            model_plot_name=plot_name,
-            search_type=SearchType.DEFAULT,
-            config_plotting=self.cfg.plotting,
-            n_random_runs_per_dataset=1,
-            n_default_runs_per_dataset=self.cfg.testing.n_default_runs_per_dataset_test,
-            openml_dataset_ids_to_ignore=self.cfg.testing.openml_dataset_ids_to_ignore,
-            hyperparams_object=hyperparams_finetuning
-        )
-        run_sweep(cfg_sweep)
-
-        output_dir = self.cfg.output_dir / 'test-numerical-classification'
-        cfg_sweep = ConfigBenchmarkSweep(
-            output_dir=output_dir,
-            seed=self.cfg.seed,
-            devices=self.cfg.devices,
-            benchmark=BENCHMARKS[BenchmarkName.NUMERICAL_CLASSIFICATION],
-            model_name=self.cfg.model_name,
-            model_plot_name=plot_name,
-            search_type=SearchType.DEFAULT,
-            config_plotting=self.cfg.plotting,
-            n_random_runs_per_dataset=1,
-            n_default_runs_per_dataset=self.cfg.testing.n_default_runs_per_dataset_test,
-            openml_dataset_ids_to_ignore=self.cfg.testing.openml_dataset_ids_to_ignore,
-            hyperparams_object=hyperparams_finetuning
-        )
-        run_sweep(cfg_sweep)
-
-        output_dir = self.cfg.output_dir / 'test-tabzilla'
-        cfg_sweep = ConfigBenchmarkSweep(
-            output_dir=output_dir,
-            seed=self.cfg.seed,
-            devices=self.cfg.devices,
-            benchmark=BENCHMARKS[BenchmarkName.TABZILLA_HAS_COMPLETED_RUNS],
-            model_name=self.cfg.model_name,
-            model_plot_name=plot_name,
-            search_type=SearchType.DEFAULT,
-            config_plotting=self.cfg.plotting,
-            n_random_runs_per_dataset=1,
-            n_default_runs_per_dataset=1,
-            openml_dataset_ids_to_ignore=self.cfg.testing.openml_dataset_ids_to_ignore,
-            hyperparams_object=hyperparams_finetuning
-        )
-        run_sweep(cfg_sweep)
-
-
-
-
-    def make_hyperparams_finetuning_dict(self, weights_path: Path) -> dict:
-
-        hyperparams_finetuning = self.cfg.hyperparams_finetuning
-        hyperparams_finetuning['use_pretrained_weights'] = True
-        hyperparams_finetuning['path_to_weights'] = str(weights_path)
-        hyperparams_finetuning['use_quantile_transformer'] = self.cfg.preprocessing.use_quantile_transformer
-        hyperparams_finetuning['use_feature_count_scaling'] = self.cfg.preprocessing.use_feature_count_scaling
-
-        if self.cfg.model_name == ModelName.FOUNDATION:
-            hyperparams_finetuning['n_features'] = self.cfg.data.max_features
-            hyperparams_finetuning['n_classes'] = self.cfg.data.max_classes
-
-            for key, value in self.cfg.model.items():
-                hyperparams_finetuning[key] = value
-
-        return hyperparams_finetuning
-
-
-    def select_optimizer(self):
-
-        parameters = [(name, param) for name, param in self.model.named_parameters()]
-
-        parameters_with_weight_decay = []
-        parameters_without_weight_decay = []
-
-        for name, param in parameters:
-            if name.endswith("bias") or 'norm' in name:
-                parameters_without_weight_decay.append(param)
-            else:
-                parameters_with_weight_decay.append(param)
-
-        optimizer_parameters = [
-            {"params": parameters_with_weight_decay, "weight_decay": self.cfg.optim.weight_decay},
-            {"params": parameters_without_weight_decay, "weight_decay": 0.0},
-        ]
-    
-        optimizer = torch.optim.Adam(
-            optimizer_parameters, 
-            lr=self.cfg.optim.lr,
-            betas=(self.cfg.optim.beta1, self.cfg.optim.beta2),
-            weight_decay=self.cfg.optim.weight_decay
-        )
-        
-        return optimizer
-        
-
-    def select_scheduler(self):
-
-        if self.cfg.optim.cosine_scheduler:
-            schedule = get_cosine_schedule_with_warmup(
-                self.optimizer,
-                num_warmup_steps=self.cfg.optim.warmup_steps,
-                num_training_steps=self.cfg.optim.max_steps
+            cfg_sweep = create_config_benchmark_sweep(
+                cfg=self.cfg,
+                benchmark=benchmark,
+                output_dir=output_dir,
+                weights_path=self.last_weights_path,
+                plot_name=f"{self.cfg.model_name.value} Pretrain Test",
+                phase=Phase.TESTING
             )
-        else:
-            schedule = get_constant_schedule_with_warmup(
-                self.optimizer,
-                num_warmup_steps=self.cfg.optim.warmup_steps
-            )
+            run_sweep(cfg_sweep)
 
-        return schedule
-    
-
-    def select_loss(self):
-        return CrossEntropyLossExtraBatch()

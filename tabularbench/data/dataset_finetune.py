@@ -3,9 +3,9 @@ from typing import Optional
 import numpy as np
 import torch
 
+from tabularbench.config.config_run import ConfigRun
 from tabularbench.core.dataset_split import make_dataset_split
 from tabularbench.core.enums import Task
-from tabularbench.utils.config_run import ConfigRun
 
 
 class DatasetFinetune(torch.utils.data.Dataset):

@@ -1,18 +1,16 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 
 import torch
-import yaml
 
+from tabularbench.config.config_plotting import ConfigPlotting
+from tabularbench.config.config_save_load_mixin import ConfigSaveLoadMixin
 from tabularbench.core.enums import ModelName, SearchType
 from tabularbench.data.benchmarks import Benchmark
-from tabularbench.utils.config_save_load_mixin import ConfigSaveLoadMixin
 
 
 @dataclass
-class ConfigBenchmarkSweep(ConfigSaveLoadMixin, yaml.YAMLObject):
+class ConfigBenchmarkSweep(ConfigSaveLoadMixin):
     output_dir: Path
     seed: int
     devices: list[torch.device]
@@ -20,7 +18,7 @@ class ConfigBenchmarkSweep(ConfigSaveLoadMixin, yaml.YAMLObject):
     model_name: ModelName
     model_plot_name: str
     search_type: SearchType
-    config_plotting: ConfigPlotting
+    plotting: ConfigPlotting
     n_random_runs_per_dataset: int
     n_default_runs_per_dataset: int
     openml_dataset_ids_to_ignore: list[int]
@@ -37,14 +35,6 @@ class ConfigBenchmarkSweep(ConfigSaveLoadMixin, yaml.YAMLObject):
 
 
 
-
-@dataclass
-class ConfigPlotting():
-    n_runs: int
-    n_random_shuffles: int
-    confidence_bound: float
-    plot_default_value: bool
-    benchmark_model_names: list[ModelName]
 
 
 

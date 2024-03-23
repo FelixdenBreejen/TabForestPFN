@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import xarray as xr
 
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.core.enums import DataSplit
 from tabularbench.results.dataset_manipulations import (add_model_plot_names, add_placeholder_as_model_name_dim,
                                                         average_out_the_cv_split,
@@ -12,7 +13,6 @@ from tabularbench.results.dataset_manipulations import (add_model_plot_names, ad
 from tabularbench.results.reformat_results_get import get_reformatted_results
 from tabularbench.results.results_sweep import ResultsSweep
 from tabularbench.results.scores_min_max import normalize_scores
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.utils.paths_and_filenames import RANKING_TABLE_FILE_NAME
 
 

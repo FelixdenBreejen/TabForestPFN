@@ -1,7 +1,7 @@
 import xarray as xr
 
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.core.enums import DataSplit, ModelName, SearchType
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
 
 
 def add_model_plot_names(ds: xr.Dataset) -> xr.Dataset:
@@ -70,7 +70,7 @@ def average_out_the_cv_split(ds: xr.Dataset) -> xr.Dataset:
 
 def only_use_models_and_datasets_specified_in_cfg(cfg: ConfigBenchmarkSweep, ds: xr.Dataset) -> xr.Dataset:
 
-    benchmark_model_names = [model_name.name for model_name in cfg.config_plotting.benchmark_model_names]
+    benchmark_model_names = [model_name.name for model_name in cfg.plotting.get_benchmark_model_names(cfg.benchmark.origin)]
     ds = ds.sel(model_name=benchmark_model_names, openml_dataset_id=cfg.openml_dataset_ids_to_use)
     return ds
 

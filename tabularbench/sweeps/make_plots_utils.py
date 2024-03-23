@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+from tabularbench.config.config_benchmark_sweep import ConfigBenchmarkSweep
 from tabularbench.results.results_sweep import ResultsSweep
-from tabularbench.utils.config_benchmark_sweep import ConfigBenchmarkSweep
-from tabularbench.utils.paths_and_filenames import \
-    DEFAULT_RESULTS_TEST_FILE_NAME
+from tabularbench.utils.paths_and_filenames import DEFAULT_RESULTS_TEST_FILE_NAME
 
 
 def sweep_default_finished(cfg: ConfigBenchmarkSweep, results_sweep: ResultsSweep) -> None:
