@@ -15,11 +15,11 @@ defaults:
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [0, 1, 2, 3, 4, 5, 6, 7]
+devices: [2, 3, 4, 5]
 workers_per_gpu: 16
 
 optim:
-  max_steps: 600_000                # Every step completes batch_size * gradient_accumulation_steps samples
+  max_steps: 300_000                # Every step completes batch_size * gradient_accumulation_steps samples
   warmup_steps: 10_000
   log_every_n_steps: 10
   eval_every_n_steps: 20_000
@@ -35,7 +35,7 @@ optim:
   path_to_weights: outputs_done/foundation_key_att/weights/model_step_500000.pt               # Path to a checkpoint to load weights from
 
 data:
-  generator: forest             # tabpfn, forest, mix or neighbor
+  generator: mix             # tabpfn, forest, mix or neighbor
   min_samples_support: 128
   max_samples_support: 1024            
   n_samples_query: 256
