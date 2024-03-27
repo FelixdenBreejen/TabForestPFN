@@ -5,7 +5,7 @@ hydra:
 defaults:
   - _self_
   - hyperparams/tabpfn: finetune_10k
-  - hyperparams/foundation: finetune_10k
+  - hyperparams/foundation: zeroshot_10k_mix
   - pretrain_model: foundation
   - plotting: plotting_default
   # - pretrain_continue
@@ -15,11 +15,11 @@ defaults:
 
 output_dir: ${hydra:run.dir}
 seed: 0
-devices: [2, 3, 4, 5]
+devices: [0, 1, 2, 3, 4, 5, 6, 7]
 workers_per_gpu: 16
 
 optim:
-  max_steps: 300_000                # Every step completes batch_size * gradient_accumulation_steps samples
+  max_steps: 600_000                # Every step completes batch_size * gradient_accumulation_steps samples
   warmup_steps: 10_000
   log_every_n_steps: 10
   eval_every_n_steps: 20_000

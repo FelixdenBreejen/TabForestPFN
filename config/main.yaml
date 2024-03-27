@@ -6,7 +6,7 @@ defaults:
   - _self_
   - hyperparams/ft_transformer: ft_transformer
   - hyperparams/tabpfn: zeroshot_10k
-  - hyperparams/foundation: zeroshot_10k_tabpfn
+  - hyperparams/foundation: zeroshot_10k_mix
   - plotting: plotting_default
   # - main_test
   - override hydra/hydra_logging: disabled  
@@ -21,10 +21,11 @@ n_default_runs_per_dataset: 10                  # on default we also want multip
 models:
   - FOUNDATION
 model_plot_names:
-  - FoundationPFN-ZeroShot
+  - TabSynMix
 benchmarks:
   # - DEBUG_CATEGORICAL_CLASSIFICATION
   # - DEBUG_TABZILLA
+  - CATEGORICAL_CLASSIFICATION
   - CATEGORICAL_CLASSIFICATION
   - NUMERICAL_CLASSIFICATION
   # - CATEGORICAL_REGRESSION
@@ -34,7 +35,7 @@ benchmarks:
   # - CATEGORICAL_REGRESSION_LARGE
   # - NUMERICAL_REGRESSION_LARGE
   # - TABZILLA_HARD_MAX_TEN_CLASSES
-  # - TABZILLA_HAS_COMPLETED_RUNS
+  - TABZILLA_HAS_COMPLETED_RUNS
 search_types:
   - DEFAULT
   # - RANDOM
