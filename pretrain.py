@@ -32,11 +32,11 @@ def main(cfg_hydra: DictConfig):
     mp.spawn(main_experiment, nprocs=len(cfg.devices), args=(cfg,barrier))
 
 
-def main_experiment(gpu: int, cfg: ConfigPretrain, barrier: mp.Barrier) -> None:
+def main_experiment(gpu_process_index: int, cfg: ConfigPretrain, barrier: mp.Barrier) -> None:
 
     logger.add(cfg.output_dir / "log.log", enqueue=True)
 
-    setup_gpus_of_experiment(cfg, gpu)
+    setup_gpus_of_experiment(cfg, gpu_process_index)
     
     trainer = TrainerPretrain(cfg, barrier)
 
@@ -93,12 +93,12 @@ def setup_gpus(cfg: ConfigPretrain) -> None:
         logger.info(f"Using GPU {cfg.device} for training")
 
 
-def setup_gpus_of_experiment(cfg: ConfigPretrain, gpu: int) -> torch.device:
+def setup_gpus_of_experiment(cfg: ConfigPretrain, gpu_process_index: int) -> torch.device:
 
-    device = cfg.devices[gpu]
+    device = cfg.devices[gpu_process_index]
     torch.cuda.set_device(device)
     cfg.device = device
-    cfg.is_main_process = (gpu == 0)
+    cfg.is_main_process = (gpu_process_index == 0)
 
     if cfg.use_ddp:
         os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
@@ -106,7 +106,7 @@ def setup_gpus_of_experiment(cfg: ConfigPretrain, gpu: int) -> torch.device:
         port = 5678 + cfg.devices[0]
         os.environ['MASTER_PORT'] = str(port)
         
-        torch.distributed.init_process_group(backend="nccl", world_size = len(cfg.devices), rank=gpu)
+        torch.distributed.init_process_group(backend="nccl", world_size = len(cfg.devices), rank=gpu_process_index)
 
     return device
 
