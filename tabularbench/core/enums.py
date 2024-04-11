@@ -37,7 +37,7 @@ class Phase(StrEnum):
 
 class ModelName(StrEnum):
     PLACEHOLDER = "_placeholder_"   # This is a placeholder for the current running model
-    FT_TRANSFORMER = "FT_Transformer"
+    FT_TRANSFORMER = "FT-Transformer"
     TABPFN = "TabPFN"
     FOUNDATION = "Foundation"
     SAINT = "SAINT"
