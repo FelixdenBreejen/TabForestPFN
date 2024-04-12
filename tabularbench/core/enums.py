@@ -47,7 +47,7 @@ class ModelName(StrEnum):
     RANDOM_FOREST = "RandomForest"
     XGBOOST = "XGBoost"
     CATBOOST = "CatBoost"
-    LIGHTGBM = "lightGBM"
+    LIGHTGBM = "LightGBM"
     GRADIENT_BOOSTING_TREE = "GradientBoostingTree"
     HIST_GRADIENT_BOOSTING_TREE = "HistGradientBoostingTree"
     LOGISTIC_REGRESSION = "LogisticRegression"
