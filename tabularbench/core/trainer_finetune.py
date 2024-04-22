@@ -45,6 +45,8 @@ class TrainerFinetune(BaseEstimator):
             max_features=self.cfg.hyperparams['n_features'],
         )
 
+        self.checkpoint.reset(self.model)
+
 
 
     def train(self, x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y_val: np.ndarray):
@@ -104,7 +106,7 @@ class TrainerFinetune(BaseEstimator):
 
             self.scheduler.step(metrics_valid.loss)
 
-        return self
+        self.checkpoint.save()
     
 
     def train_epoch(self, dataloader: torch.utils.data.DataLoader) -> PredictionMetrics:

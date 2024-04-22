@@ -5,7 +5,7 @@ from torch.optim import SGD, Adam, AdamW
 from tabularbench.config.config_pretrain import ConfigPretrain
 
 
-def get_optimizer(hyperparams: DictConfig, model: torch.nn.Module) -> torch.optim.Optimizer:
+def get_optimizer(hyperparams: dict, model: torch.nn.Module) -> torch.optim.Optimizer:
 
     optimizer: torch.optim.Optimizer
 

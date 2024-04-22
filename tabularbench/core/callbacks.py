@@ -47,16 +47,20 @@ class Checkpoint():
         self.path.parent.mkdir(exist_ok=True)
 
     
-    def reset(self, net):
+    def reset(self, net: torch.nn.Module):
         self.curr_best_loss = np.inf
-        torch.save(net.state_dict(), self.path)
+        self.best_model = net.state_dict()
         
 
     def __call__(self, net, loss):
         
         if loss < self.curr_best_loss:
             self.curr_best_loss = loss
-            torch.save(net.state_dict(), self.path)
+            self.best_model = net.state_dict()
+
+    
+    def save(self):
+        torch.save(self.best_model, self.path)
 
 
 
@@ -80,8 +84,8 @@ class EpochStatistics():
 class TrackOutput():
 
     def __init__(self) -> None:
-        self.y_true = []
-        self.y_pred = []
+        self.y_true: list[np.ndarray] = []
+        self.y_pred: list[np.ndarray] = []
 
     def update(self, y_true: np.ndarray, y_pred: np.ndarray):
         self.y_true.append(y_true)
