@@ -42,7 +42,12 @@ def normalize_scores(cfg: ConfigBenchmarkSweep, da: xr.DataArray) -> xr.Dataset:
     boundaries = xr.DataArray(
         boundaries, 
         dims=('min_max', 'openml_dataset_id', 'data_split'), 
-        coords=dict(min_max=['min', 'max'], openml_dataset_id=da.coords['openml_dataset_id'], data_split=da.coords['data_split']))
+        coords=dict(
+            min_max=['min', 'max'], 
+            openml_dataset_id=da.coords['openml_dataset_id'], 
+            data_split=da.coords['data_split']
+        )
+    )
 
     da = (da - boundaries.sel(min_max='min')) / (boundaries.sel(min_max='max') - boundaries.sel(min_max='min'))
     da = xr.where(da < 0, 0, da)
