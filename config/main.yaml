@@ -6,7 +6,7 @@ defaults:
   - _self_
   - hyperparams/ft_transformer: ft_transformer
   - hyperparams/tabpfn: zeroshot_10k
-  - hyperparams/foundation: finetune
+  - hyperparams/foundation: finetune_10k
   - plotting: plotting_default
   # - main_test
   - override hydra/hydra_logging: disabled  
@@ -34,7 +34,7 @@ benchmarks:
   # - CATEGORICAL_REGRESSION_LARGE
   # - NUMERICAL_REGRESSION_LARGE
   # - TABZILLA_HARD_MAX_TEN_CLASSES
-  - TABZILLA_HAS_COMPLETED_RUNS
+  # - TABZILLA_HAS_COMPLETED_RUNS
 search_types:
   - DEFAULT
   # - RANDOM
