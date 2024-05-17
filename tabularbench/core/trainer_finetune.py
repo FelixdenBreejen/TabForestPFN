@@ -168,7 +168,6 @@ class TrainerFinetune(BaseEstimator):
     def predict(self, x_support: np.ndarray, y_support: np.ndarray, x_query: np.ndarray) -> np.ndarray:
         """
         Give a prediction for the query set.
-        Prediction looks like y_support: it is fully post-processed.
         """
 
         x_support = self.preprocessor.transform(x_support)

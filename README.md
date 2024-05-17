@@ -18,6 +18,45 @@ There is also requirements_frozen.txt that contains the exact versions of the pa
 
 ## Easy Example
 
+The easiest way to make an prediction is to load a configuration file from a previous run, and use that to make the model:
+
+```load model
+
+cfg = ConfigRun.load(Path("outputs_done/foundation_mix_600k_finetune/test_categorical_classification/44156/#0/config_run.yaml"))
+
+<!-- set to 300 for fine-tuning -->
+cfg.hyperparams['max_epochs'] = 0
+
+model = FoundationTransformer(
+    n_features=cfg.hyperparams['n_features'],
+    n_classes=cfg.hyperparams['n_classes'],
+    dim=cfg.hyperparams['dim'],
+    n_layers=cfg.hyperparams['n_layers'],
+    n_heads=cfg.hyperparams['n_heads'],
+    attn_dropout=cfg.hyperparams['attn_dropout'],
+    y_as_float_embedding=cfg.hyperparams['y_as_float_embedding'],
+    use_pretrained_weights=True,
+    path_to_weights=Path('weights/tabforestpfn_steps_600k.pt')
+)
+
+```
+
+Then you can make fine-tune the model like this:
+
+``` Model Training
+trainer = TrainerFinetune(cfg, model, n_classes=2)
+trainer.train(X_train, y_train, X_valid, y_valid)
+```
+
+And make predictions like this:
+
+``` Model Prediction
+y_pred_logits = trainer.predict(X_test)
+```
+
+For a more elaborate example, see `notebooks/easy_example.ipynb` where we show how to load a model, fine-tune it and make predictions.
+
+
 
 
 ## Preprocessing
@@ -87,6 +126,7 @@ WhyTrees (http://arxiv.org/abs/2207.08815)
 TabZilla (http://arxiv.org/abs/2305.02997)  
 
 All analysis can be found in the `notebooks` folder, often based on the information in the `outputs_done` folder.  
+Not all analysis can be reproduced without editing the notebooks because of missing model weights or changes in the folder structure.
 
 ### WhyTrees
 
