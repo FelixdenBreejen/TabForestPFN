@@ -21,7 +21,6 @@ There is also requirements_frozen.txt that contains the exact versions of the pa
 The easiest way to make an prediction is to load a configuration file from a previous run, and use that to make the model:
 
 ```load model
-
 cfg = ConfigRun.load(Path("outputs_done/foundation_mix_600k_finetune/test_categorical_classification/44156/#0/config_run.yaml"))
 
 <!-- set to 300 for fine-tuning -->
@@ -41,7 +40,7 @@ model = FoundationTransformer(
 
 ```
 
-Then you can make fine-tune the model like this:
+Then you can fine-tune the model like this:
 
 ``` Model Training
 trainer = TrainerFinetune(cfg, model, n_classes=2)
@@ -54,7 +53,7 @@ And make predictions like this:
 y_pred_logits = trainer.predict(X_test)
 ```
 
-For a more elaborate example, see `notebooks/easy_example.ipynb` where we show how to load a model, fine-tune it and make predictions.
+For a more elaborate example, see `notebooks/easy_example.ipynb` where we show how to load a model, fine-tune it, and make predictions.
 
 
 
