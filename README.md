@@ -27,9 +27,9 @@ WhyTrees (http://arxiv.org/abs/2207.08815)
 TabZilla (http://arxiv.org/abs/2305.02997)  
 
 To run any results, we require the following results to be downloaded and placed in the `data` folder:  
-WhyTrees: benchmark_total.csv   (https://figshare.com/ndownloader/files/40081681)     
-TabZilla: metadataset_clean.csv  (https://drive.google.com/drive/folders/1cHisTmruPHDCYVOYnaqvTdybLngMkB8R)   
-See tabularbench/utils/paths_and_filenames.py for the exact paths and filenames.   
+WhyTrees: `benchmark_total.csv`   (https://figshare.com/ndownloader/files/40081681)     
+TabZilla: `metadataset_clean.csv`  (https://drive.google.com/drive/folders/1cHisTmruPHDCYVOYnaqvTdybLngMkB8R)   
+See `tabularbench/utils/paths_and_filenames.py` for the exact paths and filenames.   
 
 If the links do not work, we suggests to refer to the github pages of the above papers:  
 WhyTrees: https://github.com/LeoGrin/tabular-benchmark  
@@ -61,21 +61,21 @@ If you want to exactly replicate the results in the paper, you can use the confi
 
 We provide the pretrained weights of TabForest, TabPFN (retrained) and TabForestPFN here:  
 
-- [ICL-transformers](https://drive.google.com/drive/folders/151koPna9G8dvCW9gfnWJIHzoG6tMOq9t?usp=sharing)  
+- [Google Drive](https://drive.google.com/drive/folders/151koPna9G8dvCW9gfnWJIHzoG6tMOq9t?usp=sharing)  
 
 After downloading the weights, you can place them in the `weights` folder.  
 Make sure to update the configuration file to point to the correct weights file.  
 
 The configuration files for these models can be found in the `outputs_done` folder:  
-TabForest: foundation_forest_big_300k  
-TabPFN: foundation_tabpfn_big_300k  
-TabForestPFN: foundation_mix_600k_finetune  
+TabForest: `foundation_forest_big_300k`  
+TabPFN: `foundation_tabpfn_big_300k`  
+TabForestPFN: `foundation_mix_600k_finetune`  
 
 All three models work with our reimplementation of the TabPFN model. The original TabPFN model weights are not included in the google drive folder.  
 
-In our code, 'TabPFN' refers to the original tabpfn model, and 'Foundation' refers to our reproduction of the model.  
-The name 'TabSGFD' is an old name of 'TabForest'.  
-The retrained TabPFN model is often refered to as 'foundation_tabpfn', while the original is 'tabpfn_orig' or just tabPFN.  
+In our code, 'TabPFN' refers to the original tabpfn model, and 'Foundation' refers to our reproduction of the model.
+The name 'TabSGFD' is an old name of 'TabForest'.
+The retrained TabPFN model is often refered to as 'foundation_tabpfn', while the original is 'tabpfn_orig' or just tabPFN.
 The ensemble of TabForest and TabPFN is often refered to as 'foundation_mix'.  
 
 If you want to reproduce the analysis of ablations that use a small model size, you have to rerun the pretraining.  
