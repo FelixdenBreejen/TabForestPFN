@@ -90,11 +90,11 @@ All analysis can be found in the `notebooks` folder, often based on the informat
 
 ### WhyTrees
 
-![WhyTrees](whytrees_main.png)
+![WhyTrees](figures/whytrees_main.pdf)
 
 ### TabZilla
 
-![TabZilla](tabzilla_table.png)
+![TabZilla](figures/tabzilla_table.png)
 
 
 ## Synthetic Data
