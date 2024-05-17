@@ -1,0 +1,178 @@
+!!python/object:tabularbench.config.config_pretrain.ConfigPretrain
+data: !!python/object:tabularbench.config.config_data.ConfigData
+  generator: !!python/object/apply:tabularbench.core.enums.GeneratorName
+  - mix
+  generator_hyperparams:
+    base_size: 1024
+    categorical_x: true
+    max_depth: 25
+    min_depth: 1
+  max_classes: 10
+  max_features: 100
+  max_samples_support: 1024
+  min_features: 3
+  min_samples_support: 128
+  n_samples_query: 256
+device: null
+devices:
+- !!python/object/apply:torch.device
+  - cuda
+  - 0
+- !!python/object/apply:torch.device
+  - cuda
+  - 1
+- !!python/object/apply:torch.device
+  - cuda
+  - 2
+- !!python/object/apply:torch.device
+  - cuda
+  - 3
+- !!python/object/apply:torch.device
+  - cuda
+  - 4
+- !!python/object/apply:torch.device
+  - cuda
+  - 5
+- !!python/object/apply:torch.device
+  - cuda
+  - 6
+- !!python/object/apply:torch.device
+  - cuda
+  - 7
+hyperparams_finetuning:
+  attn_dropout: 0.0
+  dim: 512
+  early_stopping_patience: 40
+  linear_attention: false
+  lr:
+    default: 1.0e-05
+    distribution: log_uniform_values
+    max: 0.0001
+    min: 1.0e-06
+  lr_scheduler:
+    default: false
+    values:
+    - true
+    - false
+  lr_scheduler_patience: 30
+  max_epochs: 300
+  max_samples_query: 1024
+  max_samples_support: 8192
+  n_classes: 10
+  n_ensembles: 1
+  n_features: 100
+  n_heads: 4
+  n_layers: 12
+  optimizer: adamw
+  path_to_weights: outputs/2024-03-23/19-06-37/weights/model_step_20000.pt
+  use_feature_count_scaling: true
+  use_pretrained_weights: false
+  use_quantile_transformer: true
+  weight_decay: 0
+  y_as_float_embedding: true
+is_main_process: true
+model:
+  attn_dropout: 0.0
+  dim: 512
+  linear_attention: true
+  n_heads: 4
+  n_layers: 12
+  name: FOUNDATION
+  y_as_float_embedding: true
+model_name: !!python/object/apply:tabularbench.core.enums.ModelName
+- Foundation
+optim: !!python/object:tabularbench.config.config_optim.ConfigOptim
+  batch_size: 64
+  beta1: 0.9
+  beta2: 0.95
+  cosine_scheduler: true
+  eval_every_n_steps: 20000
+  gradient_accumulation_steps: 1
+  log_every_n_steps: 10
+  lr: 0.0001
+  max_grad_norm: 1.0
+  max_steps: 600000
+  path_to_weights: outputs_done/foundation_key_att/weights/model_step_500000.pt
+  use_pretrained_weights: false
+  warmup_steps: 10000
+  weight_decay: 0.0
+output_dir: !!python/object/apply:pathlib.PosixPath
+- outputs
+- '2024-03-24'
+- 09-13-45
+plotting: !!python/object:tabularbench.config.config_plotting.ConfigPlotting
+  tabzilla: !!python/object:tabularbench.config.config_plotting.ConfigPlottingTabzilla
+    benchmark_model_names:
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - CatBoost
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - Resnet
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - RandomForest
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - SAINT
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - FT-Transformer
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - XGBoost
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - NODE
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - SVM
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - MLP-rtdl
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - LightGBM
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - LinearRegression
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - DANet
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - DecisionTree
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - MLP
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - STG
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - KNN
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - TabNet
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - VIME
+  whytrees: !!python/object:tabularbench.config.config_plotting.ConfigPlottingWhytrees
+    benchmark_model_names:
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - MLP
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - Resnet
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - SAINT
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - FT-Transformer
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - RandomForest
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - XGBoost
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - GradientBoostingTree
+    confidence_bound: 0.9
+    n_random_shuffles: 100
+    n_runs: 1000
+    plot_default_value: true
+preprocessing: !!python/object:tabularbench.config.config_preprocessing.ConfigPreprocessing
+  use_feature_count_scaling: true
+  use_quantile_transformer: true
+seed: 0
+testing: !!python/object:tabularbench.config.config_testing.ConfigTesting
+  benchmarks:
+  - !!python/object/apply:tabularbench.core.enums.BenchmarkName
+    - categorical_classification
+  - !!python/object/apply:tabularbench.core.enums.BenchmarkName
+    - numerical_classification
+  - !!python/object/apply:tabularbench.core.enums.BenchmarkName
+    - tabzilla_has_completed_runs
+  n_default_runs_per_dataset_test: 10
+  n_default_runs_per_dataset_valid: 1
+  openml_dataset_ids_to_ignore: []
+use_ddp: true
+workers_per_gpu: 16

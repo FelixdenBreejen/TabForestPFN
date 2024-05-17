@@ -1,0 +1,233 @@
+!!python/object:tabularbench.utils.config_run.ConfigRun
+datafile_path: !!python/object/apply:pathlib.PosixPath
+- data
+- datasets
+- tabzilla_167211.nc
+dataset_size: null
+device: !!python/object/apply:torch.device
+- cuda
+- 4
+hyperparams: &id001 !!python/object:omegaconf.dictconfig.DictConfig
+  _content:
+    early_stopping_patience: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: early_stopping_patience
+        object_type: null
+        optional: true
+        ref_type: &id002 !!python/name:typing.Any ''
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - &id003 !!python/name:builtins.dict ''
+      _parent: *id001
+      _val: 40
+    lr: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: lr
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: 1.0e-05
+    lr_scheduler: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: lr_scheduler
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: false
+    lr_scheduler_patience: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: lr_scheduler_patience
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: 30
+    max_epochs: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: max_epochs
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: 0
+    max_samples_query: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: max_samples_query
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: 1024
+    max_samples_support: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: max_samples_support
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: 8192
+    n_ensembles: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: n_ensembles
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: 1
+    n_features: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: n_features
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: 100
+    optimizer: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: optimizer
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: adamw
+    path_to_weights: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: path_to_weights
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: tabularbench/models/tabPFN/prior_diff_real_checkpoint_n_0_epoch_42.cpkt
+    use_feature_count_scaling: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: use_feature_count_scaling
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: true
+    use_pretrained_weights: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: use_pretrained_weights
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: true
+    use_quantile_transformer: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: use_quantile_transformer
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: true
+    weight_decay: !!python/object:omegaconf.nodes.AnyNode
+      _metadata: !!python/object:omegaconf.base.Metadata
+        flags: {}
+        flags_root: false
+        key: weight_decay
+        object_type: null
+        optional: true
+        ref_type: *id002
+        resolver_cache: !!python/object/apply:collections.defaultdict
+        - *id003
+      _parent: *id001
+      _val: 0
+  _metadata: !!python/object:omegaconf.base.ContainerMetadata
+    element_type: *id002
+    flags: {}
+    flags_root: false
+    key: null
+    key_type: *id002
+    object_type: *id003
+    optional: true
+    ref_type: *id002
+    resolver_cache: !!python/object/apply:collections.defaultdict
+    - *id003
+  _parent: null
+model_name: !!python/object/apply:tabularbench.core.enums.ModelName
+- TabPFN
+openml_dataset_id: !!python/object/apply:numpy.core.multiarray.scalar
+- !!python/object/apply:numpy.dtype
+  args:
+  - i4
+  - false
+  - true
+  state: !!python/tuple
+  - 3
+  - <
+  - null
+  - null
+  - null
+  - -1
+  - -1
+  - 0
+- !!binary |
+  K40CAA==
+openml_dataset_name: Satellite
+output_dir: !!python/object/apply:pathlib.PosixPath
+- outputs
+- '2024-03-20'
+- 14-33-35
+- tabpfn-default-tabzilla_has_completed_runs
+- '167211'
+- '#0'
+seed: 0
+task: !!python/object/apply:tabularbench.core.enums.Task
+- classification

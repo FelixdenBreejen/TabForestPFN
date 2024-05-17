@@ -1,0 +1,45 @@
+!!python/object:tabularbench.utils.config_run.ConfigRun
+dataset_size: !!python/object/apply:tabularbench.core.enums.DatasetSize
+- 10000
+device: !!python/object/apply:torch.device
+- cuda
+- 2
+hyperparams:
+  attn_dropout: 0.0
+  dim: 512
+  early_stopping_patience: 40
+  linear_attention: true
+  lr: 1.0e-05
+  lr_scheduler: false
+  lr_scheduler_patience: 30
+  max_epochs: 300
+  max_samples_query: 10000
+  max_samples_support: 10000
+  n_classes: 10
+  n_ensembles: 1
+  n_features: 100
+  n_heads: 4
+  n_layers: 12
+  name: !!python/object/apply:tabularbench.core.enums.ModelName
+  - Foundation
+  optimizer: adamw
+  path_to_weights: outputs/2024-02-07/13-24-52/weights/model_step_200000.pt
+  use_feature_count_scaling: true
+  use_pretrained_weights: true
+  use_quantile_transformer: true
+  weight_decay: 0
+  y_as_float_embedding: true
+model_name: !!python/object/apply:tabularbench.core.enums.ModelName
+- Foundation
+openml_dataset_id: 45038
+openml_dataset_name: road-safety
+output_dir: !!python/object/apply:pathlib.PosixPath
+- outputs
+- '2024-02-07'
+- 13-24-52
+- step_200000
+- '45038'
+- '#0'
+seed: 0
+task: !!python/object/apply:tabularbench.core.enums.Task
+- classification

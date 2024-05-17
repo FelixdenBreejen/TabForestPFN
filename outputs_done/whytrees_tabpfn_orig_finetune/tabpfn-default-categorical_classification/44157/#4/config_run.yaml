@@ -1,0 +1,56 @@
+!!python/object:tabularbench.config.config_run.ConfigRun
+datafile_path: !!python/object/apply:pathlib.PosixPath
+- data
+- datasets
+- whytrees_44157_MEDIUM.nc
+dataset_size: !!python/object/apply:tabularbench.core.enums.DatasetSize
+- 10000
+device: !!python/object/apply:torch.device
+- cuda
+- 7
+hyperparams:
+  early_stopping_patience: 40
+  lr: 1.0e-05
+  lr_scheduler: false
+  lr_scheduler_patience: 30
+  max_epochs: 300
+  max_samples_query: 1024
+  max_samples_support: 8192
+  n_ensembles: 1
+  n_features: 100
+  optimizer: adamw
+  path_to_weights: tabularbench/models/tabPFN/prior_diff_real_checkpoint_n_0_epoch_42.cpkt
+  use_feature_count_scaling: true
+  use_pretrained_weights: true
+  use_quantile_transformer: true
+  weight_decay: 0
+model_name: !!python/object/apply:tabularbench.core.enums.ModelName
+- TabPFN
+openml_dataset_id: !!python/object/apply:numpy.core.multiarray.scalar
+- !!python/object/apply:numpy.dtype
+  args:
+  - i4
+  - false
+  - true
+  state: !!python/tuple
+  - 3
+  - <
+  - null
+  - null
+  - null
+  - -1
+  - -1
+  - 0
+- !!binary |
+  fawAAA==
+openml_dataset_name: eye_movements
+output_dir: !!python/object/apply:pathlib.PosixPath
+- outputs
+- '2024-03-24'
+- 18-40-57
+- tabpfn-default-categorical_classification
+- '44157'
+- '#4'
+seed: 4
+task: !!python/object/apply:tabularbench.core.enums.Task
+- classification

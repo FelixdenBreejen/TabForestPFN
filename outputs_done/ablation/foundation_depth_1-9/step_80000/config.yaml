@@ -1,0 +1,123 @@
+!!python/object:tabularbench.sweeps.config_benchmark_sweep.ConfigBenchmarkSweep
+benchmark: !!python/object:tabularbench.data.benchmarks.Benchmark
+  dataset_size: !!python/object/apply:tabularbench.core.enums.DatasetSize
+  - 10000
+  name: !!python/object/apply:tabularbench.core.enums.BenchmarkName
+  - categorical_classification
+  openml_dataset_ids:
+  - 44156
+  - 44157
+  - 44159
+  - 45035
+  - 45036
+  - 45038
+  - 45039
+  openml_dataset_names:
+  - electricity
+  - eye_movements
+  - covertype
+  - albert
+  - default-of-credit-card-clients
+  - road-safety
+  - compas-two-years
+  openml_suite_id: 334
+  openml_task_ids:
+  - 361110
+  - 361111
+  - 361113
+  - 361282
+  - 361283
+  - 361285
+  - 361286
+  task: !!python/object/apply:tabularbench.core.enums.Task
+  - classification
+config_plotting: !!python/object:tabularbench.sweeps.config_benchmark_sweep.ConfigPlotting
+  benchmark_model_names:
+  - !!python/object/apply:tabularbench.core.enums.ModelName
+    - MLP
+  - !!python/object/apply:tabularbench.core.enums.ModelName
+    - Resnet
+  - !!python/object/apply:tabularbench.core.enums.ModelName
+    - SAINT
+  - !!python/object/apply:tabularbench.core.enums.ModelName
+    - FT_Transformer
+  - !!python/object/apply:tabularbench.core.enums.ModelName
+    - RandomForest
+  - !!python/object/apply:tabularbench.core.enums.ModelName
+    - XGBoost
+  - !!python/object/apply:tabularbench.core.enums.ModelName
+    - GradientBoostingTree
+  confidence_bound: 0.9
+  n_random_shuffles: 100
+  n_runs: 500
+  plot_default_value: true
+devices:
+- !!python/object/apply:torch.device
+  - cuda
+  - 0
+- !!python/object/apply:torch.device
+  - cuda
+  - 1
+- !!python/object/apply:torch.device
+  - cuda
+  - 2
+- !!python/object/apply:torch.device
+  - cuda
+  - 3
+hyperparams_object:
+  attn_dropout: 0.0
+  dim: 256
+  early_stopping_patience: 40
+  linear_attention: true
+  lr:
+    default: 1.0e-05
+    distribution: log_uniform_values
+    max: 0.0001
+    min: 1.0e-06
+  lr_scheduler:
+    default: false
+    values:
+    - true
+    - false
+  lr_scheduler_patience: 30
+  max_epochs: 300
+  max_samples_query: 10000
+  max_samples_support: 10000
+  n_classes: 10
+  n_ensembles: 1
+  n_features: 100
+  n_heads: 4
+  n_layers: 8
+  name: !!python/object/apply:tabularbench.core.enums.ModelName
+  - Foundation
+  optimizer: adamw
+  path_to_weights: outputs/2024-01-05/13-20-41/weights/model_step_80000.pt
+  use_feature_count_scaling: true
+  use_pretrained_weights: true
+  use_quantile_transformer: true
+  weight_decay: 0
+  y_as_float_embedding: true
+logger: !!python/object/apply:logging.getLogger
+- outputs/2024-01-05/13-20-41/step_80000/log.txt
+model_name: !!python/object/apply:tabularbench.core.enums.ModelName
+- Foundation
+model_plot_name: Foundation Pretrain Step 80000
+n_default_runs_per_dataset: 1
+n_random_runs_per_dataset: 1
+openml_dataset_ids_to_ignore: []
+openml_dataset_ids_to_use:
+- 44156
+- 44157
+- 44159
+- 45035
+- 45036
+- 45038
+- 45039
+output_dir: !!python/object/apply:pathlib.PosixPath
+- outputs
+- '2024-01-05'
+- 13-20-41
+- step_80000
+search_type: !!python/object/apply:tabularbench.core.enums.SearchType
+- default
+seed: 0

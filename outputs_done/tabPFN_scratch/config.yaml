@@ -1,0 +1,123 @@
+hyperparams:
+  ft_transformer:
+    batch_size:
+      values:
+      - 256
+      - 512
+      - 1024
+      default: 512
+    max_epochs: 300
+    optimizer: adamw
+    lr:
+      distribution: log_uniform_values
+      min: 1.0e-05
+      max: 0.001
+      default: 0.0001
+    weight_decay:
+      distribution: log_uniform_values
+      min: 1.0e-06
+      max: 0.001
+      default: 1.0e-05
+    lr_scheduler:
+      values:
+      - true
+      - false
+      default: true
+    lr_scheduler_patience: 30
+    early_stopping_patience: 40
+    d_token:
+      distribution: q_uniform
+      min: 64
+      max: 512
+      default: 192
+    activation: reglu
+    token_bias: true
+    prenormalization: true
+    kv_compression:
+      values:
+      - true
+      - false
+      default: true
+    kv_compression_sharing:
+      values:
+      - headwise
+      - key-value
+      default: headwise
+    initialization: kaiming
+    n_layers:
+      distribution: q_uniform
+      min: 1
+      max: 6
+      default: 3
+    n_heads: 8
+    d_ffn_factor:
+      distribution: uniform
+      min: 0.667
+      max: 2.333
+      default: 1.333
+    ffn_dropout:
+      distribution: uniform
+      min: 0.0
+      max: 0.5
+      default: 0.1
+    attention_dropout:
+      distribution: uniform
+      min: 0.0
+      max: 0.5
+      default: 0.2
+    residual_dropout:
+      distribution: uniform
+      min: 0.0
+      max: 0.5
+      default: 0.0
+  tabpfn_finetune:
+    batch_size: 10000
+    max_epochs: 300
+    optimizer: adamw
+    lr:
+      distribution: log_uniform_values
+      min: 1.0e-06
+      max: 0.0001
+      default: 0.0001
+    weight_decay: 1.0e-05
+    lr_scheduler:
+      values:
+      - true
+      - false
+      default: true
+    lr_scheduler_patience: 30
+    early_stopping_patience: 40
+    use_pretrained_weights: false
+    path_to_weights: tabularbench/models/tabPFN/prior_diff_real_checkpoint_n_0_epoch_42.cpkt
+    n_ensembles: 1
+output_dir: ./outputs/2023-09-19/21-51-18
+runs_per_dataset: 1000
+models:
+- tabpfn_finetune
+model_plot_names:
+- TabPFN Scratch
+benchmarks:
+- categorical_classification
+- numerical_classification
+- categorical_regression
+- numerical_regression
+search_type:
+- default
+ignore_datasets:
+- 44135
+- 44061
+- 45041
+- 45046
+- 45019
+plotting:
+  n_runs: 500
+  n_random_shuffles: 100
+  confidence_bound: 0.9
+  benchmark_models:
+  - MLP
+  - Resnet
+  - SAINT
+  - FT Transformer
+  - RandomForest
+  - XGBoost
+  - GradientBoostingTree

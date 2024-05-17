@@ -1,0 +1,416 @@
+!!python/object:tabularbench.utils.config_benchmark_sweep.ConfigBenchmarkSweep
+benchmark: !!python/object:tabularbench.data.benchmarks.Benchmark
+  dataset_size: null
+  name: !!python/object/apply:tabularbench.core.enums.BenchmarkName
+  - tabzilla_has_completed_runs
+  openml_dataset_ids:
+  - 3
+  - 4
+  - 9
+  - 10
+  - 11
+  - 12
+  - 14
+  - 15
+  - 16
+  - 18
+  - 23
+  - 25
+  - 27
+  - 29
+  - 30
+  - 35
+  - 37
+  - 39
+  - 40
+  - 43
+  - 45
+  - 47
+  - 48
+  - 49
+  - 50
+  - 53
+  - 59
+  - 2074
+  - 2079
+  - 2867
+  - 3485
+  - 3512
+  - 3540
+  - 3543
+  - 3549
+  - 3560
+  - 3561
+  - 3602
+  - 3620
+  - 3647
+  - 3711
+  - 3731
+  - 3739
+  - 3748
+  - 3779
+  - 3797
+  - 3896
+  - 3902
+  - 3903
+  - 3904
+  - 3913
+  - 3917
+  - 3918
+  - 3953
+  - 9946
+  - 9952
+  - 9957
+  - 9960
+  - 9964
+  - 9971
+  - 9978
+  - 9984
+  - 10089
+  - 10093
+  - 10101
+  - 14952
+  - 14954
+  - 14965
+  - 14967
+  - 125920
+  - 125921
+  - 145793
+  - 145799
+  - 145836
+  - 145847
+  - 145977
+  - 145984
+  - 146024
+  - 146063
+  - 146065
+  - 146192
+  - 146210
+  - 146607
+  - 146800
+  - 146817
+  - 146818
+  - 146820
+  - 146821
+  - 167140
+  - 167141
+  - 167211
+  - 168911
+  - 190408
+  - 360948
+  openml_dataset_names:
+  - kr-vs-kp
+  - labor
+  - autos
+  - lymph
+  - balance-scale
+  - mfeat-factors
+  - mfeat-fourier
+  - breast-w
+  - mfeat-karhunen
+  - mfeat-morphological
+  - cmc
+  - colic
+  - colic
+  - credit-approval
+  - page-blocks
+  - dermatology
+  - diabetes
+  - sonar
+  - glass
+  - spambase
+  - splice
+  - tae
+  - heart-c
+  - tic-tac-toe
+  - heart-h
+  - vehicle
+  - iris
+  - satimage
+  - eucalyptus
+  - anneal
+  - scene
+  - synthetic_control
+  - analcatdata_boxing1
+  - irish
+  - analcatdata_authorship
+  - analcatdata_dmft
+  - profb
+  - visualizing_environmental
+  - fri_c0_100_5
+  - rabe_266
+  - elevators
+  - visualizing_livestock
+  - analcatdata_chlamydia
+  - transplant
+  - fri_c3_100_5
+  - socmob
+  - ada_agnostic
+  - pc4
+  - pc3
+  - jm1
+  - kc2
+  - kc1
+  - pc1
+  - adult-census
+  - wdbc
+  - phoneme
+  - qsar-biodeg
+  - wall-robot-navigation
+  - semeion
+  - ilpd
+  - ozone-level-8hr
+  - fertility
+  - acute-inflammations
+  - banknote-authentication
+  - blood-transfusion-service-center
+  - PhishingWebsites
+  - cylinder-bands
+  - bank-marketing
+  - cjs
+  - dresses-sales
+  - LED-display-domain-7digit
+  - yeast
+  - breast-cancer
+  - blood-transfusion-service-center
+  - hill-valley
+  - ecoli
+  - ionosphere
+  - lung-cancer
+  - hayes-roth
+  - monks-problems-2
+  - car-evaluation
+  - postoperative-patient-data
+  - SpeedDating
+  - MiceProtein
+  - steel-plates-fault
+  - Australian
+  - wilt
+  - car
+  - dna
+  - churn
+  - Satellite
+  - jasmine
+  - Click_prediction_small
+  - libras
+  origin: !!python/object/apply:tabularbench.core.enums.BenchmarkOrigin
+  - tabzilla
+  task: !!python/object/apply:tabularbench.core.enums.Task
+  - classification
+plotting: !!python/object:tabularbench.config.config_plotting.ConfigPlotting
+  tabzilla: !!python/object:tabularbench.config.config_plotting.ConfigPlottingTabzilla
+    benchmark_model_names:
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - CatBoost
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - Resnet
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - RandomForest
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - SAINT
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - FT-Transformer
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - XGBoost
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - NODE
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - SVM
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - MLP-rtdl
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - LightGBM
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - LinearRegression
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - DANet
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - DecisionTree
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - MLP
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - STG
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - KNN
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - TabNet
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - VIME
+  whytrees: !!python/object:tabularbench.config.config_plotting.ConfigPlottingWhytrees
+    benchmark_model_names:
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - MLP
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - Resnet
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - SAINT
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - FT-Transformer
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - RandomForest
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - XGBoost
+    - !!python/object/apply:tabularbench.core.enums.ModelName
+      - GradientBoostingTree
+    confidence_bound: 0.9
+    n_random_shuffles: 100
+    n_runs: 1000
+    plot_default_value: truedevices:
+- !!python/object/apply:torch.device
+  - cuda
+  - 0
+- !!python/object/apply:torch.device
+  - cuda
+  - 1
+- !!python/object/apply:torch.device
+  - cuda
+  - 3
+- !!python/object/apply:torch.device
+  - cuda
+  - 4
+- !!python/object/apply:torch.device
+  - cuda
+  - 5
+- !!python/object/apply:torch.device
+  - cuda
+  - 6
+hyperparams_object:
+  attn_dropout: 0.0
+  dim: 512
+  early_stopping_patience: 40
+  linear_attention: false
+  lr:
+    default: 1.0e-05
+    distribution: log_uniform_values
+    max: 0.0001
+    min: 1.0e-06
+  lr_scheduler:
+    default: false
+    values:
+    - true
+    - false
+  lr_scheduler_patience: 30
+  max_epochs: 0
+  max_samples_query: 1024
+  max_samples_support: 8192
+  n_classes: 10
+  n_ensembles: 1
+  n_features: 100
+  n_heads: 4
+  n_layers: 12
+  optimizer: adamw
+  path_to_weights: outputs_done/foundation_forest_big_300k/weights/model_step_300000.pt
+  use_feature_count_scaling: true
+  use_pretrained_weights: true
+  use_quantile_transformer: true
+  weight_decay: 0
+  y_as_float_embedding: true
+model_name: !!python/object/apply:tabularbench.core.enums.ModelName
+- Foundation
+model_plot_name: TabSGFD_zeroshot
+n_default_runs_per_dataset: 1
+n_random_runs_per_dataset: 500
+openml_dataset_ids_to_ignore: []
+openml_dataset_ids_to_use:
+- 3
+- 4
+- 9
+- 10
+- 11
+- 12
+- 14
+- 15
+- 16
+- 18
+- 23
+- 25
+- 27
+- 29
+- 30
+- 35
+- 37
+- 39
+- 40
+- 43
+- 45
+- 47
+- 48
+- 49
+- 50
+- 53
+- 59
+- 2074
+- 2079
+- 2867
+- 3485
+- 3512
+- 3540
+- 3543
+- 3549
+- 3560
+- 3561
+- 3602
+- 3620
+- 3647
+- 3711
+- 3731
+- 3739
+- 3748
+- 3779
+- 3797
+- 3896
+- 3902
+- 3903
+- 3904
+- 3913
+- 3917
+- 3918
+- 3953
+- 9946
+- 9952
+- 9957
+- 9960
+- 9964
+- 9971
+- 9978
+- 9984
+- 10089
+- 10093
+- 10101
+- 14952
+- 14954
+- 14965
+- 14967
+- 125920
+- 125921
+- 145793
+- 145799
+- 145836
+- 145847
+- 145977
+- 145984
+- 146024
+- 146063
+- 146065
+- 146192
+- 146210
+- 146607
+- 146800
+- 146817
+- 146818
+- 146820
+- 146821
+- 167140
+- 167141
+- 167211
+- 168911
+- 190408
+- 360948
+output_dir: !!python/object/apply:pathlib.PosixPath
+- outputs
+- '2024-03-21'
+- 08-18-46
+- foundation-default-tabzilla_has_completed_runs
+search_type: !!python/object/apply:tabularbench.core.enums.SearchType
+- default
+seed: 0

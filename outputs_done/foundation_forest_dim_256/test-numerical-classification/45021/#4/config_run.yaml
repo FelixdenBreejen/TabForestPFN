@@ -1,0 +1,45 @@
+!!python/object:tabularbench.utils.config_run.ConfigRun
+dataset_size: !!python/object/apply:tabularbench.core.enums.DatasetSize
+- 10000
+device: !!python/object/apply:torch.device
+- cuda
+- 0
+hyperparams:
+  attn_dropout: 0.0
+  dim: 256
+  early_stopping_patience: 40
+  linear_attention: true
+  lr: 1.0e-05
+  lr_scheduler: false
+  lr_scheduler_patience: 30
+  max_epochs: 300
+  max_samples_query: 10000
+  max_samples_support: 10000
+  n_classes: 10
+  n_ensembles: 1
+  n_features: 100
+  n_heads: 4
+  n_layers: 12
+  name: !!python/object/apply:tabularbench.core.enums.ModelName
+  - Foundation
+  optimizer: adamw
+  path_to_weights: outputs/2024-02-09/11-49-15/weights/model_step_300000.pt
+  use_feature_count_scaling: true
+  use_pretrained_weights: true
+  use_quantile_transformer: true
+  weight_decay: 0
+  y_as_float_embedding: true
+model_name: !!python/object/apply:tabularbench.core.enums.ModelName
+- Foundation
+openml_dataset_id: 45021
+openml_dataset_name: jannis
+output_dir: !!python/object/apply:pathlib.PosixPath
+- outputs
+- '2024-02-09'
+- 11-49-15
+- test-numerical-classification
+- '45021'
+- '#4'
+seed: 4
+task: !!python/object/apply:tabularbench.core.enums.Task
+- classification

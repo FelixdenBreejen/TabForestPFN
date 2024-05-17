@@ -1,0 +1,63 @@
+!!python/object:tabularbench.config.config_run.ConfigRun
+datafile_path: !!python/object/apply:pathlib.PosixPath
+- data
+- datasets
+- whytrees_45022_MEDIUM.nc
+dataset_size: !!python/object/apply:tabularbench.core.enums.DatasetSize
+- 10000
+device: !!python/object/apply:torch.device
+- cuda
+- 3
+hyperparams:
+  attn_dropout: 0.0
+  dim: 512
+  early_stopping_patience: 40
+  linear_attention: false
+  lr: 1.0e-05
+  lr_scheduler: false
+  lr_scheduler_patience: 30
+  max_epochs: 300
+  max_samples_query: 1024
+  max_samples_support: 4096
+  n_classes: 10
+  n_ensembles: 1
+  n_features: 100
+  n_heads: 4
+  n_layers: 12
+  optimizer: adamw
+  path_to_weights: outputs_done/foundation_mix_600k_finetune/weights/model_step_600000.pt
+  use_feature_count_scaling: true
+  use_pretrained_weights: true
+  use_quantile_transformer: true
+  weight_decay: 0
+  y_as_float_embedding: true
+model_name: !!python/object/apply:tabularbench.core.enums.ModelName
+- Foundation
+openml_dataset_id: !!python/object/apply:numpy.core.multiarray.scalar
+- !!python/object/apply:numpy.dtype
+  args:
+  - i4
+  - false
+  - true
+  state: !!python/tuple
+  - 3
+  - <
+  - null
+  - null
+  - null
+  - -1
+  - -1
+  - 0
+- !!binary |
+  3q8AAA==
+openml_dataset_name: Diabetes130US
+output_dir: !!python/object/apply:pathlib.PosixPath
+- outputs
+- '2024-04-28'
+- 17-31-50
+- foundation-default-numerical_classification
+- '45022'
+- '#4'
+seed: 4
+task: !!python/object/apply:tabularbench.core.enums.Task
+- classification

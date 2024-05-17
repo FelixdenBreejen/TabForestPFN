@@ -1,0 +1,244 @@
+2024-01-06 04:47:17,832 :: INFO     :: run_experiment  ::   Start experiment on road-safety (id=45038) with Foundation doing classification
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::   Set seed to 8
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::   We are using the following hyperparameters:
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::       n_features: 100
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::       n_classes: 10
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::       dim: 256
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::       n_layers: 8
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::       n_heads: 4
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::       attn_dropout: 0.0
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::       y_as_float_embedding: True
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::       linear_attention: True
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::       max_samples_support: 10000
+2024-01-06 04:47:17,833 :: INFO     :: run_experiment  ::       max_samples_query: 10000
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       max_epochs: 300
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       optimizer: adamw
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       lr: 1e-05
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       weight_decay: 0
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       lr_scheduler: False
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       lr_scheduler_patience: 30
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       early_stopping_patience: 40
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       use_pretrained_weights: True
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       path_to_weights: outputs/2024-01-05/13-20-41/weights/model_step_300000.pt
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       n_ensembles: 1
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       use_quantile_transformer: True
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       use_feature_count_scaling: True
+2024-01-06 04:47:17,834 :: INFO     :: run_experiment  ::       name: Foundation
+2024-01-06 04:47:18,557 :: INFO     :: run_experiment_ ::   Start split 1/1 of road-safety (id=45038) with FOUNDATION doing CLASSIFICATION
+2024-01-06 04:47:20,099 :: INFO     :: train           ::   Epoch 000 | Train loss: 0.5703 | Train score: 0.7113 | Val loss: 0.5420 | Val score: 0.7250
+2024-01-06 04:47:20,420 :: INFO     :: train           ::   Epoch 001 | Train loss: 0.5545 | Train score: 0.7163 | Val loss: 0.5315 | Val score: 0.7315
+2024-01-06 04:47:20,730 :: INFO     :: train           ::   Epoch 002 | Train loss: 0.5142 | Train score: 0.7431 | Val loss: 0.5265 | Val score: 0.7300
+2024-01-06 04:47:21,037 :: INFO     :: train           ::   Epoch 003 | Train loss: 0.5186 | Train score: 0.7300 | Val loss: 0.5261 | Val score: 0.7300
+2024-01-06 04:47:21,328 :: INFO     :: train           ::   Epoch 004 | Train loss: 0.5173 | Train score: 0.7312 | Val loss: 0.5270 | Val score: 0.7295
+2024-01-06 04:47:21,596 :: INFO     :: train           ::   Epoch 005 | Train loss: 0.5039 | Train score: 0.7550 | Val loss: 0.5256 | Val score: 0.7295
+2024-01-06 04:47:21,966 :: INFO     :: train           ::   Epoch 006 | Train loss: 0.5207 | Train score: 0.7394 | Val loss: 0.5236 | Val score: 0.7310
+2024-01-06 04:47:22,280 :: INFO     :: train           ::   Epoch 007 | Train loss: 0.4937 | Train score: 0.7581 | Val loss: 0.5232 | Val score: 0.7315
+2024-01-06 04:47:22,581 :: INFO     :: train           ::   Epoch 008 | Train loss: 0.5054 | Train score: 0.7462 | Val loss: 0.5234 | Val score: 0.7305
+2024-01-06 04:47:22,841 :: INFO     :: train           ::   Epoch 009 | Train loss: 0.5088 | Train score: 0.7394 | Val loss: 0.5247 | Val score: 0.7265
+2024-01-06 04:47:23,103 :: INFO     :: train           ::   Epoch 010 | Train loss: 0.4880 | Train score: 0.7625 | Val loss: 0.5269 | Val score: 0.7260
+2024-01-06 04:47:23,362 :: INFO     :: train           ::   Epoch 011 | Train loss: 0.5146 | Train score: 0.7412 | Val loss: 0.5252 | Val score: 0.7290
+2024-01-06 04:47:23,626 :: INFO     :: train           ::   Epoch 012 | Train loss: 0.5028 | Train score: 0.7431 | Val loss: 0.5238 | Val score: 0.7295
+2024-01-06 04:47:23,891 :: INFO     :: train           ::   Epoch 013 | Train loss: 0.5196 | Train score: 0.7312 | Val loss: 0.5241 | Val score: 0.7345
+2024-01-06 04:47:24,150 :: INFO     :: train           ::   Epoch 014 | Train loss: 0.4886 | Train score: 0.7587 | Val loss: 0.5242 | Val score: 0.7335
+2024-01-06 04:47:24,410 :: INFO     :: train           ::   Epoch 015 | Train loss: 0.4926 | Train score: 0.7544 | Val loss: 0.5237 | Val score: 0.7300
+2024-01-06 04:47:24,670 :: INFO     :: train           ::   Epoch 016 | Train loss: 0.5278 | Train score: 0.7269 | Val loss: 0.5217 | Val score: 0.7310
+2024-01-06 04:47:24,980 :: INFO     :: train           ::   Epoch 017 | Train loss: 0.5087 | Train score: 0.7369 | Val loss: 0.5202 | Val score: 0.7310
+2024-01-06 04:47:25,293 :: INFO     :: train           ::   Epoch 018 | Train loss: 0.4909 | Train score: 0.7537 | Val loss: 0.5180 | Val score: 0.7310
+2024-01-06 04:47:25,610 :: INFO     :: train           ::   Epoch 019 | Train loss: 0.5130 | Train score: 0.7294 | Val loss: 0.5152 | Val score: 0.7350
+2024-01-06 04:47:25,934 :: INFO     :: train           ::   Epoch 020 | Train loss: 0.5016 | Train score: 0.7375 | Val loss: 0.5138 | Val score: 0.7325
+2024-01-06 04:47:26,254 :: INFO     :: train           ::   Epoch 021 | Train loss: 0.5004 | Train score: 0.7606 | Val loss: 0.5138 | Val score: 0.7375
+2024-01-06 04:47:26,512 :: INFO     :: train           ::   Epoch 022 | Train loss: 0.5110 | Train score: 0.7406 | Val loss: 0.5139 | Val score: 0.7380
+2024-01-06 04:47:26,771 :: INFO     :: train           ::   Epoch 023 | Train loss: 0.5018 | Train score: 0.7487 | Val loss: 0.5129 | Val score: 0.7385
+2024-01-06 04:47:27,078 :: INFO     :: train           ::   Epoch 024 | Train loss: 0.5129 | Train score: 0.7394 | Val loss: 0.5111 | Val score: 0.7400
+2024-01-06 04:47:27,450 :: INFO     :: train           ::   Epoch 025 | Train loss: 0.4926 | Train score: 0.7587 | Val loss: 0.5098 | Val score: 0.7400
+2024-01-06 04:47:27,760 :: INFO     :: train           ::   Epoch 026 | Train loss: 0.5048 | Train score: 0.7369 | Val loss: 0.5092 | Val score: 0.7355
+2024-01-06 04:47:28,075 :: INFO     :: train           ::   Epoch 027 | Train loss: 0.4961 | Train score: 0.7525 | Val loss: 0.5079 | Val score: 0.7350
+2024-01-06 04:47:28,398 :: INFO     :: train           ::   Epoch 028 | Train loss: 0.4785 | Train score: 0.7625 | Val loss: 0.5060 | Val score: 0.7340
+2024-01-06 04:47:28,708 :: INFO     :: train           ::   Epoch 029 | Train loss: 0.4634 | Train score: 0.7644 | Val loss: 0.5047 | Val score: 0.7360
+2024-01-06 04:47:29,017 :: INFO     :: train           ::   Epoch 030 | Train loss: 0.4928 | Train score: 0.7556 | Val loss: 0.5034 | Val score: 0.7430
+2024-01-06 04:47:29,328 :: INFO     :: train           ::   Epoch 031 | Train loss: 0.5079 | Train score: 0.7462 | Val loss: 0.5021 | Val score: 0.7410
+2024-01-06 04:47:29,643 :: INFO     :: train           ::   Epoch 032 | Train loss: 0.4878 | Train score: 0.7587 | Val loss: 0.5002 | Val score: 0.7410
+2024-01-06 04:47:29,956 :: INFO     :: train           ::   Epoch 033 | Train loss: 0.4971 | Train score: 0.7312 | Val loss: 0.4980 | Val score: 0.7430
+2024-01-06 04:47:30,272 :: INFO     :: train           ::   Epoch 034 | Train loss: 0.4849 | Train score: 0.7575 | Val loss: 0.4956 | Val score: 0.7485
+2024-01-06 04:47:30,584 :: INFO     :: train           ::   Epoch 035 | Train loss: 0.4596 | Train score: 0.7800 | Val loss: 0.4939 | Val score: 0.7470
+2024-01-06 04:47:30,896 :: INFO     :: train           ::   Epoch 036 | Train loss: 0.4723 | Train score: 0.7656 | Val loss: 0.4926 | Val score: 0.7450
+2024-01-06 04:47:31,206 :: INFO     :: train           ::   Epoch 037 | Train loss: 0.5082 | Train score: 0.7344 | Val loss: 0.4916 | Val score: 0.7515
+2024-01-06 04:47:31,505 :: INFO     :: train           ::   Epoch 038 | Train loss: 0.4761 | Train score: 0.7556 | Val loss: 0.4901 | Val score: 0.7510
+2024-01-06 04:47:31,824 :: INFO     :: train           ::   Epoch 039 | Train loss: 0.4644 | Train score: 0.7575 | Val loss: 0.4881 | Val score: 0.7480
+2024-01-06 04:47:32,132 :: INFO     :: train           ::   Epoch 040 | Train loss: 0.4867 | Train score: 0.7537 | Val loss: 0.4853 | Val score: 0.7480
+2024-01-06 04:47:32,434 :: INFO     :: train           ::   Epoch 041 | Train loss: 0.4681 | Train score: 0.7625 | Val loss: 0.4822 | Val score: 0.7475
+2024-01-06 04:47:32,734 :: INFO     :: train           ::   Epoch 042 | Train loss: 0.4740 | Train score: 0.7544 | Val loss: 0.4789 | Val score: 0.7465
+2024-01-06 04:47:33,030 :: INFO     :: train           ::   Epoch 043 | Train loss: 0.4733 | Train score: 0.7531 | Val loss: 0.4756 | Val score: 0.7490
+2024-01-06 04:47:33,327 :: INFO     :: train           ::   Epoch 044 | Train loss: 0.4609 | Train score: 0.7656 | Val loss: 0.4732 | Val score: 0.7490
+2024-01-06 04:47:33,627 :: INFO     :: train           ::   Epoch 045 | Train loss: 0.4545 | Train score: 0.7750 | Val loss: 0.4711 | Val score: 0.7490
+2024-01-06 04:47:33,931 :: INFO     :: train           ::   Epoch 046 | Train loss: 0.4643 | Train score: 0.7587 | Val loss: 0.4691 | Val score: 0.7475
+2024-01-06 04:47:34,237 :: INFO     :: train           ::   Epoch 047 | Train loss: 0.4591 | Train score: 0.7669 | Val loss: 0.4677 | Val score: 0.7550
+2024-01-06 04:47:34,555 :: INFO     :: train           ::   Epoch 048 | Train loss: 0.4682 | Train score: 0.7650 | Val loss: 0.4678 | Val score: 0.7560
+2024-01-06 04:47:34,815 :: INFO     :: train           ::   Epoch 049 | Train loss: 0.4524 | Train score: 0.7750 | Val loss: 0.4676 | Val score: 0.7565
+2024-01-06 04:47:35,133 :: INFO     :: train           ::   Epoch 050 | Train loss: 0.4767 | Train score: 0.7637 | Val loss: 0.4667 | Val score: 0.7560
+2024-01-06 04:47:35,449 :: INFO     :: train           ::   Epoch 051 | Train loss: 0.4559 | Train score: 0.7569 | Val loss: 0.4662 | Val score: 0.7525
+2024-01-06 04:47:35,759 :: INFO     :: train           ::   Epoch 052 | Train loss: 0.4557 | Train score: 0.7644 | Val loss: 0.4661 | Val score: 0.7510
+2024-01-06 04:47:36,077 :: INFO     :: train           ::   Epoch 053 | Train loss: 0.4435 | Train score: 0.7587 | Val loss: 0.4659 | Val score: 0.7495
+2024-01-06 04:47:36,391 :: INFO     :: train           ::   Epoch 054 | Train loss: 0.4538 | Train score: 0.7556 | Val loss: 0.4658 | Val score: 0.7525
+2024-01-06 04:47:36,700 :: INFO     :: train           ::   Epoch 055 | Train loss: 0.4544 | Train score: 0.7587 | Val loss: 0.4659 | Val score: 0.7525
+2024-01-06 04:47:36,965 :: INFO     :: train           ::   Epoch 056 | Train loss: 0.4474 | Train score: 0.7681 | Val loss: 0.4663 | Val score: 0.7555
+2024-01-06 04:47:37,244 :: INFO     :: train           ::   Epoch 057 | Train loss: 0.4572 | Train score: 0.7594 | Val loss: 0.4660 | Val score: 0.7500
+2024-01-06 04:47:37,512 :: INFO     :: train           ::   Epoch 058 | Train loss: 0.4577 | Train score: 0.7487 | Val loss: 0.4660 | Val score: 0.7490
+2024-01-06 04:47:37,788 :: INFO     :: train           ::   Epoch 059 | Train loss: 0.4424 | Train score: 0.7637 | Val loss: 0.4664 | Val score: 0.7465
+2024-01-06 04:47:38,052 :: INFO     :: train           ::   Epoch 060 | Train loss: 0.4777 | Train score: 0.7525 | Val loss: 0.4678 | Val score: 0.7475
+2024-01-06 04:47:38,312 :: INFO     :: train           ::   Epoch 061 | Train loss: 0.4525 | Train score: 0.7544 | Val loss: 0.4650 | Val score: 0.7490
+2024-01-06 04:47:38,624 :: INFO     :: train           ::   Epoch 062 | Train loss: 0.4444 | Train score: 0.7750 | Val loss: 0.4641 | Val score: 0.7495
+2024-01-06 04:47:38,931 :: INFO     :: train           ::   Epoch 063 | Train loss: 0.4383 | Train score: 0.7769 | Val loss: 0.4636 | Val score: 0.7485
+2024-01-06 04:47:39,239 :: INFO     :: train           ::   Epoch 064 | Train loss: 0.4561 | Train score: 0.7656 | Val loss: 0.4632 | Val score: 0.7495
+2024-01-06 04:47:39,548 :: INFO     :: train           ::   Epoch 065 | Train loss: 0.4546 | Train score: 0.7581 | Val loss: 0.4626 | Val score: 0.7455
+2024-01-06 04:47:39,858 :: INFO     :: train           ::   Epoch 066 | Train loss: 0.4723 | Train score: 0.7537 | Val loss: 0.4619 | Val score: 0.7495
+2024-01-06 04:47:40,166 :: INFO     :: train           ::   Epoch 067 | Train loss: 0.4504 | Train score: 0.7713 | Val loss: 0.4616 | Val score: 0.7475
+2024-01-06 04:47:40,483 :: INFO     :: train           ::   Epoch 068 | Train loss: 0.4520 | Train score: 0.7656 | Val loss: 0.4619 | Val score: 0.7480
+2024-01-06 04:47:40,743 :: INFO     :: train           ::   Epoch 069 | Train loss: 0.4369 | Train score: 0.7731 | Val loss: 0.4622 | Val score: 0.7460
+2024-01-06 04:47:41,006 :: INFO     :: train           ::   Epoch 070 | Train loss: 0.4349 | Train score: 0.7744 | Val loss: 0.4626 | Val score: 0.7480
+2024-01-06 04:47:41,268 :: INFO     :: train           ::   Epoch 071 | Train loss: 0.4725 | Train score: 0.7494 | Val loss: 0.4628 | Val score: 0.7525
+2024-01-06 04:47:41,531 :: INFO     :: train           ::   Epoch 072 | Train loss: 0.4527 | Train score: 0.7625 | Val loss: 0.4630 | Val score: 0.7555
+2024-01-06 04:47:41,790 :: INFO     :: train           ::   Epoch 073 | Train loss: 0.4500 | Train score: 0.7688 | Val loss: 0.4634 | Val score: 0.7545
+2024-01-06 04:47:42,050 :: INFO     :: train           ::   Epoch 074 | Train loss: 0.4571 | Train score: 0.7512 | Val loss: 0.4640 | Val score: 0.7515
+2024-01-06 04:47:42,316 :: INFO     :: train           ::   Epoch 075 | Train loss: 0.4579 | Train score: 0.7600 | Val loss: 0.4644 | Val score: 0.7480
+2024-01-06 04:47:42,655 :: INFO     :: train           ::   Epoch 076 | Train loss: 0.4511 | Train score: 0.7681 | Val loss: 0.4645 | Val score: 0.7505
+2024-01-06 04:47:42,932 :: INFO     :: train           ::   Epoch 077 | Train loss: 0.4459 | Train score: 0.7562 | Val loss: 0.4637 | Val score: 0.7545
+2024-01-06 04:47:43,205 :: INFO     :: train           ::   Epoch 078 | Train loss: 0.4713 | Train score: 0.7494 | Val loss: 0.4629 | Val score: 0.7570
+2024-01-06 04:47:43,494 :: INFO     :: train           ::   Epoch 079 | Train loss: 0.4542 | Train score: 0.7756 | Val loss: 0.4625 | Val score: 0.7515
+2024-01-06 04:47:43,754 :: INFO     :: train           ::   Epoch 080 | Train loss: 0.4352 | Train score: 0.7794 | Val loss: 0.4621 | Val score: 0.7515
+2024-01-06 04:47:44,016 :: INFO     :: train           ::   Epoch 081 | Train loss: 0.4123 | Train score: 0.7962 | Val loss: 0.4615 | Val score: 0.7515
+2024-01-06 04:47:44,327 :: INFO     :: train           ::   Epoch 082 | Train loss: 0.4502 | Train score: 0.7644 | Val loss: 0.4604 | Val score: 0.7550
+2024-01-06 04:47:44,639 :: INFO     :: train           ::   Epoch 083 | Train loss: 0.4362 | Train score: 0.7812 | Val loss: 0.4592 | Val score: 0.7535
+2024-01-06 04:47:44,953 :: INFO     :: train           ::   Epoch 084 | Train loss: 0.4484 | Train score: 0.7763 | Val loss: 0.4588 | Val score: 0.7525
+2024-01-06 04:47:45,267 :: INFO     :: train           ::   Epoch 085 | Train loss: 0.4440 | Train score: 0.7763 | Val loss: 0.4586 | Val score: 0.7510
+2024-01-06 04:47:45,582 :: INFO     :: train           ::   Epoch 086 | Train loss: 0.4362 | Train score: 0.7794 | Val loss: 0.4581 | Val score: 0.7535
+2024-01-06 04:47:45,970 :: INFO     :: train           ::   Epoch 087 | Train loss: 0.4430 | Train score: 0.7731 | Val loss: 0.4580 | Val score: 0.7555
+2024-01-06 04:47:46,281 :: INFO     :: train           ::   Epoch 088 | Train loss: 0.4444 | Train score: 0.7800 | Val loss: 0.4576 | Val score: 0.7570
+2024-01-06 04:47:46,588 :: INFO     :: train           ::   Epoch 089 | Train loss: 0.4297 | Train score: 0.7931 | Val loss: 0.4581 | Val score: 0.7620
+2024-01-06 04:47:46,859 :: INFO     :: train           ::   Epoch 090 | Train loss: 0.4544 | Train score: 0.7681 | Val loss: 0.4588 | Val score: 0.7625
+2024-01-06 04:47:47,206 :: INFO     :: train           ::   Epoch 091 | Train loss: 0.4568 | Train score: 0.7656 | Val loss: 0.4595 | Val score: 0.7635
+2024-01-06 04:47:47,466 :: INFO     :: train           ::   Epoch 092 | Train loss: 0.4474 | Train score: 0.7669 | Val loss: 0.4605 | Val score: 0.7625
+2024-01-06 04:47:47,724 :: INFO     :: train           ::   Epoch 093 | Train loss: 0.4368 | Train score: 0.7781 | Val loss: 0.4612 | Val score: 0.7615
+2024-01-06 04:47:47,989 :: INFO     :: train           ::   Epoch 094 | Train loss: 0.4316 | Train score: 0.7844 | Val loss: 0.4618 | Val score: 0.7605
+2024-01-06 04:47:48,255 :: INFO     :: train           ::   Epoch 095 | Train loss: 0.4222 | Train score: 0.7850 | Val loss: 0.4618 | Val score: 0.7575
+2024-01-06 04:47:48,525 :: INFO     :: train           ::   Epoch 096 | Train loss: 0.4505 | Train score: 0.7637 | Val loss: 0.4610 | Val score: 0.7580
+2024-01-06 04:47:48,791 :: INFO     :: train           ::   Epoch 097 | Train loss: 0.4426 | Train score: 0.7750 | Val loss: 0.4598 | Val score: 0.7565
+2024-01-06 04:47:49,060 :: INFO     :: train           ::   Epoch 098 | Train loss: 0.4408 | Train score: 0.7750 | Val loss: 0.4585 | Val score: 0.7560
+2024-01-06 04:47:49,326 :: INFO     :: train           ::   Epoch 099 | Train loss: 0.4405 | Train score: 0.7763 | Val loss: 0.4582 | Val score: 0.7565
+2024-01-06 04:47:49,597 :: INFO     :: train           ::   Epoch 100 | Train loss: 0.4431 | Train score: 0.7612 | Val loss: 0.4581 | Val score: 0.7545
+2024-01-06 04:47:49,866 :: INFO     :: train           ::   Epoch 101 | Train loss: 0.4366 | Train score: 0.7756 | Val loss: 0.4579 | Val score: 0.7545
+2024-01-06 04:47:50,124 :: INFO     :: train           ::   Epoch 102 | Train loss: 0.4213 | Train score: 0.7731 | Val loss: 0.4577 | Val score: 0.7540
+2024-01-06 04:47:50,389 :: INFO     :: train           ::   Epoch 103 | Train loss: 0.4387 | Train score: 0.7631 | Val loss: 0.4575 | Val score: 0.7505
+2024-01-06 04:47:50,695 :: INFO     :: train           ::   Epoch 104 | Train loss: 0.4344 | Train score: 0.7700 | Val loss: 0.4575 | Val score: 0.7500
+2024-01-06 04:47:51,010 :: INFO     :: train           ::   Epoch 105 | Train loss: 0.4297 | Train score: 0.7794 | Val loss: 0.4575 | Val score: 0.7500
+2024-01-06 04:47:51,273 :: INFO     :: train           ::   Epoch 106 | Train loss: 0.4169 | Train score: 0.7831 | Val loss: 0.4577 | Val score: 0.7500
+2024-01-06 04:47:51,536 :: INFO     :: train           ::   Epoch 107 | Train loss: 0.4435 | Train score: 0.7719 | Val loss: 0.4577 | Val score: 0.7510
+2024-01-06 04:47:51,799 :: INFO     :: train           ::   Epoch 108 | Train loss: 0.4276 | Train score: 0.7738 | Val loss: 0.4575 | Val score: 0.7535
+2024-01-06 04:47:52,055 :: INFO     :: train           ::   Epoch 109 | Train loss: 0.4294 | Train score: 0.7694 | Val loss: 0.4575 | Val score: 0.7540
+2024-01-06 04:47:52,315 :: INFO     :: train           ::   Epoch 110 | Train loss: 0.4355 | Train score: 0.7731 | Val loss: 0.4572 | Val score: 0.7530
+2024-01-06 04:47:52,619 :: INFO     :: train           ::   Epoch 111 | Train loss: 0.4366 | Train score: 0.7812 | Val loss: 0.4579 | Val score: 0.7520
+2024-01-06 04:47:52,881 :: INFO     :: train           ::   Epoch 112 | Train loss: 0.4291 | Train score: 0.7862 | Val loss: 0.4588 | Val score: 0.7530
+2024-01-06 04:47:53,140 :: INFO     :: train           ::   Epoch 113 | Train loss: 0.4403 | Train score: 0.7669 | Val loss: 0.4585 | Val score: 0.7535
+2024-01-06 04:47:53,399 :: INFO     :: train           ::   Epoch 114 | Train loss: 0.4354 | Train score: 0.7706 | Val loss: 0.4581 | Val score: 0.7495
+2024-01-06 04:47:53,658 :: INFO     :: train           ::   Epoch 115 | Train loss: 0.4430 | Train score: 0.7706 | Val loss: 0.4580 | Val score: 0.7485
+2024-01-06 04:47:53,919 :: INFO     :: train           ::   Epoch 116 | Train loss: 0.4407 | Train score: 0.7694 | Val loss: 0.4588 | Val score: 0.7535
+2024-01-06 04:47:54,180 :: INFO     :: train           ::   Epoch 117 | Train loss: 0.4269 | Train score: 0.7769 | Val loss: 0.4594 | Val score: 0.7575
+2024-01-06 04:47:54,438 :: INFO     :: train           ::   Epoch 118 | Train loss: 0.4350 | Train score: 0.7731 | Val loss: 0.4593 | Val score: 0.7560
+2024-01-06 04:47:54,695 :: INFO     :: train           ::   Epoch 119 | Train loss: 0.4290 | Train score: 0.7756 | Val loss: 0.4593 | Val score: 0.7545
+2024-01-06 04:47:54,959 :: INFO     :: train           ::   Epoch 120 | Train loss: 0.4242 | Train score: 0.7800 | Val loss: 0.4589 | Val score: 0.7570
+2024-01-06 04:47:55,218 :: INFO     :: train           ::   Epoch 121 | Train loss: 0.4271 | Train score: 0.7875 | Val loss: 0.4587 | Val score: 0.7555
+2024-01-06 04:47:55,478 :: INFO     :: train           ::   Epoch 122 | Train loss: 0.4404 | Train score: 0.7700 | Val loss: 0.4588 | Val score: 0.7545
+2024-01-06 04:47:55,741 :: INFO     :: train           ::   Epoch 123 | Train loss: 0.4377 | Train score: 0.7694 | Val loss: 0.4588 | Val score: 0.7565
+2024-01-06 04:47:56,001 :: INFO     :: train           ::   Epoch 124 | Train loss: 0.4237 | Train score: 0.7812 | Val loss: 0.4583 | Val score: 0.7550
+2024-01-06 04:47:56,275 :: INFO     :: train           ::   Epoch 125 | Train loss: 0.4199 | Train score: 0.7800 | Val loss: 0.4581 | Val score: 0.7530
+2024-01-06 04:47:56,538 :: INFO     :: train           ::   Epoch 126 | Train loss: 0.4274 | Train score: 0.7706 | Val loss: 0.4581 | Val score: 0.7575
+2024-01-06 04:47:56,805 :: INFO     :: train           ::   Epoch 127 | Train loss: 0.4492 | Train score: 0.7637 | Val loss: 0.4585 | Val score: 0.7555
+2024-01-06 04:47:57,063 :: INFO     :: train           ::   Epoch 128 | Train loss: 0.4196 | Train score: 0.7900 | Val loss: 0.4589 | Val score: 0.7560
+2024-01-06 04:47:57,320 :: INFO     :: train           ::   Epoch 129 | Train loss: 0.4331 | Train score: 0.7656 | Val loss: 0.4582 | Val score: 0.7545
+2024-01-06 04:47:57,580 :: INFO     :: train           ::   Epoch 130 | Train loss: 0.4358 | Train score: 0.7756 | Val loss: 0.4573 | Val score: 0.7535
+2024-01-06 04:47:57,848 :: INFO     :: train           ::   Epoch 131 | Train loss: 0.4324 | Train score: 0.7694 | Val loss: 0.4564 | Val score: 0.7535
+2024-01-06 04:47:58,145 :: INFO     :: train           ::   Epoch 132 | Train loss: 0.4371 | Train score: 0.7781 | Val loss: 0.4555 | Val score: 0.7555
+2024-01-06 04:47:58,438 :: INFO     :: train           ::   Epoch 133 | Train loss: 0.4439 | Train score: 0.7706 | Val loss: 0.4553 | Val score: 0.7535
+2024-01-06 04:47:58,744 :: INFO     :: train           ::   Epoch 134 | Train loss: 0.4216 | Train score: 0.7850 | Val loss: 0.4551 | Val score: 0.7520
+2024-01-06 04:47:59,111 :: INFO     :: train           ::   Epoch 135 | Train loss: 0.4324 | Train score: 0.7850 | Val loss: 0.4548 | Val score: 0.7495
+2024-01-06 04:47:59,426 :: INFO     :: train           ::   Epoch 136 | Train loss: 0.4124 | Train score: 0.7944 | Val loss: 0.4547 | Val score: 0.7520
+2024-01-06 04:47:59,736 :: INFO     :: train           ::   Epoch 137 | Train loss: 0.4067 | Train score: 0.7944 | Val loss: 0.4560 | Val score: 0.7530
+2024-01-06 04:47:59,997 :: INFO     :: train           ::   Epoch 138 | Train loss: 0.4212 | Train score: 0.7794 | Val loss: 0.4585 | Val score: 0.7510
+2024-01-06 04:48:00,258 :: INFO     :: train           ::   Epoch 139 | Train loss: 0.4218 | Train score: 0.7788 | Val loss: 0.4605 | Val score: 0.7500
+2024-01-06 04:48:00,520 :: INFO     :: train           ::   Epoch 140 | Train loss: 0.4327 | Train score: 0.7788 | Val loss: 0.4594 | Val score: 0.7480
+2024-01-06 04:48:00,778 :: INFO     :: train           ::   Epoch 141 | Train loss: 0.4452 | Train score: 0.7669 | Val loss: 0.4588 | Val score: 0.7515
+2024-01-06 04:48:01,124 :: INFO     :: train           ::   Epoch 142 | Train loss: 0.4272 | Train score: 0.7781 | Val loss: 0.4585 | Val score: 0.7510
+2024-01-06 04:48:01,463 :: INFO     :: train           ::   Epoch 143 | Train loss: 0.4074 | Train score: 0.8069 | Val loss: 0.4588 | Val score: 0.7545
+2024-01-06 04:48:01,727 :: INFO     :: train           ::   Epoch 144 | Train loss: 0.4198 | Train score: 0.7850 | Val loss: 0.4583 | Val score: 0.7580
+2024-01-06 04:48:01,987 :: INFO     :: train           ::   Epoch 145 | Train loss: 0.4155 | Train score: 0.7744 | Val loss: 0.4578 | Val score: 0.7570
+2024-01-06 04:48:02,250 :: INFO     :: train           ::   Epoch 146 | Train loss: 0.4149 | Train score: 0.7969 | Val loss: 0.4575 | Val score: 0.7550
+2024-01-06 04:48:02,509 :: INFO     :: train           ::   Epoch 147 | Train loss: 0.4157 | Train score: 0.7925 | Val loss: 0.4576 | Val score: 0.7530
+2024-01-06 04:48:02,768 :: INFO     :: train           ::   Epoch 148 | Train loss: 0.4415 | Train score: 0.7644 | Val loss: 0.4582 | Val score: 0.7525
+2024-01-06 04:48:03,028 :: INFO     :: train           ::   Epoch 149 | Train loss: 0.4320 | Train score: 0.7763 | Val loss: 0.4590 | Val score: 0.7485
+2024-01-06 04:48:03,287 :: INFO     :: train           ::   Epoch 150 | Train loss: 0.4234 | Train score: 0.7763 | Val loss: 0.4592 | Val score: 0.7480
+2024-01-06 04:48:03,545 :: INFO     :: train           ::   Epoch 151 | Train loss: 0.4263 | Train score: 0.7825 | Val loss: 0.4596 | Val score: 0.7510
+2024-01-06 04:48:03,806 :: INFO     :: train           ::   Epoch 152 | Train loss: 0.4377 | Train score: 0.7738 | Val loss: 0.4597 | Val score: 0.7580
+2024-01-06 04:48:04,064 :: INFO     :: train           ::   Epoch 153 | Train loss: 0.4135 | Train score: 0.7850 | Val loss: 0.4607 | Val score: 0.7540
+2024-01-06 04:48:04,330 :: INFO     :: train           ::   Epoch 154 | Train loss: 0.4165 | Train score: 0.7919 | Val loss: 0.4620 | Val score: 0.7525
+2024-01-06 04:48:04,607 :: INFO     :: train           ::   Epoch 155 | Train loss: 0.4232 | Train score: 0.7919 | Val loss: 0.4638 | Val score: 0.7515
+2024-01-06 04:48:04,873 :: INFO     :: train           ::   Epoch 156 | Train loss: 0.4148 | Train score: 0.7850 | Val loss: 0.4644 | Val score: 0.7525
+2024-01-06 04:48:05,144 :: INFO     :: train           ::   Epoch 157 | Train loss: 0.4062 | Train score: 0.7994 | Val loss: 0.4647 | Val score: 0.7560
+2024-01-06 04:48:05,412 :: INFO     :: train           ::   Epoch 158 | Train loss: 0.4163 | Train score: 0.7925 | Val loss: 0.4659 | Val score: 0.7535
+2024-01-06 04:48:05,682 :: INFO     :: train           ::   Epoch 159 | Train loss: 0.4191 | Train score: 0.7881 | Val loss: 0.4668 | Val score: 0.7555
+2024-01-06 04:48:05,954 :: INFO     :: train           ::   Epoch 160 | Train loss: 0.4184 | Train score: 0.7987 | Val loss: 0.4683 | Val score: 0.7535
+2024-01-06 04:48:06,225 :: INFO     :: train           ::   Epoch 161 | Train loss: 0.3978 | Train score: 0.7950 | Val loss: 0.4684 | Val score: 0.7510
+2024-01-06 04:48:06,491 :: INFO     :: train           ::   Epoch 162 | Train loss: 0.4148 | Train score: 0.7919 | Val loss: 0.4690 | Val score: 0.7510
+2024-01-06 04:48:06,760 :: INFO     :: train           ::   Epoch 163 | Train loss: 0.4288 | Train score: 0.7812 | Val loss: 0.4685 | Val score: 0.7525
+2024-01-06 04:48:07,029 :: INFO     :: train           ::   Epoch 164 | Train loss: 0.4155 | Train score: 0.7819 | Val loss: 0.4671 | Val score: 0.7550
+2024-01-06 04:48:07,301 :: INFO     :: train           ::   Epoch 165 | Train loss: 0.4374 | Train score: 0.7844 | Val loss: 0.4647 | Val score: 0.7510
+2024-01-06 04:48:07,569 :: INFO     :: train           ::   Epoch 166 | Train loss: 0.4093 | Train score: 0.7956 | Val loss: 0.4622 | Val score: 0.7540
+2024-01-06 04:48:07,835 :: INFO     :: train           ::   Epoch 167 | Train loss: 0.4166 | Train score: 0.7925 | Val loss: 0.4589 | Val score: 0.7550
+2024-01-06 04:48:08,096 :: INFO     :: train           ::   Epoch 168 | Train loss: 0.4013 | Train score: 0.8044 | Val loss: 0.4567 | Val score: 0.7560
+2024-01-06 04:48:08,355 :: INFO     :: train           ::   Epoch 169 | Train loss: 0.4176 | Train score: 0.7844 | Val loss: 0.4561 | Val score: 0.7535
+2024-01-06 04:48:08,613 :: INFO     :: train           ::   Epoch 170 | Train loss: 0.4214 | Train score: 0.7875 | Val loss: 0.4566 | Val score: 0.7550
+2024-01-06 04:48:08,873 :: INFO     :: train           ::   Epoch 171 | Train loss: 0.4303 | Train score: 0.7819 | Val loss: 0.4546 | Val score: 0.7580
+2024-01-06 04:48:09,181 :: INFO     :: train           ::   Epoch 172 | Train loss: 0.4312 | Train score: 0.7738 | Val loss: 0.4537 | Val score: 0.7570
+2024-01-06 04:48:09,494 :: INFO     :: train           ::   Epoch 173 | Train loss: 0.4135 | Train score: 0.7875 | Val loss: 0.4546 | Val score: 0.7545
+2024-01-06 04:48:09,760 :: INFO     :: train           ::   Epoch 174 | Train loss: 0.4080 | Train score: 0.7994 | Val loss: 0.4556 | Val score: 0.7525
+2024-01-06 04:48:10,025 :: INFO     :: train           ::   Epoch 175 | Train loss: 0.4151 | Train score: 0.7894 | Val loss: 0.4560 | Val score: 0.7515
+2024-01-06 04:48:10,288 :: INFO     :: train           ::   Epoch 176 | Train loss: 0.4114 | Train score: 0.7894 | Val loss: 0.4569 | Val score: 0.7520
+2024-01-06 04:48:10,553 :: INFO     :: train           ::   Epoch 177 | Train loss: 0.3975 | Train score: 0.8119 | Val loss: 0.4584 | Val score: 0.7555
+2024-01-06 04:48:10,815 :: INFO     :: train           ::   Epoch 178 | Train loss: 0.4099 | Train score: 0.7856 | Val loss: 0.4609 | Val score: 0.7575
+2024-01-06 04:48:11,078 :: INFO     :: train           ::   Epoch 179 | Train loss: 0.4043 | Train score: 0.7900 | Val loss: 0.4631 | Val score: 0.7610
+2024-01-06 04:48:11,341 :: INFO     :: train           ::   Epoch 180 | Train loss: 0.4208 | Train score: 0.7925 | Val loss: 0.4652 | Val score: 0.7585
+2024-01-06 04:48:11,604 :: INFO     :: train           ::   Epoch 181 | Train loss: 0.4110 | Train score: 0.7975 | Val loss: 0.4653 | Val score: 0.7595
+2024-01-06 04:48:11,867 :: INFO     :: train           ::   Epoch 182 | Train loss: 0.4205 | Train score: 0.7794 | Val loss: 0.4639 | Val score: 0.7600
+2024-01-06 04:48:12,134 :: INFO     :: train           ::   Epoch 183 | Train loss: 0.4185 | Train score: 0.7875 | Val loss: 0.4630 | Val score: 0.7565
+2024-01-06 04:48:12,393 :: INFO     :: train           ::   Epoch 184 | Train loss: 0.4063 | Train score: 0.8037 | Val loss: 0.4615 | Val score: 0.7585
+2024-01-06 04:48:12,656 :: INFO     :: train           ::   Epoch 185 | Train loss: 0.4292 | Train score: 0.7738 | Val loss: 0.4594 | Val score: 0.7580
+2024-01-06 04:48:12,918 :: INFO     :: train           ::   Epoch 186 | Train loss: 0.4174 | Train score: 0.7900 | Val loss: 0.4597 | Val score: 0.7570
+2024-01-06 04:48:13,182 :: INFO     :: train           ::   Epoch 187 | Train loss: 0.3917 | Train score: 0.8031 | Val loss: 0.4615 | Val score: 0.7570
+2024-01-06 04:48:13,445 :: INFO     :: train           ::   Epoch 188 | Train loss: 0.4139 | Train score: 0.7912 | Val loss: 0.4626 | Val score: 0.7530
+2024-01-06 04:48:13,709 :: INFO     :: train           ::   Epoch 189 | Train loss: 0.4038 | Train score: 0.8056 | Val loss: 0.4624 | Val score: 0.7520
+2024-01-06 04:48:13,971 :: INFO     :: train           ::   Epoch 190 | Train loss: 0.4048 | Train score: 0.7906 | Val loss: 0.4623 | Val score: 0.7540
+2024-01-06 04:48:14,254 :: INFO     :: train           ::   Epoch 191 | Train loss: 0.4076 | Train score: 0.7944 | Val loss: 0.4641 | Val score: 0.7570
+2024-01-06 04:48:14,515 :: INFO     :: train           ::   Epoch 192 | Train loss: 0.4138 | Train score: 0.7937 | Val loss: 0.4664 | Val score: 0.7550
+2024-01-06 04:48:14,777 :: INFO     :: train           ::   Epoch 193 | Train loss: 0.3874 | Train score: 0.8031 | Val loss: 0.4680 | Val score: 0.7540
+2024-01-06 04:48:15,037 :: INFO     :: train           ::   Epoch 194 | Train loss: 0.4068 | Train score: 0.7937 | Val loss: 0.4681 | Val score: 0.7545
+2024-01-06 04:48:15,294 :: INFO     :: train           ::   Epoch 195 | Train loss: 0.4042 | Train score: 0.8031 | Val loss: 0.4688 | Val score: 0.7540
+2024-01-06 04:48:15,557 :: INFO     :: train           ::   Epoch 196 | Train loss: 0.4308 | Train score: 0.7900 | Val loss: 0.4680 | Val score: 0.7515
+2024-01-06 04:48:15,817 :: INFO     :: train           ::   Epoch 197 | Train loss: 0.4288 | Train score: 0.7775 | Val loss: 0.4647 | Val score: 0.7515
+2024-01-06 04:48:16,076 :: INFO     :: train           ::   Epoch 198 | Train loss: 0.3958 | Train score: 0.8019 | Val loss: 0.4617 | Val score: 0.7550
+2024-01-06 04:48:16,335 :: INFO     :: train           ::   Epoch 199 | Train loss: 0.3951 | Train score: 0.8094 | Val loss: 0.4606 | Val score: 0.7590
+2024-01-06 04:48:16,670 :: INFO     :: train           ::   Epoch 200 | Train loss: 0.4331 | Train score: 0.7794 | Val loss: 0.4604 | Val score: 0.7585
+2024-01-06 04:48:16,946 :: INFO     :: train           ::   Epoch 201 | Train loss: 0.4157 | Train score: 0.7981 | Val loss: 0.4613 | Val score: 0.7590
+2024-01-06 04:48:17,210 :: INFO     :: train           ::   Epoch 202 | Train loss: 0.4245 | Train score: 0.7912 | Val loss: 0.4621 | Val score: 0.7550
+2024-01-06 04:48:17,477 :: INFO     :: train           ::   Epoch 203 | Train loss: 0.3944 | Train score: 0.7975 | Val loss: 0.4630 | Val score: 0.7520
+2024-01-06 04:48:17,740 :: INFO     :: train           ::   Epoch 204 | Train loss: 0.4027 | Train score: 0.7969 | Val loss: 0.4638 | Val score: 0.7520
+2024-01-06 04:48:18,003 :: INFO     :: train           ::   Epoch 205 | Train loss: 0.4126 | Train score: 0.7956 | Val loss: 0.4630 | Val score: 0.7545
+2024-01-06 04:48:18,269 :: INFO     :: train           ::   Epoch 206 | Train loss: 0.4052 | Train score: 0.7994 | Val loss: 0.4625 | Val score: 0.7520
+2024-01-06 04:48:18,532 :: INFO     :: train           ::   Epoch 207 | Train loss: 0.4013 | Train score: 0.7981 | Val loss: 0.4620 | Val score: 0.7560
+2024-01-06 04:48:18,795 :: INFO     :: train           ::   Epoch 208 | Train loss: 0.4062 | Train score: 0.7994 | Val loss: 0.4610 | Val score: 0.7495
+2024-01-06 04:48:19,058 :: INFO     :: train           ::   Epoch 209 | Train loss: 0.4157 | Train score: 0.7850 | Val loss: 0.4613 | Val score: 0.7460
+2024-01-06 04:48:19,325 :: INFO     :: train           ::   Epoch 210 | Train loss: 0.4010 | Train score: 0.7962 | Val loss: 0.4618 | Val score: 0.7470
+2024-01-06 04:48:19,587 :: INFO     :: train           ::   Epoch 211 | Train loss: 0.4093 | Train score: 0.7919 | Val loss: 0.4621 | Val score: 0.7495
+2024-01-06 04:48:19,849 :: INFO     :: train           ::   Epoch 212 | Train loss: 0.4079 | Train score: 0.7987 | Val loss: 0.4620 | Val score: 0.7505
+2024-01-06 04:48:19,849 :: INFO     :: train           ::   Early stopping
+2024-01-06 04:48:22,638 :: INFO     :: run_experiment  ::   Finished experiment on road-safety (id=45038) with Foundation doing CLASSIFICATION
+2024-01-06 04:48:22,638 :: INFO     :: run_experiment  ::   Final scores: 
+2024-01-06 04:48:22,638 :: INFO     :: run_experiment  ::   split_0 :: train: 0.8883, val: 0.7636, test: 0.7642

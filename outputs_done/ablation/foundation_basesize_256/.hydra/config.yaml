@@ -1,0 +1,124 @@
+output_dir: ${hydra:run.dir}
+seed: 0
+devices:
+- 0
+- 1
+- 2
+- 3
+workers_per_gpu: 16
+optim:
+  max_steps: 300000
+  warmup_steps: 10000
+  log_every_n_steps: 10
+  eval_every_n_steps: 20000
+  batch_size: 64
+  gradient_accumulation_steps: 1
+  lr: 0.0001
+  weight_decay: 0.0
+  beta1: 0.9
+  beta2: 0.95
+  cosine_scheduler: true
+  max_grad_norm: 1.0
+  use_pretrained_weights: false
+  path_to_weights: outputs_done/foundation_key_att/weights/model_step_500000.pt
+data:
+  generator: forest
+  min_samples_support: 128
+  max_samples_support: 1024
+  n_samples_query: 256
+  min_features: 3
+  max_features: 100
+  max_classes: 10
+  generator_hyperparams:
+    min_depth: 1
+    max_depth: 25
+    base_size: 256
+preprocessing:
+  use_quantile_transformer: true
+  use_feature_count_scaling: true
+testing:
+  n_default_runs_per_dataset_valid: 1
+  n_default_runs_per_dataset_test: 10
+  openml_dataset_ids_to_ignore:
+  - 44135
+  - 44061
+  - 45041
+  - 45046
+  - 45019
+plotting:
+  n_runs: 500
+  n_random_shuffles: 100
+  confidence_bound: 0.9
+  plot_default_value: true
+  benchmark_models:
+  - MLP
+  - RESNET
+  - SAINT
+  - FT_TRANSFORMER
+  - RANDOM_FOREST
+  - XGBOOST
+  - GRADIENT_BOOSTING_TREE
+hyperparams:
+  tabpfn:
+    max_samples_support: 10000
+    max_samples_query: 10000
+    max_features: 100
+    max_epochs: 300
+    optimizer: adamw
+    lr:
+      distribution: log_uniform_values
+      min: 1.0e-06
+      max: 0.0001
+      default: 1.0e-05
+    weight_decay: 0
+    lr_scheduler:
+      values:
+      - true
+      - false
+      default: false
+    lr_scheduler_patience: 30
+    early_stopping_patience: 40
+    use_pretrained_weights: true
+    path_to_weights: tabularbench/models/tabPFN/prior_diff_real_checkpoint_n_0_epoch_42.cpkt
+    n_ensembles: 1
+    use_quantile_transformer: true
+    use_feature_count_scaling: true
+  foundation:
+    n_features: 100
+    n_classes: 10
+    dim: 256
+    n_layers: 8
+    n_heads: 4
+    attn_dropout: 0.0
+    y_as_float_embedding: true
+    linear_attention: false
+    max_samples_support: 10000
+    max_samples_query: 10000
+    max_epochs: 300
+    optimizer: adamw
+    lr:
+      distribution: log_uniform_values
+      min: 1.0e-06
+      max: 0.0001
+      default: 1.0e-05
+    weight_decay: 0
+    lr_scheduler:
+      values:
+      - true
+      - false
+      default: false
+    lr_scheduler_patience: 30
+    early_stopping_patience: 40
+    use_pretrained_weights: true
+    path_to_weights: outputs/2023-12-27/15-24-25/weights/model_step_300000.pt
+    n_ensembles: 1
+    use_quantile_transformer: true
+    use_feature_count_scaling: true
+pretrain_model:
+  name: FOUNDATION
+  dim: 256
+  n_layers: 8
+  n_heads: 4
+  attn_dropout: 0.0
+  y_as_float_embedding: true
+  linear_attention: true

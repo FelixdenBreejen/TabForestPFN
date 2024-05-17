@@ -1,0 +1,177 @@
+output_dir: ${hydra:run.dir}
+seed: 0
+devices:
+- 4
+n_random_runs_per_dataset: 500
+n_default_runs_per_dataset: 10
+models:
+- FOUNDATION
+model_plot_names:
+- FoundationQuery1kFinetune
+benchmarks:
+- CATEGORICAL_CLASSIFICATION
+- NUMERICAL_CLASSIFICATION
+search_types:
+- DEFAULT
+openml_dataset_ids_to_ignore: []
+hyperparams:
+  ft_transformer:
+    batch_size:
+      values:
+      - 256
+      - 512
+      - 1024
+      default: 512
+    max_epochs: 300
+    optimizer: adamw
+    lr:
+      distribution: log_uniform_values
+      min: 1.0e-05
+      max: 0.001
+      default: 0.0001
+    weight_decay:
+      distribution: log_uniform_values
+      min: 1.0e-06
+      max: 0.001
+      default: 1.0e-05
+    lr_scheduler:
+      values:
+      - true
+      - false
+      default: true
+    lr_scheduler_patience: 30
+    early_stopping_patience: 40
+    d_token:
+      distribution: q_uniform
+      min: 64
+      max: 512
+      default: 192
+    activation: reglu
+    token_bias: true
+    prenormalization: true
+    kv_compression:
+      values:
+      - true
+      - false
+      default: true
+    kv_compression_sharing:
+      values:
+      - headwise
+      - key-value
+      default: headwise
+    initialization: kaiming
+    n_layers:
+      distribution: q_uniform
+      min: 1
+      max: 6
+      default: 3
+    n_heads: 8
+    d_ffn_factor:
+      distribution: uniform
+      min: 0.667
+      max: 2.333
+      default: 1.333
+    ffn_dropout:
+      distribution: uniform
+      min: 0.0
+      max: 0.5
+      default: 0.1
+    attention_dropout:
+      distribution: uniform
+      min: 0.0
+      max: 0.5
+      default: 0.2
+    residual_dropout:
+      distribution: uniform
+      min: 0.0
+      max: 0.5
+      default: 0.0
+  tabpfn:
+    max_samples_support: 8192
+    max_samples_query: 1024
+    n_features: 100
+    max_epochs: 0
+    optimizer: adamw
+    lr:
+      distribution: log_uniform_values
+      min: 1.0e-06
+      max: 0.0001
+      default: 1.0e-05
+    weight_decay: 0
+    lr_scheduler:
+      values:
+      - true
+      - false
+      default: false
+    lr_scheduler_patience: 30
+    early_stopping_patience: 40
+    use_pretrained_weights: true
+    path_to_weights: tabularbench/models/tabPFN/prior_diff_real_checkpoint_n_0_epoch_42.cpkt
+    n_ensembles: 1
+    use_quantile_transformer: true
+    use_feature_count_scaling: true
+  foundation:
+    n_features: 100
+    n_classes: 10
+    dim: 512
+    n_layers: 12
+    n_heads: 4
+    attn_dropout: 0.0
+    y_as_float_embedding: true
+    linear_attention: false
+    max_samples_support: 1024
+    max_samples_query: 1024
+    max_epochs: 300
+    optimizer: adamw
+    lr:
+      distribution: log_uniform_values
+      min: 1.0e-06
+      max: 0.0001
+      default: 1.0e-05
+    weight_decay: 0
+    lr_scheduler:
+      values:
+      - true
+      - false
+      default: false
+    lr_scheduler_patience: 30
+    early_stopping_patience: 40
+    use_pretrained_weights: true
+    path_to_weights: outputs_done/foundation_mix_600k_finetune/weights/model_step_600000.pt
+    n_ensembles: 1
+    use_quantile_transformer: true
+    use_feature_count_scaling: true
+plotting:
+  whytrees:
+    n_runs: 1000
+    n_random_shuffles: 100
+    confidence_bound: 0.9
+    plot_default_value: true
+    benchmark_models:
+    - MLP
+    - RESNET
+    - SAINT
+    - FT_TRANSFORMER
+    - RANDOM_FOREST
+    - XGBOOST
+    - GRADIENT_BOOSTING_TREE
+  tabzilla:
+    benchmark_models:
+    - CATBOOST
+    - RESNET
+    - RANDOM_FOREST
+    - SAINT
+    - FT_TRANSFORMER
+    - XGBOOST
+    - NODE
+    - SVM
+    - MLP_RTDL
+    - LIGHTGBM
+    - LINEAR_REGRESSION
+    - DANET
+    - DECISION_TREE
+    - MLP
+    - STG
+    - KNN
+    - TABNET
+    - VIME
