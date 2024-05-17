@@ -90,7 +90,7 @@ All analysis can be found in the `notebooks` folder, often based on the informat
 
 ### WhyTrees
 
-![WhyTrees](figures/whytrees_main.pdf)
+![WhyTrees](figures/whytrees_main.png)
 
 ### TabZilla
 
