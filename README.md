@@ -82,15 +82,27 @@ If you want to reproduce the analysis of ablations that use a small model size, 
 
 ## Results
 
-Our model achieves the following performance on :
+Our model is tested on:
+WhyTrees (http://arxiv.org/abs/2207.08815)
+TabZilla (http://arxiv.org/abs/2305.02997)
 
-### [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
+All analysis can be found in the `notebooks` folder, often based on the information in the `outputs_done` folder.
 
-| Model name         | Top 1 Accuracy  | Top 5 Accuracy |
-| ------------------ |---------------- | -------------- |
-| My awesome model   |     85%         |      95%       |
+### WhyTrees
 
->📋  Include a table of results from your paper, and link back to the leaderboard for clarity and context. If your main result is a figure, include that figure and link to the command or notebook to reproduce it. 
+![WhyTrees](whytrees_main.png)
+
+### TabZilla
+
+![TabZilla](tabzilla_table.png)
+
+
+## Synthetic Data
+
+The synthetic data is showcased in the `notebooks/synthetic_generators_showcase` file.
+It can produce images for the forest dataset generator and the tabpfn dataset generator like these:
+
+![Forest](figures/synthetic_forest.png)
 
 
 ## Contributing
