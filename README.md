@@ -1,6 +1,6 @@
 # Why In-Context Learning Transformers are Tabular Data Classifiers
 
-This repository is the official implementation of [Why In-Context Learning Transformers are Tabular Data Classifiers](--arxiv link--). 
+This repository is the official implementation of [Why In-Context Learning Transformers are Tabular Data Classifiers](--Arxiv link censored for Neurips Submission--). 
 
 ![Complex Decision Boundaries](figures/boundary_plots.png)
 
@@ -99,7 +99,7 @@ If you want to exactly replicate the results in the paper, you can use the confi
 
 We provide the pretrained weights of TabForest, TabPFN (retrained) and TabForestPFN here:  
 
-- [Google Drive](https://drive.google.com/drive/folders/151koPna9G8dvCW9gfnWJIHzoG6tMOq9t?usp=sharing)  
+- [Google Drive](--Censored due to Neurips Submission--)  
 
 After downloading the weights, you can place them in the `weights` folder.  
 Make sure to update the configuration file to point to the correct weights file.  
