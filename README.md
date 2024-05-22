@@ -99,7 +99,7 @@ If you want to exactly replicate the results in the paper, you can use the confi
 
 We provide the pretrained weights of TabForest, TabPFN (retrained) and TabForestPFN here:  
 
-- [Google Drive](--Censored due to Neurips Submission--)  
+- [Google Drive](https://drive.google.com/drive/folders/151koPna9G8dvCW9gfnWJIHzoG6tMOq9t?usp=sharing)  
 
 After downloading the weights, you can place them in the `weights` folder.  
 Make sure to update the configuration file to point to the correct weights file.  
