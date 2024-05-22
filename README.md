@@ -142,8 +142,3 @@ The synthetic data is showcased in the `notebooks/synthetic_generators_showcase`
 It can produce images for the forest dataset generator and the tabpfn dataset generator like these:  
 
 ![Forest](figures/synthetic_forest.png)
-
-
-## Contributing
-
->📋  Pick a licence and describe how to contribute to your code repository. 
