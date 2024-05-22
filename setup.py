@@ -6,7 +6,7 @@ setup(
     packages=find_packages('tabularbench'),
     url='',
     license='',
-    author='',
-    author_email='',
+    author='Felix den Breejen',
+    author_email='FelixdenBreejen@kaist.ac.kr',
     description='TabForestPFN: Why In-Context Learning Transformers are Tabular Data Classifiers'
 )
