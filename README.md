@@ -1,6 +1,6 @@
 # Why In-Context Learning Transformers are Tabular Data Classifiers
 
-This repository is the official implementation of [Why In-Context Learning Transformers are Tabular Data Classifiers](--Arxiv link censored for Neurips Submission--). 
+This repository is the official implementation of [Why In-Context Learning Transformers are Tabular Data Classifiers](https://arxiv.org/pdf/2405.13396). 
 
 ![Complex Decision Boundaries](figures/boundary_plots.png)
 
