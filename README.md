@@ -69,7 +69,7 @@ WhyTrees: `benchmark_total.csv`   (https://figshare.com/ndownloader/files/400816
 TabZilla: `metadataset_clean.csv`  (https://drive.google.com/drive/folders/1cHisTmruPHDCYVOYnaqvTdybLngMkB8R)   
 See `tabularbench/utils/paths_and_filenames.py` for the exact paths and filenames.   
 
-If the links do not work, we suggests to refer to the github pages of the above papers:  
+If the links do not work, we suggest to refer to the github pages of the above papers:  
 WhyTrees: https://github.com/LeoGrin/tabular-benchmark  
 TabZilla: https://github.com/naszilla/tabzilla  
 
@@ -101,8 +101,8 @@ We provide the pretrained weights of TabForest, TabPFN (retrained) and TabForest
 
 - [Google Drive](https://drive.google.com/drive/folders/151koPna9G8dvCW9gfnWJIHzoG6tMOq9t?usp=sharing)  
 
-After downloading the weights, you can place them in the `weights` folder.  
-Make sure to update the configuration file to point to the correct weights file.  
+After downloading the weights, you can place in the (yet to be created) `weights` folder.  
+Make sure to update the configuration files to point to the correct weights file.  
 
 The configuration files for these models can be found in the `outputs_done` folder:  
 TabForest: `foundation_forest_big_300k`  
